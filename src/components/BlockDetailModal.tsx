@@ -5,7 +5,7 @@ import {
   Bus, Palmtree, Coffee, Bed, Sparkles,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { TimeBlock, BlockCategory } from "@/types/itinerary";
 import { fetchBlockAlternatives, BlockDetails, BlockAlternative } from "@/lib/chat";
 
@@ -117,7 +117,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
         </div>
 
         {/* Scrollable body */}
-        <ScrollArea className="flex-1 min-h-0 w-full [&_[data-radix-scroll-area-viewport]]:overflow-x-hidden">
+        <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden">
           <div className="w-full min-w-0 px-6 pb-6 space-y-5">
             {/* Notes */}
             {block.notes && (
@@ -209,7 +209,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
               </>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
