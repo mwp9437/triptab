@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Send, Plane, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import luxuryPool from "@/assets/luxury-pool.png";
+import luxuryTerrace from "@/assets/luxury-terrace.png";
 
 const SUGGESTIONS = [
   "🏖️ Plan a beach getaway for 2",
@@ -36,7 +36,7 @@ export default function LandingHero({ onSubmitIdea }: LandingHeroProps) {
       {/* Full-bleed background */}
       <div className="absolute inset-0 z-0">
         <img
-          src={luxuryPool}
+          src={luxuryTerrace}
           alt=""
           className="w-full h-full object-cover"
         />
