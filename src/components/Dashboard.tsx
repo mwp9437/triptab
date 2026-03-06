@@ -18,6 +18,7 @@ import { BlockAlternative } from "@/lib/chat";
 import { downloadICS } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
+import RemixModal from "./RemixModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 
 const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
