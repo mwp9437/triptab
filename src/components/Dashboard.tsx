@@ -17,9 +17,15 @@ import { BlockAlternative } from "@/lib/chat";
 import { downloadICS } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
-import { downloadICS } from "@/lib/calendar-export";
-import FloatingChat from "./FloatingChat";
-import BlockDetailModal from "./BlockDetailModal";
+
+const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
+  clothing: Shirt,
+  gear: Backpack,
+  toiletries: ShowerHead,
+  electronics: Plug,
+  documents: FileText,
+  misc: Package,
+};
 
 const BLOCK_STYLES: Record<BlockCategory, { icon: typeof Plane; colorClass: string }> = {
   transport: { icon: Bus, colorClass: "bg-ocean-light text-ocean-dark border-l-4 border-l-ocean" },
