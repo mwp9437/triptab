@@ -288,7 +288,32 @@ export default function Dashboard({
                         )}
 
                         {/* Accommodation footer */}
-                        {accommodationBlocks.map((block) => (
+                        {accommodationBlocks.map((block) => {
+                          // Determine check-in/check-out prefix
+                          const allDays = plan.itinerary;
+                          const hotelDayIndices = allDays
+                            .map((d, i) => d.blocks.some(b => b.category === "accommodation" && b.title === block.title) ? i : -1)
+                            .filter(i => i >= 0);
+                          const isFirstDay = hotelDayIndices.length > 0 && hotelDayIndices[0] === idx;
+                          const isLastDay = hotelDayIndices.length > 0 && hotelDayIndices[hotelDayIndices.length - 1] === idx;
+
+                          const formatTime = (t: string) => {
+                            const [h, m] = t.split(":").map(Number);
+                            const ampm = h >= 12 ? "PM" : "AM";
+                            const hr = h % 12 || 12;
+                            return m ? `${hr}:${m.toString().padStart(2, "0")} ${ampm}` : `${hr} ${ampm}`;
+                          };
+
+                          let displayTitle = block.title;
+                          if (isFirstDay && isLastDay) {
+                            displayTitle = `Check in: ${block.title} @ ${formatTime(block.startTime)}`;
+                          } else if (isFirstDay) {
+                            displayTitle = `Check in: ${block.title} @ ${formatTime(block.startTime)}`;
+                          } else if (isLastDay) {
+                            displayTitle = `Check out: ${block.title} @ ${formatTime(block.endTime)}`;
+                          }
+
+                          return (
                           <motion.div
                             key={block.id}
                             initial={{ opacity: 0 }}
@@ -302,7 +327,7 @@ export default function Dashboard({
                                   <Bed className="w-4 h-4 text-primary" />
                                 </div>
                                 <div>
-                                  <p className="font-body font-medium text-sm text-foreground">{block.title}</p>
+                                  <p className="font-body font-medium text-sm text-foreground">{displayTitle}</p>
                                   {block.location && (
                                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                       <MapPin className="w-3 h-3" /> {block.location}
@@ -334,7 +359,8 @@ export default function Dashboard({
                               </div>
                             </div>
                           </motion.div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </AccordionContent>
                   </AccordionItem>
