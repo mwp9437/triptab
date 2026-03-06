@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  CalendarDown,
+  CalendarDays,
   MapPin,
   Clock,
   DollarSign,
@@ -91,7 +91,7 @@ export default function Dashboard({ plan, conversationHistory, onBack }: Dashboa
           className="gap-2 rounded-lg"
           onClick={() => downloadICS(plan)}
         >
-          <CalendarDown className="w-4 h-4" />
+          <CalendarDays className="w-4 h-4" />
           Sync with Calendar
         </Button>
       </header>
