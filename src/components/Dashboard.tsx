@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
-  Coffee, Bed, Plus, Download, Trash2,
+  Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,11 +12,20 @@ import { Progress } from "@/components/ui/progress";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory } from "@/types/itinerary";
+import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory, PackingItem, PackingCategory } from "@/types/itinerary";
 import { BlockAlternative } from "@/lib/chat";
 import { downloadICS } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
+
+const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
+  clothing: Shirt,
+  gear: Backpack,
+  toiletries: ShowerHead,
+  electronics: Plug,
+  documents: FileText,
+  misc: Package,
+};
 
 const BLOCK_STYLES: Record<BlockCategory, { icon: typeof Plane; colorClass: string }> = {
   transport: { icon: Bus, colorClass: "bg-ocean-light text-ocean-dark border-l-4 border-l-ocean" },
@@ -60,7 +69,14 @@ export default function Dashboard({
   hideFloatingChat,
 }: DashboardProps) {
   const [actionItems, setActionItems] = useState<ActionItem[]>(plan.actionItems);
+  const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
+
+  const togglePackingItem = (id: string) => {
+    setPackingList((items) =>
+      items.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item))
+    );
+  };
 
   const toggleItem = (id: string) => {
     setActionItems((items) =>
@@ -287,6 +303,64 @@ export default function Dashboard({
                 })}
               </CardContent>
             </Card>
+
+            {/* Packing List */}
+            {packingList.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-display flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Luggage className="w-4 h-4 text-primary" />
+                      Packing List
+                    </span>
+                    <span className="text-xs font-body text-muted-foreground font-normal">
+                      {packingList.filter(i => i.checked).length}/{packingList.length}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {Object.entries(
+                    packingList.reduce<Record<string, PackingItem[]>>((acc, item) => {
+                      (acc[item.category] ||= []).push(item);
+                      return acc;
+                    }, {})
+                  ).map(([category, items]) => {
+                    const Icon = PACKING_ICONS[category as PackingCategory] || Package;
+                    return (
+                      <div key={category}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
+                            {category}
+                          </span>
+                        </div>
+                        <div className="space-y-1.5 ml-5">
+                          {items.map((item) => (
+                            <label key={item.id} className="flex items-start gap-2 cursor-pointer group">
+                              <Checkbox
+                                checked={item.checked}
+                                onCheckedChange={() => togglePackingItem(item.id)}
+                                className="mt-0.5"
+                              />
+                              <div>
+                                <span className={`text-sm font-body leading-tight ${
+                                  item.checked ? "line-through text-muted-foreground" : "text-foreground"
+                                }`}>
+                                  {item.text}
+                                </span>
+                                {item.reason && (
+                                  <p className="text-xs text-muted-foreground font-body mt-0.5">{item.reason}</p>
+                                )}
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
       </div>

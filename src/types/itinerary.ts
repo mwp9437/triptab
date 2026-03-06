@@ -34,6 +34,16 @@ export interface BudgetSummary {
   categories: Record<string, number>;
 }
 
+export type PackingCategory = "clothing" | "gear" | "toiletries" | "electronics" | "documents" | "misc";
+
+export interface PackingItem {
+  id: string;
+  category: PackingCategory;
+  text: string;
+  checked: boolean;
+  reason?: string;
+}
+
 export interface TripPlan {
   destination: string;
   startDate: string;
@@ -42,6 +52,7 @@ export interface TripPlan {
   itinerary: ItineraryDay[];
   actionItems: ActionItem[];
   budget: BudgetSummary;
+  packingList?: PackingItem[];
 }
 
 export interface ChatMessage {

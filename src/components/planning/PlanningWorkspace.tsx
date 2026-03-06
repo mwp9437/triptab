@@ -79,6 +79,7 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
           setPlan(generated);
           setActionItems(generated.actionItems || []);
           setIsGenerating(false);
+          setIsGenerating(false);
         }
       } catch {
         if (!cancelled) {
