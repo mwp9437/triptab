@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  X, MapPin, Clock, DollarSign, Star, Loader2,
+  MapPin, Clock, DollarSign, Star, Loader2,
   Bus, Palmtree, Coffee, Bed, Sparkles,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
