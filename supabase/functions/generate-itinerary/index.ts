@@ -125,7 +125,7 @@ Rules:
 - Be opinionated about recommendations — pick the best options, don't hedge
 - Generate 15-30 packing items based on: destination climate/weather for the travel dates, planned activities (hiking gear, swimwear, formal wear etc.), location-specific needs (adapters, sunscreen, mosquito repellent etc.), and trip duration
 - Each packing item should have a brief "reason" explaining why it's needed
-- Generate 8-15 local tips covering: tipping customs, typical prices (beer, coffee, meal), greetings & how to say hello/thank you/goodbye with phonetic pronunciation, cultural etiquette (bowing, handshakes, cheek kisses), common scams to avoid, useful local phrases, transportation tips, and any unique local customs travelers should know
+- Generate 5-10 local tips covering: tipping customs, typical prices (beer, coffee, meal), greetings & how to say hello/thank you/goodbye with phonetic pronunciation, cultural etiquette (bowing, handshakes, cheek kisses), common scams to avoid, useful local phrases, transportation tips, and any unique local customs travelers should know
 - Each local tip should have an appropriate emoji, a short title, and a detailed explanation
 - Return ONLY JSON, no markdown`;
 
