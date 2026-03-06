@@ -6,9 +6,36 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are a travel itinerary generator. Based on the conversation, create a detailed trip plan as JSON.
+const BUDGET_LABELS: Record<number, Record<string, string>> = {
+  1: { accommodation: "Hostel/budget", meals: "Street food/casual", activities: "Free/cheap", transportation: "Public transit" },
+  2: { accommodation: "Mid-range", meals: "Sit-down casual", activities: "Moderate", transportation: "Rideshare" },
+  3: { accommodation: "Boutique/4-star", meals: "Upscale", activities: "Premium", transportation: "Private car" },
+  4: { accommodation: "Luxury/5-star", meals: "Fine dining", activities: "VIP/private", transportation: "Luxury/charter" },
+};
 
-Return ONLY valid JSON matching this exact schema:
+function buildPromptFromIntake(intake: any): string {
+  const b = intake.budget || {};
+  return `Plan a trip to ${intake.destination} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
+
+Budget preferences:
+- Accommodation: ${BUDGET_LABELS[b.accommodation]?.accommodation || "mid-range"}
+- Meals: ${BUDGET_LABELS[b.meals]?.meals || "casual"}
+- Activities: ${BUDGET_LABELS[b.activities]?.activities || "moderate"}
+- Transportation: ${BUDGET_LABELS[b.transportation]?.transportation || "rideshare"}
+
+Trip vibes: ${(intake.vibes || []).join(", ") || "general sightseeing"}
+Dietary: ${(intake.dietary || []).join(", ") || "no restrictions"}
+Mobility: ${intake.mobility || "no limitations"}
+${intake.mustDos ? `Must-do: ${intake.mustDos}` : ""}
+${intake.avoids ? `Avoid: ${intake.avoids}` : ""}
+${intake.childAges?.length ? `Children ages: ${intake.childAges.join(", ")}` : ""}
+
+Generate the complete trip plan.`;
+}
+
+const SYSTEM_PROMPT = `You are a travel itinerary generator. Create a detailed trip plan as JSON.
+
+Return ONLY valid JSON matching this schema:
 {
   "destination": "City, Country",
   "startDate": "YYYY-MM-DD",
@@ -21,21 +48,21 @@ Return ONLY valid JSON matching this exact schema:
       "title": "Arrival & Exploring Downtown",
       "blocks": [
         {
-          "id": "unique-id",
+          "id": "block-1-1",
           "startTime": "09:00",
           "endTime": "10:30",
           "title": "Activity Name",
           "location": "Address or area",
           "cost": 25,
           "category": "activity",
-          "notes": "Optional tips"
+          "notes": "Brief tip or detail"
         }
       ]
     }
   ],
   "actionItems": [
     {
-      "id": "unique-id",
+      "id": "action-1",
       "category": "flights",
       "text": "Book round-trip flights",
       "completed": false,
@@ -56,13 +83,15 @@ Return ONLY valid JSON matching this exact schema:
 }
 
 Rules:
-- category for blocks must be one of: "transport", "activity", "meal", "free", "accommodation"
-- category for actionItems must be one of: "flights", "hotels", "restaurants", "tickets", "packing"
-- Generate unique IDs for each block and action item using format "block-X-Y" or "action-X"
-- Include realistic time estimates with travel time between locations
-- Cost should be per person in USD
-- Create a balanced day with 6-10 blocks including meals and free time
-- Return ONLY the JSON, no markdown or explanation`;
+- block category: "transport" | "activity" | "meal" | "free" | "accommodation"
+- actionItem category: "flights" | "hotels" | "restaurants" | "tickets" | "packing"
+- Unique IDs: "block-X-Y" or "action-X"
+- Include realistic travel time between locations
+- Cost per person in USD
+- 6-10 blocks per day including meals and free time
+- Respect the budget tier preferences
+- Be opinionated about recommendations — pick the best options, don't hedge
+- Return ONLY JSON, no markdown`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -70,16 +99,25 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+
+    let userPrompt: string;
+
+    if (body.intake) {
+      userPrompt = buildPromptFromIntake(body.intake);
+    } else if (body.messages) {
+      // Legacy: build from conversation history
+      const msgs = body.messages.map((m: any) => `${m.role}: ${m.content}`).join("\n");
+      userPrompt = `Based on this conversation, generate the trip plan:\n${msgs}`;
+    } else {
+      throw new Error("Either 'intake' or 'messages' must be provided");
+    }
 
     const fullMessages = [
       { role: "system", content: SYSTEM_PROMPT },
-      ...messages,
-      {
-        role: "user",
-        content: "Now generate the complete trip plan JSON based on our conversation. Return ONLY the JSON.",
-      },
+      { role: "user", content: userPrompt },
     ];
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -89,13 +127,23 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: fullMessages,
         stream: false,
       }),
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Usage limit reached." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const err = await response.text();
       throw new Error(`AI API error: ${response.status} ${err}`);
     }
@@ -103,7 +151,6 @@ Deno.serve(async (req) => {
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    // Extract JSON from the response (handle possible markdown wrapping)
     let jsonStr = content;
     const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
@@ -116,6 +163,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("generate-itinerary error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

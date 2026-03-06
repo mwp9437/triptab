@@ -1,31 +1,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  CalendarDays,
-  MapPin,
-  Clock,
-  DollarSign,
-  Check,
-  Plane,
-  Hotel,
-  UtensilsCrossed,
-  Ticket,
-  Backpack,
-  ArrowLeft,
-  Bus,
-  Palmtree,
-  Coffee,
-  Bed,
+  CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
+  UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
+  Coffee, Bed, Plus, Download, Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { TripPlan, ActionItem, BlockCategory, ActionCategory } from "@/types/itinerary";
 import { downloadICS } from "@/lib/calendar-export";
@@ -51,9 +36,21 @@ interface DashboardProps {
   plan: TripPlan;
   conversationHistory: { role: string; content: string }[];
   onBack: () => void;
+  collaborative?: boolean;
+  onAddActivity?: (dayIndex: number) => void;
+  hideActionsSidebar?: boolean;
+  hideFloatingChat?: boolean;
 }
 
-export default function Dashboard({ plan, conversationHistory, onBack }: DashboardProps) {
+export default function Dashboard({
+  plan,
+  conversationHistory,
+  onBack,
+  collaborative,
+  onAddActivity,
+  hideActionsSidebar,
+  hideFloatingChat,
+}: DashboardProps) {
   const [actionItems, setActionItems] = useState<ActionItem[]>(plan.actionItems);
 
   const toggleItem = (id: string) => {
@@ -70,6 +67,10 @@ export default function Dashboard({ plan, conversationHistory, onBack }: Dashboa
     return acc;
   }, {});
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Top bar */}
@@ -85,21 +86,25 @@ export default function Dashboard({ plan, conversationHistory, onBack }: Dashboa
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 rounded-lg"
-          onClick={() => downloadICS(plan)}
-        >
-          <CalendarDays className="w-4 h-4" />
-          Sync with Calendar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-2 rounded-lg" onClick={handlePrint}>
+            <Download className="w-4 h-4" /> PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-lg"
+            onClick={() => downloadICS(plan)}
+          >
+            <CalendarDays className="w-4 h-4" /> Sync with Calendar
+          </Button>
+        </div>
       </header>
 
       {/* Content */}
       <div className="flex flex-col lg:flex-row">
         {/* Left: Itinerary */}
-        <div className="flex-1 p-6 lg:border-r border-border">
+        <div className={`flex-1 p-6 ${!hideActionsSidebar ? "lg:border-r border-border" : ""}`}>
           <h2 className="font-display font-bold text-xl text-foreground mb-4">Itinerary</h2>
           <Accordion type="multiple" defaultValue={plan.itinerary.map((_, i) => `day-${i}`)}>
             {plan.itinerary.map((day, idx) => (
@@ -159,6 +164,20 @@ export default function Dashboard({ plan, conversationHistory, onBack }: Dashboa
                         </motion.div>
                       );
                     })}
+
+                    {/* Collaborative: Add Activity button */}
+                    {collaborative && (
+                      <button
+                        onClick={() => onAddActivity?.(idx)}
+                        className="w-full rounded-lg border-2 border-dashed border-border hover:border-primary/50 p-3 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-body"
+                      >
+                        <Plus className="w-4 h-4" /> Add Activity
+                      </button>
+                    )}
+
+                    {!collaborative && day.blocks.length === 0 && (
+                      <p className="text-sm text-muted-foreground font-body py-3 text-center">No activities planned yet.</p>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -166,91 +185,88 @@ export default function Dashboard({ plan, conversationHistory, onBack }: Dashboa
           </Accordion>
         </div>
 
-        {/* Right: Actions & Budget */}
-        <div className="lg:w-[380px] p-6 space-y-6">
-          {/* Budget Card */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-display flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-primary" />
-                Budget
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between text-sm font-body">
-                <span className="text-muted-foreground">Estimated total</span>
-                <span className="font-semibold text-foreground">${plan.budget.total.toLocaleString()}</span>
-              </div>
-              <Progress value={budgetPercent} className="h-2" />
-              <div className="grid grid-cols-2 gap-2">
-                {Object.entries(plan.budget.categories).map(([cat, amount]) => (
-                  <div key={cat} className="flex justify-between text-xs font-body text-muted-foreground">
-                    <span className="capitalize">{cat}</span>
-                    <span>${(amount as number).toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Right: Actions & Budget (desktop, non-collaborative or when not hidden) */}
+        {!hideActionsSidebar && (
+          <div className="lg:w-[380px] p-6 space-y-6">
+            {/* Budget Card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-display flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-primary" />
+                  Budget
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between text-sm font-body">
+                  <span className="text-muted-foreground">Estimated total</span>
+                  <span className="font-semibold text-foreground">${plan.budget.total.toLocaleString()}</span>
+                </div>
+                <Progress value={budgetPercent} className="h-2" />
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(plan.budget.categories).map(([cat, amount]) => (
+                    <div key={cat} className="flex justify-between text-xs font-body text-muted-foreground">
+                      <span className="capitalize">{cat}</span>
+                      <span>${(amount as number).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Action Items */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-display flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  Action Items
-                </span>
-                <span className="text-xs font-body text-muted-foreground font-normal">
-                  {completedCount}/{actionItems.length}
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries(groupedActions).map(([category, items]) => {
-                const Icon = ACTION_ICONS[category as ActionCategory] || Ticket;
-                return (
-                  <div key={category}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
-                        {category}
-                      </span>
-                    </div>
-                    <div className="space-y-1.5 ml-5">
-                      {items.map((item) => (
-                        <label
-                          key={item.id}
-                          className="flex items-start gap-2 cursor-pointer group"
-                        >
-                          <Checkbox
-                            checked={item.completed}
-                            onCheckedChange={() => toggleItem(item.id)}
-                            className="mt-0.5"
-                          />
-                          <span
-                            className={`text-sm font-body leading-tight ${
+            {/* Action Items */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-display flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    Action Items
+                  </span>
+                  <span className="text-xs font-body text-muted-foreground font-normal">
+                    {completedCount}/{actionItems.length}
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(groupedActions).map(([category, items]) => {
+                  const Icon = ACTION_ICONS[category as ActionCategory] || Ticket;
+                  return (
+                    <div key={category}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
+                          {category}
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 ml-5">
+                        {items.map((item) => (
+                          <label key={item.id} className="flex items-start gap-2 cursor-pointer group">
+                            <Checkbox
+                              checked={item.completed}
+                              onCheckedChange={() => toggleItem(item.id)}
+                              className="mt-0.5"
+                            />
+                            <span className={`text-sm font-body leading-tight ${
                               item.completed ? "line-through text-muted-foreground" : "text-foreground"
-                            }`}
-                          >
-                            {item.text}
-                            {item.cost != null && item.cost > 0 && (
-                              <span className="text-xs text-muted-foreground ml-1">(~${item.cost})</span>
-                            )}
-                          </span>
-                        </label>
-                      ))}
+                            }`}>
+                              {item.text}
+                              {item.cost != null && item.cost > 0 && (
+                                <span className="text-xs text-muted-foreground ml-1">(~${item.cost})</span>
+                              )}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Floating Chat */}
-      <FloatingChat conversationHistory={conversationHistory} />
+      {!hideFloatingChat && <FloatingChat conversationHistory={conversationHistory} />}
     </div>
   );
 }
