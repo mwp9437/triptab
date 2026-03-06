@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { TripIntake, ActivityOption, PlanningMode } from "@/types/intake";
-import { TripPlan, TimeBlock, ItineraryDay, ActionItem } from "@/types/itinerary";
+import { TripIntake, ActivityOption } from "@/types/intake";
+import { TripPlan, TimeBlock, ActionItem } from "@/types/itinerary";
 import { generateFromIntake } from "@/lib/chat";
 import { toast } from "@/hooks/use-toast";
 import Dashboard from "@/components/Dashboard";
@@ -21,7 +21,7 @@ interface PlanningWorkspaceProps {
 function createEmptyPlan(intake: TripIntake): TripPlan {
   const start = new Date(intake.startDate + "T00:00:00");
   const end = new Date(intake.endDate + "T00:00:00");
-  const days: ItineraryDay[] = [];
+  const days = [];
   const d = new Date(start);
   let dayNum = 1;
   while (d <= end) {
@@ -58,7 +58,7 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
     intake.planningMode === "collaborative" ? createEmptyPlan(intake) : null
   );
   const [isGenerating, setIsGenerating] = useState(intake.planningMode === "auto");
-  const [chatCollapsed, setChatCollapsed] = useState(intake.planningMode === "auto");
+  const [chatCollapsed, setChatCollapsed] = useState(false); // Always show chat in both modes
   const [options, setOptions] = useState<ActivityOption[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [mobileTab, setMobileTab] = useState("itinerary");
@@ -67,7 +67,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
   const intakeContext = intakeToContext(intake);
   const conversationHistory = [{ role: "system", content: intakeContext }];
 
-  // Auto-generate itinerary
   useEffect(() => {
     if (intake.planningMode !== "auto") return;
     let cancelled = false;
@@ -102,6 +101,24 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
     );
   };
 
+  const handlePlanUpdate = (updatedPlan: TripPlan) => {
+    setPlan(updatedPlan);
+    if (updatedPlan.actionItems) {
+      setActionItems(updatedPlan.actionItems);
+    }
+    toast({ title: "Itinerary updated", description: "Your changes have been applied." });
+  };
+
+  const handleDeleteBlock = (dayIndex: number, blockId: string) => {
+    if (!plan) return;
+    const updatedDays = [...plan.itinerary];
+    updatedDays[dayIndex] = {
+      ...updatedDays[dayIndex],
+      blocks: updatedDays[dayIndex].blocks.filter((b) => b.id !== blockId),
+    };
+    setPlan({ ...plan, itinerary: updatedDays });
+  };
+
   const handleSelectOption = (opt: ActivityOption) => {
     if (!plan) return;
     const block: TimeBlock = {
@@ -115,7 +132,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
       notes: opt.description,
     };
 
-    // Add to first day with fewest blocks (simple heuristic)
     const updatedDays = [...plan.itinerary];
     const targetDay = updatedDays.reduce((a, b) => a.blocks.length <= b.blocks.length ? a : b);
     targetDay.blocks = [...targetDay.blocks, block].sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -134,7 +150,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
     setChatCollapsed(false);
   };
 
-  // Loading state
   if (isGenerating) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -149,7 +164,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
 
   if (!plan) return null;
 
-  // Update plan with action items for Dashboard
   const planWithActions = { ...plan, actionItems };
 
   // Mobile layout
@@ -164,6 +178,8 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
                   conversationHistory={conversationHistory}
                   collaborative={intake.planningMode === "collaborative"}
                   onSuggestionsReady={handleSuggestionsReady}
+                  onPlanUpdate={handlePlanUpdate}
+                  currentPlan={plan}
                   intakeContext={intakeContext}
                 />
               </TabsContent>
@@ -183,6 +199,7 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
                   onBack={onBack}
                   collaborative={intake.planningMode === "collaborative"}
                   onAddActivity={handleAddActivity}
+                  onDeleteBlock={handleDeleteBlock}
                   hideActionsSidebar
                   hideFloatingChat
                 />
@@ -208,7 +225,7 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
   // Desktop layout
   return (
     <div className="h-screen flex bg-background">
-      {/* Chat Panel */}
+      {/* Chat Panel — always visible, collapsible */}
       <div className={chatCollapsed ? "w-10" : "w-[320px]"} style={{ transition: "width 0.2s" }}>
         <ChatPanel
           conversationHistory={conversationHistory}
@@ -216,6 +233,8 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
           onToggle={() => setChatCollapsed(!chatCollapsed)}
           collaborative={intake.planningMode === "collaborative"}
           onSuggestionsReady={handleSuggestionsReady}
+          onPlanUpdate={handlePlanUpdate}
+          currentPlan={plan}
           intakeContext={intakeContext}
         />
       </div>
@@ -228,6 +247,7 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
           onBack={onBack}
           collaborative={intake.planningMode === "collaborative"}
           onAddActivity={handleAddActivity}
+          onDeleteBlock={handleDeleteBlock}
           hideFloatingChat
         />
       </div>
@@ -245,12 +265,15 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
         )}
       </AnimatePresence>
 
-      {/* Action Items FAB (desktop) */}
       <ActionItemsModal items={actionItems} onToggle={toggleActionItem} />
 
-      {/* Floating chat for auto mode when chat panel is collapsed */}
-      {chatCollapsed && intake.planningMode === "auto" && (
-        <FloatingChat conversationHistory={conversationHistory} />
+      {/* Floating chat when panel is collapsed */}
+      {chatCollapsed && (
+        <FloatingChat
+          conversationHistory={conversationHistory}
+          currentPlan={plan}
+          onPlanUpdate={handlePlanUpdate}
+        />
       )}
     </div>
   );
