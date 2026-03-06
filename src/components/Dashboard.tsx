@@ -324,6 +324,13 @@ export default function Dashboard({
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 )}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                  title="Find alternatives"
+                                >
+                                  <Shuffle className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
                           </motion.div>
