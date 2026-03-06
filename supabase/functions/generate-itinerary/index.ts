@@ -15,7 +15,7 @@ const BUDGET_LABELS: Record<number, Record<string, string>> = {
 
 function buildPromptFromIntake(intake: any): string {
   const b = intake.budget || {};
-  const totalBudget = b.totalBudget ? `\nTotal budget cap: $${b.totalBudget} USD total for the entire trip.` : "";
+  const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip.` : "";
   return `Plan a trip to ${intake.destination} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
 
 Budget preferences:

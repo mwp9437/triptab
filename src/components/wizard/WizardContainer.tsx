@@ -259,9 +259,9 @@ function StepBudget({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Pa
       {/* Total budget input */}
       <div className="bg-card border border-border rounded-xl p-4">
         <label className="text-sm font-body font-semibold text-foreground mb-1.5 block">
-          <DollarSign className="w-4 h-4 inline mr-1.5" />Total Trip Budget <span className="font-normal text-muted-foreground">(optional)</span>
+          <DollarSign className="w-4 h-4 inline mr-1.5" />Budget Per Person <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
-        <p className="text-xs text-muted-foreground font-body mb-3">Set a total budget cap and we'll keep recommendations within range.</p>
+        <p className="text-xs text-muted-foreground font-body mb-3">Set a per-person budget cap and we'll keep recommendations within range.</p>
         <Input
           type="number"
           value={intake.budget.totalBudget || ""}
