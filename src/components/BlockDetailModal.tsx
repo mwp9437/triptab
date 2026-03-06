@@ -5,7 +5,7 @@ import {
   Bus, Palmtree, Coffee, Bed, Sparkles,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { TimeBlock, BlockCategory } from "@/types/itinerary";
 import { fetchBlockAlternatives, BlockDetails, BlockAlternative } from "@/lib/chat";
 
@@ -117,11 +117,11 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
         </div>
 
         {/* Scrollable body */}
-        <ScrollArea className="flex-1 min-h-0">
-          <div className="px-6 pb-6 space-y-5 overflow-hidden">
+        <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden">
+          <div className="w-full min-w-0 px-6 pb-6 space-y-5">
             {/* Notes */}
             {block.notes && (
-              <p className="text-sm text-foreground font-body leading-relaxed">{block.notes}</p>
+              <p className="text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">{block.notes}</p>
             )}
 
             {/* AI-fetched details */}
@@ -139,25 +139,25 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
             {data && (
               <>
                 {/* Description & highlights */}
-                <div className="space-y-3">
-                  <p className="text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">
+                <div className="space-y-3 overflow-x-hidden w-full min-w-0">
+                  <p className="w-full max-w-full text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">
                     {data.details.description}
                   </p>
                   {data.details.highlights.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 w-full">
                       {data.details.highlights.map((h, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary font-body"
+                          className="inline-flex max-w-full items-start gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary font-body whitespace-normal break-words leading-snug"
                         >
-                          <Sparkles className="w-3 h-3" />
-                          {h}
+                          <Sparkles className="w-3 h-3 shrink-0 mt-0.5" />
+                          <span className="break-words">{h}</span>
                         </span>
                       ))}
                     </div>
                   )}
                   {data.details.tip && (
-                    <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground font-body break-words whitespace-normal">
+                    <div className="w-full max-w-full rounded-lg bg-muted p-3 text-xs text-muted-foreground font-body break-words whitespace-normal overflow-x-hidden">
                       <span className="font-semibold text-foreground">Tip:</span> {data.details.tip}
                     </div>
                   )}
@@ -165,9 +165,9 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
 
                 {/* Alternatives */}
                 {data.alternatives.length > 0 && (
-                  <div>
+                  <div className="w-full min-w-0">
                     <h3 className="font-display font-semibold text-sm text-foreground mb-3">{altLabel}</h3>
-                    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
+                    <div className="flex w-full max-w-full gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
                       {data.alternatives.map((alt) => (
                         <motion.button
                           key={alt.id}
@@ -209,7 +209,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
               </>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
