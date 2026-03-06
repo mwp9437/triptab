@@ -175,6 +175,29 @@ export default function Dashboard({
           {/* Left: Itinerary */}
           <div className={`flex-1 p-6 ${!hideActionsSidebar ? "lg:border-r border-white/10" : ""}`}>
             <h2 className="font-display font-bold text-xl text-foreground mb-4 italic">Your Itinerary</h2>
+
+            {/* Day bubbles navigation */}
+            <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+              {plan.itinerary.map((day, idx) => {
+                const d = new Date(day.date + "T00:00:00");
+                const dayLetter = d.toLocaleDateString("en-US", { weekday: "short" }).charAt(0);
+                const dateNum = d.getDate();
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      const el = document.getElementById(`day-section-${idx}`);
+                      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                    className="flex flex-col items-center min-w-[40px] px-2 py-1.5 rounded-2xl glass hover:bg-primary/15 transition-colors group"
+                  >
+                    <span className="text-xs font-display font-bold text-muted-foreground group-hover:text-primary transition-colors">{dayLetter}</span>
+                    <span className="text-sm font-body font-semibold text-foreground group-hover:text-primary transition-colors">{dateNum}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             <Accordion type="multiple" defaultValue={plan.itinerary.map((_, i) => `day-${i}`)}>
               {plan.itinerary.map((day, idx) => {
                 const dedupedBlocks = deduplicateBlocks(day.blocks);
@@ -184,7 +207,7 @@ export default function Dashboard({
                 const accommodationBlocks = dedupedBlocks.filter(b => b.category === "accommodation");
 
                 return (
-                  <AccordionItem key={idx} value={`day-${idx}`} className="border-white/10">
+                  <AccordionItem key={idx} value={`day-${idx}`} className="border-white/10" id={`day-section-${idx}`}>
                     <AccordionTrigger className="hover:no-underline">
                       <div className="flex items-center gap-3 text-left">
                         <div className="w-10 h-10 rounded-2xl glass flex items-center justify-center">
@@ -318,10 +341,10 @@ export default function Dashboard({
                             key={block.id}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="mt-3 pt-3 border-t border-white/10 cursor-pointer group"
+                            className="mt-2 pt-2 border-t border-border/30 cursor-pointer group"
                             onClick={() => setSelectedBlock(block)}
                           >
-                            <div className="glass-dark rounded-2xl p-3 flex items-center justify-between">
+                            <div className={`glass rounded-2xl p-3 flex items-center justify-between ${BLOCK_STYLES.accommodation.colorClass}`}>
                               <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                                   <Bed className="w-4 h-4 text-primary" />
