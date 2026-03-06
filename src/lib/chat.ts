@@ -1,5 +1,5 @@
 import { TripIntake } from "@/types/intake";
-import { TripPlan } from "@/types/itinerary";
+import { TripPlan, TimeBlock } from "@/types/itinerary";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -113,6 +113,48 @@ export async function modifyItinerary(
 
   if (!response.ok) {
     throw new Error(`Modify error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export interface BlockAlternative {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  cost: number;
+  priceTier: string;
+  imageQuery: string;
+  rating: number;
+  category: string;
+}
+
+export interface BlockDetails {
+  details: {
+    description: string;
+    highlights: string[];
+    tip?: string;
+  };
+  alternatives: BlockAlternative[];
+}
+
+export async function fetchBlockAlternatives(
+  block: TimeBlock,
+  tripContext: string
+): Promise<BlockDetails> {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/block-alternatives`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      apikey: SUPABASE_KEY,
+    },
+    body: JSON.stringify({ block, tripContext }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Alternatives error: ${response.status}`);
   }
 
   return response.json();

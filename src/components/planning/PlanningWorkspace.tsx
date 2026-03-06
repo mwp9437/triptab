@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { TripIntake, ActivityOption } from "@/types/intake";
 import { TripPlan, TimeBlock, ActionItem } from "@/types/itinerary";
+import { BlockAlternative } from "@/lib/chat";
 import { generateFromIntake } from "@/lib/chat";
 import { toast } from "@/hooks/use-toast";
 import Dashboard from "@/components/Dashboard";
@@ -119,6 +120,26 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
     setPlan({ ...plan, itinerary: updatedDays });
   };
 
+  const handleSwapBlock = (original: TimeBlock, replacement: BlockAlternative) => {
+    if (!plan) return;
+    const updatedDays = plan.itinerary.map((day) => ({
+      ...day,
+      blocks: day.blocks.map((b) =>
+        b.id === original.id
+          ? {
+              ...b,
+              title: replacement.title,
+              location: replacement.location,
+              cost: replacement.cost,
+              notes: replacement.description,
+            }
+          : b
+      ),
+    }));
+    setPlan({ ...plan, itinerary: updatedDays });
+    toast({ title: "Swapped", description: `Replaced "${original.title}" with "${replacement.title}".` });
+  };
+
   const handleSelectOption = (opt: ActivityOption) => {
     if (!plan) return;
     const block: TimeBlock = {
@@ -200,6 +221,8 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
                   collaborative={intake.planningMode === "collaborative"}
                   onAddActivity={handleAddActivity}
                   onDeleteBlock={handleDeleteBlock}
+                  onSwapBlock={handleSwapBlock}
+                  tripContext={intakeContext}
                   hideActionsSidebar
                   hideFloatingChat
                 />
@@ -248,6 +271,8 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
           collaborative={intake.planningMode === "collaborative"}
           onAddActivity={handleAddActivity}
           onDeleteBlock={handleDeleteBlock}
+          onSwapBlock={handleSwapBlock}
+          tripContext={intakeContext}
           hideFloatingChat
         />
       </div>
