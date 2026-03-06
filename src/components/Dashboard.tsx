@@ -260,6 +260,14 @@ export default function Dashboard({
                                   {block.notes && (
                                     <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body line-clamp-2">{block.notes}</p>
                                   )}
+                                  {/* Remix button */}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                    title="Find alternatives"
+                                  >
+                                    <Shuffle className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               </motion.div>
                             );
