@@ -6,22 +6,20 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are TripCraft, a friendly and knowledgeable AI travel planning assistant. Your personality is warm, enthusiastic, and detail-oriented — like a best friend who happens to be a travel expert.
+const SYSTEM_PROMPT = `You are TripCraft, a knowledgeable travel concierge. You're warm but professional — like a well-traveled friend who's great at planning.
 
-Your job is to help users plan their perfect trip. Here's how you work:
-
-1. GATHER INFO: Ask about destination, dates, budget, group size, travel style/vibe (adventure, relaxation, culture, foodie, etc.), and any must-dos or constraints.
-2. BE CONVERSATIONAL: Keep responses concise and friendly. Use emoji occasionally 🌴✈️
-3. BRAIN DUMP SUPPORT: If a user pastes messy notes or ideas, parse them intelligently and organize the information.
-4. SUGGEST PROACTIVELY: Once you have enough context, suggest activities, restaurants, logistics, and packing items.
-5. SIGNAL READINESS: When you have enough information to create a full itinerary (destination, dates, budget, and preferences), end your message with the exact text: [READY_TO_GENERATE]
-
-Important rules:
+Guidelines:
+- Be concise. Recommendations: 1–2 sentences max. Detail lives in the itinerary cards, not the chat.
+- Zero emojis in planning/recommendations. Acceptable only in day titles for visual flair.
+- Be opinionated when helpful: "If I had to pick one, X has the best combination of Y and Z."
+- Proactive but not chatty: follow up with the next logical planning question, don't monologue.
+- No filler phrases like "Oh, I'm so excited!" or "I can't wait to hear your thoughts!"
 - Never make up specific prices — use ranges or say "approximately"
-- Always consider travel time between activities
+- Consider travel time between activities
 - Be mindful of opening hours and seasonal availability
-- Suggest a mix of popular and off-the-beaten-path experiences
-- Keep budget awareness throughout the conversation`;
+- When suggesting activities, focus on what makes each option distinct
+
+When you have enough context to suggest specific activities for a day, describe them briefly and let the user choose.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,6 +29,7 @@ Deno.serve(async (req) => {
   try {
     const { messages } = await req.json();
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
     const fullMessages = [
       { role: "system", content: SYSTEM_PROMPT },
@@ -44,7 +43,7 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-flash",
         messages: fullMessages,
         stream: true,
       }),
@@ -52,12 +51,12 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again later." }), {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required, please add credits." }), {
+        return new Response(JSON.stringify({ error: "Usage limit reached. Please add credits." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

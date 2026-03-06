@@ -1,4 +1,5 @@
-import { ChatMessage } from "@/types/itinerary";
+import { TripIntake } from "@/types/intake";
+import { TripPlan } from "@/types/itinerary";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -56,9 +57,7 @@ export async function streamChat(
   onDone();
 }
 
-export async function generateItinerary(
-  messages: { role: string; content: string }[]
-) {
+export async function generateFromIntake(intake: TripIntake): Promise<TripPlan> {
   const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-itinerary`, {
     method: "POST",
     headers: {
@@ -66,11 +65,32 @@ export async function generateItinerary(
       Authorization: `Bearer ${SUPABASE_KEY}`,
       apikey: SUPABASE_KEY,
     },
-    body: JSON.stringify({ messages }),
+    body: JSON.stringify({ intake }),
   });
 
   if (!response.ok) {
     throw new Error(`Generate error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function suggestActivities(
+  messages: { role: string; content: string }[],
+  request: string
+): Promise<{ suggestions: any[]; followUp: string }> {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/suggest-activities`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      apikey: SUPABASE_KEY,
+    },
+    body: JSON.stringify({ messages, request }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Suggest error: ${response.status}`);
   }
 
   return response.json();
