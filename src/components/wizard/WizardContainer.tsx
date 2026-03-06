@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, Sparkles, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { TripIntake, BudgetTier, TravelerType, MobilityLevel, VIBE_OPTIONS, DIETARY_OPTIONS, BUDGET_LABELS, PlanningMode } from "@/types/intake";
+import { TripIntake, BudgetTier, TravelerType, VIBE_OPTIONS, DIETARY_OPTIONS, BUDGET_LABELS, PlanningMode } from "@/types/intake";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ import luxuryBedroom from "@/assets/luxury-bedroom.png";
 import luxuryTerrace from "@/assets/luxury-terrace.png";
 import luxuryResort from "@/assets/luxury-resort.png";
 
-const STEP_BACKGROUNDS = [luxuryTerrace, luxuryResort, luxuryBedroom, luxuryTerrace];
+const STEP_BACKGROUNDS = [luxuryTerrace, luxuryResort, luxuryBedroom];
 
 interface WizardContainerProps {
   intake: TripIntake;
@@ -24,7 +24,7 @@ interface WizardContainerProps {
   onBack: () => void;
 }
 
-const STEPS = ["Destination & Dates", "Budget", "Preferences", "Planning Mode"];
+const STEPS = ["Destination & Dates", "Preferences", "Planning Mode"];
 
 export default function WizardContainer({ intake, onUpdate, onComplete, onBack }: WizardContainerProps) {
   const [step, setStep] = useState(0);
@@ -36,7 +36,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
   const canProceed = () => true;
 
   const next = () => {
-    if (step < 3) setStep(step + 1);
+    if (step < 2) setStep(step + 1);
     else onComplete(intake);
   };
 
@@ -127,9 +127,8 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
                 transition={{ duration: 0.2 }}
               >
                 {step === 0 && <StepDestination intake={intake} onUpdate={update} />}
-                {step === 1 && <StepBudget intake={intake} onUpdate={update} />}
-                {step === 2 && <StepPreferences intake={intake} onUpdate={update} />}
-                {step === 3 && <StepPlanningMode intake={intake} onUpdate={update} />}
+                {step === 1 && <StepPreferences intake={intake} onUpdate={update} />}
+                {step === 2 && <StepPlanningMode intake={intake} onUpdate={update} />}
               </motion.div>
             </AnimatePresence>
           </motion.div>
@@ -151,7 +150,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             disabled={!canProceed()}
             className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 shadow-lg shadow-primary/20"
           >
-            {step === 3 ? "Build My Trip" : "Next"} <ArrowRight className="w-4 h-4" />
+            {step === 2 ? "Build My Trip" : "Next"} <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -277,73 +276,7 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
   );
 }
 
-/* ─── Step 2: Budget ─── */
-function StepBudget({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Partial<TripIntake>) => void }) {
-  const categories = ["accommodation", "meals", "activities", "transportation"] as const;
-  const tierLabels = ["$", "$$", "$$$", "$$$$"];
-
-  const setBudgetTier = (cat: string, tier: BudgetTier) => {
-    onUpdate({ budget: { ...intake.budget, [cat]: tier } });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-display font-bold text-foreground mb-1">Set your budget</h2>
-        <p className="text-sm text-muted-foreground font-body">Pick a tier for each category.</p>
-      </div>
-
-      <div className="rounded-2xl bg-white/40 backdrop-blur-sm border border-white/30 p-4">
-        <label className="text-sm font-body font-semibold text-foreground mb-1.5 block">
-          <DollarSign className="w-4 h-4 inline mr-1.5" />Budget Per Person <span className="font-normal text-muted-foreground">(optional)</span>
-        </label>
-        <p className="text-xs text-muted-foreground font-body mb-3">Set a per-person budget cap.</p>
-        <Input
-          type="number"
-          value={intake.budget.totalBudget || ""}
-          onChange={(e) => onUpdate({ budget: { ...intake.budget, totalBudget: e.target.value ? Number(e.target.value) : undefined } })}
-          placeholder="e.g., 5000"
-          className="rounded-xl max-w-[200px] border-border/50 bg-white/50 backdrop-blur-sm"
-          min={0}
-        />
-      </div>
-
-      <div className="space-y-4">
-        {categories.map((cat) => (
-          <div key={cat} className="rounded-2xl bg-white/40 backdrop-blur-sm border border-white/30 p-4">
-            <label className="text-sm font-body font-semibold text-foreground capitalize mb-3 block">
-              {cat}
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {([1, 2, 3, 4] as BudgetTier[]).map((tier) => {
-                const isSelected = intake.budget[cat] === tier;
-                return (
-                  <button
-                    key={tier}
-                    onClick={() => setBudgetTier(cat, tier)}
-                    className={cn(
-                      "rounded-xl py-2.5 px-3 text-center transition-all border font-body text-sm",
-                      isSelected
-                        ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
-                        : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50 hover:text-foreground hover:bg-white/70"
-                    )}
-                  >
-                    <div className="font-semibold">{tierLabels[tier - 1]}</div>
-                    <div className="text-xs mt-0.5 opacity-80 leading-tight">
-                      {BUDGET_LABELS[tier][cat]}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Step 3: Preferences ─── */
+/* ─── Step 2: Preferences (with budget + suggestion bubbles) ─── */
 function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Partial<TripIntake>) => void }) {
   const toggleVibe = (v: string) => {
     const vibes = intake.vibes.includes(v) ? intake.vibes.filter(x => x !== v) : [...intake.vibes, v];
@@ -355,13 +288,88 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
     onUpdate({ dietary });
   };
 
+  const categories = ["accommodation", "meals", "activities", "transportation"] as const;
+  const tierLabels = ["$", "$$", "$$$", "$$$$"];
+
+  const setBudgetTier = (cat: string, tier: BudgetTier) => {
+    onUpdate({ budget: { ...intake.budget, [cat]: tier } });
+  };
+
+  // Generate contextual suggestions based on destination/vibes
+  const mustDoSuggestions = useMemo(() => {
+    const dest = intake.destination.toLowerCase();
+    const base: string[] = [];
+    
+    if (dest.includes("japan") || dest.includes("tokyo") || dest.includes("kyoto") || dest.includes("hokkaido")) {
+      base.push("🏯 Visit a temple", "🍣 Try authentic sushi", "♨️ Onsen experience", "🌸 See cherry blossoms", "🎌 Explore a night market");
+    } else if (dest.includes("italy") || dest.includes("rome") || dest.includes("florence") || dest.includes("venice")) {
+      base.push("🍕 Authentic pizza", "🏛️ Visit the Colosseum", "🍷 Wine tasting", "🎨 Uffizi Gallery", "🛶 Gondola ride");
+    } else if (dest.includes("paris") || dest.includes("france")) {
+      base.push("🗼 Eiffel Tower", "🥐 Bakery tour", "🎨 Louvre Museum", "🍷 Wine & cheese evening", "🌸 Jardins du Luxembourg");
+    } else if (dest.includes("beach") || dest.includes("bali") || dest.includes("maldives") || dest.includes("caribbean")) {
+      base.push("🏖️ Beach day", "🤿 Snorkeling", "🌅 Sunset cruise", "💆 Spa treatment", "🍹 Beach bar hopping");
+    } else if (dest.includes("new york") || dest.includes("nyc")) {
+      base.push("🗽 Statue of Liberty", "🎭 Broadway show", "🌳 Central Park", "🍕 NYC pizza", "🌉 Brooklyn Bridge walk");
+    } else {
+      base.push("🏛️ Local landmarks", "🍽️ Try local cuisine", "🚶 Walking tour", "🛍️ Local markets", "📸 Scenic viewpoints");
+    }
+
+    if (intake.vibes.includes("Adventure")) base.push("🧗 Outdoor adventure");
+    if (intake.vibes.includes("Foodie")) base.push("👨‍🍳 Cooking class");
+    if (intake.vibes.includes("Cultural")) base.push("🎭 Cultural show");
+    if (intake.vibes.includes("Nightlife")) base.push("🍸 Rooftop bar");
+    if (intake.vibes.includes("Romance")) base.push("🌹 Romantic dinner");
+
+    return [...new Set(base)].slice(0, 8);
+  }, [intake.destination, intake.vibes]);
+
+  const avoidSuggestions = useMemo(() => {
+    const suggestions = [
+      "🚫 Tourist traps", "🚌 Long bus rides", "👥 Crowded places",
+      "🍔 Chain restaurants", "🏨 Generic hotels", "⏰ Early mornings",
+      "🛍️ Shopping malls", "🎪 Overly touristy spots",
+    ];
+    return suggestions;
+  }, []);
+
+  const toggleMustDo = (suggestion: string) => {
+    const clean = suggestion.replace(/^[^\w]*\s/, ""); // Remove emoji prefix
+    const current = intake.mustDos;
+    if (current.includes(clean)) {
+      onUpdate({ mustDos: current.replace(clean, "").replace(/,\s*,/g, ",").replace(/^,\s*|,\s*$/g, "").trim() });
+    } else {
+      onUpdate({ mustDos: current ? `${current}, ${clean}` : clean });
+    }
+  };
+
+  const toggleAvoid = (suggestion: string) => {
+    const clean = suggestion.replace(/^[^\w]*\s/, "");
+    const current = intake.avoids;
+    if (current.includes(clean)) {
+      onUpdate({ avoids: current.replace(clean, "").replace(/,\s*,/g, ",").replace(/^,\s*|,\s*$/g, "").trim() });
+    } else {
+      onUpdate({ avoids: current ? `${current}, ${clean}` : clean });
+    }
+  };
+
+  const isMustDoSelected = (suggestion: string) => {
+    const clean = suggestion.replace(/^[^\w]*\s/, "");
+    return intake.mustDos.includes(clean);
+  };
+
+  const isAvoidSelected = (suggestion: string) => {
+    const clean = suggestion.replace(/^[^\w]*\s/, "");
+    return intake.avoids.includes(clean);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h2 className="text-2xl font-display font-bold text-foreground mb-1">Your preferences</h2>
-        <p className="text-sm text-muted-foreground font-body">Help us tailor the experience to you.</p>
+        <h2 className="text-2xl font-display font-bold text-foreground mb-1">Preferences & Budget</h2>
+        <p className="text-sm text-muted-foreground font-body">Tailor the experience to your style.</p>
       </div>
 
+      {/* Trip Vibe */}
       <div>
         <label className="text-sm font-body font-semibold text-foreground mb-2 block">Trip Vibe</label>
         <div className="flex flex-wrap gap-2">
@@ -370,7 +378,7 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
               key={v}
               onClick={() => toggleVibe(v)}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-body border transition-all",
+                "rounded-full px-3.5 py-1.5 text-sm font-body border transition-all",
                 intake.vibes.includes(v)
                   ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
                   : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50 hover:bg-white/70 backdrop-blur-sm"
@@ -382,6 +390,7 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
         </div>
       </div>
 
+      {/* Dietary */}
       <div>
         <label className="text-sm font-body font-semibold text-foreground mb-2 block">Dietary Restrictions</label>
         <div className="flex flex-wrap gap-2">
@@ -390,7 +399,7 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
               key={d}
               onClick={() => toggleDietary(d)}
               className={cn(
-                "rounded-full px-4 py-2 text-sm font-body border transition-all",
+                "rounded-full px-3.5 py-1.5 text-sm font-body border transition-all",
                 intake.dietary.includes(d)
                   ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
                   : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50 hover:bg-white/70 backdrop-blur-sm"
@@ -402,48 +411,116 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
         </div>
       </div>
 
-      <div>
-        <label className="text-sm font-body font-semibold text-foreground mb-1.5 block">Mobility</label>
-        <Select value={intake.mobility} onValueChange={(v) => onUpdate({ mobility: v as MobilityLevel })}>
-          <SelectTrigger className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">No limitations</SelectItem>
-            <SelectItem value="limited">Limited walking</SelectItem>
-            <SelectItem value="wheelchair">Wheelchair accessible</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
+      {/* Must-Dos with suggestion bubbles */}
       <div>
         <label className="text-sm font-body font-semibold text-foreground mb-1.5 block">
-          Anything you absolutely want to do? <span className="font-normal text-muted-foreground">(optional)</span>
+          Must-do activities <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {mustDoSuggestions.map((s) => (
+            <button
+              key={s}
+              onClick={() => toggleMustDo(s)}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-body border transition-all",
+                isMustDoSelected(s)
+                  ? "bg-primary/15 text-primary border-primary/40"
+                  : "bg-white/40 border-white/30 text-muted-foreground hover:border-primary/30 hover:bg-white/60 backdrop-blur-sm"
+              )}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
         <Textarea
           value={intake.mustDos}
           onChange={(e) => onUpdate({ mustDos: e.target.value })}
-          placeholder="e.g., Visit the fish market, try onsen, ski Niseko..."
-          className="rounded-xl resize-none border-border/50 bg-white/50 backdrop-blur-sm"
+          placeholder="Or type your own..."
+          className="rounded-xl resize-none border-border/50 bg-white/50 backdrop-blur-sm text-sm"
           rows={2}
         />
       </div>
 
+      {/* Avoids with suggestion bubbles */}
       <div>
         <label className="text-sm font-body font-semibold text-foreground mb-1.5 block">
-          Anything you want to avoid? <span className="font-normal text-muted-foreground">(optional)</span>
+          Things to avoid <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {avoidSuggestions.map((s) => (
+            <button
+              key={s}
+              onClick={() => toggleAvoid(s)}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs font-body border transition-all",
+                isAvoidSelected(s)
+                  ? "bg-destructive/15 text-destructive border-destructive/40"
+                  : "bg-white/40 border-white/30 text-muted-foreground hover:border-destructive/30 hover:bg-white/60 backdrop-blur-sm"
+              )}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
         <Textarea
           value={intake.avoids}
           onChange={(e) => onUpdate({ avoids: e.target.value })}
-          placeholder="e.g., Tourist traps, long bus rides..."
-          className="rounded-xl resize-none border-border/50 bg-white/50 backdrop-blur-sm"
+          placeholder="Or type your own..."
+          className="rounded-xl resize-none border-border/50 bg-white/50 backdrop-blur-sm text-sm"
           rows={2}
         />
+      </div>
+
+      {/* Compact Budget Section */}
+      <div className="rounded-2xl bg-white/40 backdrop-blur-sm border border-white/30 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <label className="text-sm font-body font-semibold text-foreground flex items-center gap-1.5">
+            <DollarSign className="w-4 h-4" /> Budget
+          </label>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-body">Per person cap:</span>
+            <Input
+              type="number"
+              value={intake.budget.totalBudget || ""}
+              onChange={(e) => onUpdate({ budget: { ...intake.budget, totalBudget: e.target.value ? Number(e.target.value) : undefined } })}
+              placeholder="Optional"
+              className="rounded-lg w-24 h-8 text-xs border-border/50 bg-white/50 backdrop-blur-sm"
+              min={0}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {categories.map((cat) => (
+            <div key={cat}>
+              <span className="text-xs font-body font-medium text-foreground capitalize mb-1.5 block">{cat}</span>
+              <div className="grid grid-cols-4 gap-1">
+                {([1, 2, 3, 4] as BudgetTier[]).map((tier) => {
+                  const isSelected = intake.budget[cat] === tier;
+                  return (
+                    <button
+                      key={tier}
+                      onClick={() => setBudgetTier(cat, tier)}
+                      className={cn(
+                        "rounded-lg py-1.5 text-center transition-all border font-body text-xs",
+                        isSelected
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50"
+                      )}
+                    >
+                      {tierLabels[tier - 1]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-/* ─── Step 4: Planning Mode ─── */
+/* ─── Step 3: Planning Mode ─── */
 function StepPlanningMode({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Partial<TripIntake>) => void }) {
   const modes: { id: PlanningMode; icon: typeof Sparkles; title: string; desc: string; sub: string }[] = [
     {
