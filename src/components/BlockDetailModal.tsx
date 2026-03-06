@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
-  X, MapPin, Clock, DollarSign, Star, Loader2,
+  MapPin, Clock, DollarSign, Star, Loader2,
   Bus, Palmtree, Coffee, Bed, Sparkles,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -78,13 +78,9 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
   const categoryLabel = CATEGORY_LABELS[block.category];
   const altLabel = CATEGORY_ALT_LABELS[block.category];
 
-  // Generate a placeholder image URL from the block title
-  const getImageUrl = (query: string) =>
-    `https://source.unsplash.com/400x250/?${encodeURIComponent(query)}`;
-
   return (
     <Dialog open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden rounded-2xl border-border bg-card max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden rounded-2xl border-border bg-card max-h-[85vh] flex flex-col [&>button]:z-10">
         {/* Header with category color */}
         <div className="px-6 pt-6 pb-4">
           <DialogHeader>
@@ -178,18 +174,8 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
                           whileHover={{ y: -2 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => onSwap?.(block, alt)}
-                          className="flex-none w-[200px] rounded-xl border border-border bg-background overflow-hidden text-left snap-start hover:border-primary/50 transition-colors group"
+                          className="flex-none w-[220px] rounded-xl border border-border bg-background overflow-hidden text-left snap-start hover:border-primary/50 transition-colors group"
                         >
-                          {/* Image */}
-                          <div className="h-[100px] bg-muted overflow-hidden">
-                            <img
-                              src={getImageUrl(alt.imageQuery)}
-                              alt={alt.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              loading="lazy"
-                            />
-                          </div>
-                          {/* Info */}
                           <div className="p-3 space-y-1.5">
                             <p className="font-body font-medium text-sm text-foreground leading-tight line-clamp-1">
                               {alt.title}
