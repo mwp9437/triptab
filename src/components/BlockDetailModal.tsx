@@ -118,7 +118,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
 
         {/* Scrollable body */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="px-6 pb-6 space-y-5">
+          <div className="px-6 pb-6 space-y-5 overflow-hidden">
             {/* Notes */}
             {block.notes && (
               <p className="text-sm text-foreground font-body leading-relaxed">{block.notes}</p>
@@ -140,7 +140,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
               <>
                 {/* Description & highlights */}
                 <div className="space-y-3">
-                  <p className="text-sm text-foreground font-body leading-relaxed">
+                  <p className="text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">
                     {data.details.description}
                   </p>
                   {data.details.highlights.length > 0 && (
@@ -157,7 +157,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
                     </div>
                   )}
                   {data.details.tip && (
-                    <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground font-body">
+                    <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground font-body break-words whitespace-normal">
                       <span className="font-semibold text-foreground">Tip:</span> {data.details.tip}
                     </div>
                   )}
