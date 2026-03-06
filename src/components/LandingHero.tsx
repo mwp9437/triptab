@@ -36,7 +36,7 @@ export default function LandingHero({ onSubmitIdea }: LandingHeroProps) {
       {/* Full-bleed background */}
       <div className="absolute inset-0 z-0">
         <img
-          src={luxuryPool}
+          src={luxuryTerrace}
           alt=""
           className="w-full h-full object-cover"
         />
