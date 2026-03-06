@@ -13,11 +13,7 @@ import ActionItemsModal from "./ActionItemsModal";
 import FloatingChat from "@/components/FloatingChat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-interface PlanningWorkspaceProps {
-  intake: TripIntake;
-  onBack: () => void;
-}
+import luxuryBedroom from "@/assets/luxury-bedroom.png";
 
 function createEmptyPlan(intake: TripIntake): TripPlan {
   const start = new Date(intake.startDate + "T00:00:00");
@@ -54,12 +50,12 @@ function intakeToContext(intake: TripIntake): string {
   return `Trip context: ${intake.destination}, ${intake.startDate} to ${intake.endDate}, ${intake.travelerCount} travelers (${intake.travelerType}). Budget: accommodation ${budgetLabels[intake.budget.accommodation]}, meals ${budgetLabels[intake.budget.meals]}, activities ${budgetLabels[intake.budget.activities]}, transport ${budgetLabels[intake.budget.transportation]}. Vibes: ${intake.vibes.join(", ") || "none specified"}. Dietary: ${intake.dietary.join(", ") || "none"}. Mobility: ${intake.mobility}. Must-dos: ${intake.mustDos || "none"}. Avoid: ${intake.avoids || "none"}.`;
 }
 
-export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceProps) {
+export default function PlanningWorkspace({ intake, onBack }: { intake: TripIntake; onBack: () => void }) {
   const [plan, setPlan] = useState<TripPlan | null>(
     intake.planningMode === "collaborative" ? createEmptyPlan(intake) : null
   );
   const [isGenerating, setIsGenerating] = useState(intake.planningMode === "auto");
-  const [chatCollapsed, setChatCollapsed] = useState(false); // Always show chat in both modes
+  const [chatCollapsed, setChatCollapsed] = useState(false);
   const [options, setOptions] = useState<ActivityOption[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [mobileTab, setMobileTab] = useState("itinerary");
@@ -78,7 +74,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
         if (!cancelled) {
           setPlan(generated);
           setActionItems(generated.actionItems || []);
-          setIsGenerating(false);
           setIsGenerating(false);
         }
       } catch {
@@ -172,12 +167,21 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
     setChatCollapsed(false);
   };
 
+  // Luxury loading screen
   if (isGenerating) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <h2 className="font-display font-bold text-xl text-foreground mb-2">Crafting your itinerary</h2>
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img src={luxuryBedroom} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative z-10 text-center glass-card rounded-3xl p-12 max-w-md mx-4"
+        >
+          <div className="w-16 h-16 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto mb-6" />
+          <h2 className="font-display font-bold text-2xl text-foreground mb-2 italic">Curating your experience</h2>
           <p className="text-sm text-muted-foreground font-body">This usually takes 10–20 seconds...</p>
         </motion.div>
       </div>
@@ -229,12 +233,12 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
                 />
               </TabsContent>
             </div>
-            <TabsList className="w-full rounded-none border-t border-border h-12 bg-card">
+            <TabsList className="w-full rounded-none border-t border-border h-12 bg-card/80 backdrop-blur-lg">
               <TabsTrigger value="chat" className="flex-1 font-body text-xs">Chat</TabsTrigger>
               <TabsTrigger value="options" className="flex-1 font-body text-xs relative">
                 Options
                 {options.length > 0 && (
-                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-accent" />
+                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-primary" />
                 )}
               </TabsTrigger>
               <TabsTrigger value="itinerary" className="flex-1 font-body text-xs">Itinerary</TabsTrigger>
@@ -249,7 +253,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
   // Desktop layout
   return (
     <div className="h-screen flex bg-background">
-      {/* Chat Panel — always visible, collapsible */}
       <div className={chatCollapsed ? "w-10" : "w-[320px]"} style={{ transition: "width 0.2s" }}>
         <ChatPanel
           conversationHistory={conversationHistory}
@@ -263,7 +266,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
         />
       </div>
 
-      {/* Itinerary */}
       <div className="flex-1 overflow-y-auto">
         <Dashboard
           plan={planWithActions}
@@ -278,7 +280,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
         />
       </div>
 
-      {/* Options Panel */}
       <AnimatePresence>
         {options.length > 0 && (
           <div className="w-[350px]">
@@ -293,7 +294,6 @@ export default function PlanningWorkspace({ intake, onBack }: PlanningWorkspaceP
 
       <ActionItemsModal items={actionItems} onToggle={toggleActionItem} />
 
-      {/* Floating chat when panel is collapsed */}
       {chatCollapsed && (
         <FloatingChat
           conversationHistory={conversationHistory}

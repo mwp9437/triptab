@@ -26,83 +26,49 @@ export default function FloatingChat({ conversationHistory, currentPlan, onPlanU
 
   const sendMessage = async () => {
     if (!input.trim() || isStreaming) return;
-
-    const userMsg: ChatMessage = {
-      id: createMessageId(),
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
-    };
-
+    const userMsg: ChatMessage = { id: createMessageId(), role: "user", content: input.trim(), timestamp: new Date() };
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     const userRequest = input.trim();
     setInput("");
     setIsStreaming(true);
 
-    // If we have a plan, use modify-itinerary
     if (currentPlan && onPlanUpdate) {
       try {
         const chatHistory = updatedMessages.slice(0, -1).map((m) => ({ role: m.role, content: m.content }));
         const result = await modifyItinerary(currentPlan, userRequest, chatHistory);
         if (result.plan) {
           onPlanUpdate(result.plan);
-          const assistantMsg: ChatMessage = {
-            id: createMessageId(),
-            role: "assistant",
-            content: result.message || "Done — itinerary updated.",
-            timestamp: new Date(),
-          };
+          const assistantMsg: ChatMessage = { id: createMessageId(), role: "assistant", content: result.message || "Done — itinerary updated.", timestamp: new Date() };
           setMessages((prev) => [...prev, assistantMsg]);
           setIsStreaming(false);
           return;
         }
-      } catch {
-        // Fall through to regular chat
-      }
+      } catch { /* Fall through */ }
     }
 
-    // Regular streaming chat
-    const assistantMsg: ChatMessage = {
-      id: createMessageId(),
-      role: "assistant",
-      content: "",
-      timestamp: new Date(),
-    };
+    const assistantMsg: ChatMessage = { id: createMessageId(), role: "assistant", content: "", timestamp: new Date() };
     setMessages((prev) => [...prev, assistantMsg]);
 
     try {
-      const apiMessages = [
-        ...conversationHistory,
-        ...updatedMessages.map((m) => ({ role: m.role, content: m.content })),
-      ];
-
+      const apiMessages = [...conversationHistory, ...updatedMessages.map((m) => ({ role: m.role, content: m.content }))];
       let fullContent = "";
       await streamChat(
         apiMessages,
         (chunk) => {
           fullContent += chunk;
-          setMessages((prev) =>
-            prev.map((m) => (m.id === assistantMsg.id ? { ...m, content: fullContent } : m))
-          );
+          setMessages((prev) => prev.map((m) => (m.id === assistantMsg.id ? { ...m, content: fullContent } : m)));
         },
         () => setIsStreaming(false)
       );
     } catch {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMsg.id ? { ...m, content: "Connection issue. Try again." } : m
-        )
-      );
+      setMessages((prev) => prev.map((m) => m.id === assistantMsg.id ? { ...m, content: "Connection issue. Try again." } : m));
       setIsStreaming(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
   return (
@@ -113,12 +79,12 @@ export default function FloatingChat({ conversationHistory, currentPlan, onPlanU
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="absolute bottom-16 right-0 w-[360px] h-[480px] bg-card border border-border rounded-2xl shadow-xl flex flex-col overflow-hidden"
+            className="absolute bottom-16 right-0 w-[360px] h-[480px] bg-white/80 backdrop-blur-2xl border border-white/30 rounded-3xl shadow-2xl flex flex-col overflow-hidden"
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-primary" />
-                <span className="font-display font-semibold text-sm text-card-foreground">Edit your plan</span>
+                <span className="font-display font-semibold text-sm text-foreground">Edit your plan</span>
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
                 <X className="w-4 h-4" />
@@ -134,10 +100,10 @@ export default function FloatingChat({ conversationHistory, currentPlan, onPlanU
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[85%] rounded-xl px-3 py-2 text-xs font-body ${
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs font-body ${
                       msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground"
+                        ? "bg-primary/90 text-primary-foreground"
+                        : "bg-white/70 text-foreground border border-white/40 backdrop-blur-sm"
                     }`}
                   >
                     <ReactMarkdown>{msg.content || "..."}</ReactMarkdown>
@@ -146,27 +112,27 @@ export default function FloatingChat({ conversationHistory, currentPlan, onPlanU
               ))}
               {isStreaming && messages[messages.length - 1]?.role === "user" && (
                 <div className="flex justify-start">
-                  <div className="bg-muted rounded-xl px-3 py-2">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                  <div className="bg-white/70 backdrop-blur-sm border border-white/40 rounded-2xl px-3 py-2">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="border-t border-border p-2">
+            <div className="border-t border-border/50 p-2">
               <div className="flex gap-1.5">
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Adjust your plan..."
-                  className="min-h-[36px] max-h-[72px] resize-none text-xs rounded-lg border-border bg-background font-body"
+                  className="min-h-[36px] max-h-[72px] resize-none text-xs rounded-xl border-border/50 bg-white/50 backdrop-blur-sm font-body"
                   rows={1}
                   disabled={isStreaming}
                 />
                 <Button
                   size="icon"
-                  className="h-[36px] w-[36px] rounded-lg shrink-0"
+                  className="h-[36px] w-[36px] rounded-xl shrink-0"
                   onClick={sendMessage}
                   disabled={!input.trim() || isStreaming}
                 >
@@ -182,7 +148,7 @@ export default function FloatingChat({ conversationHistory, currentPlan, onPlanU
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 rounded-full bg-accent text-accent-foreground shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow"
+        className="w-14 h-14 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center hover:shadow-xl transition-all border border-primary/30"
       >
         {isOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
       </motion.button>

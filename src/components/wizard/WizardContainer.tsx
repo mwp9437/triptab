@@ -11,6 +11,13 @@ import { TripIntake, BudgetTier, TravelerType, MobilityLevel, VIBE_OPTIONS, DIET
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
+import luxuryBedroom from "@/assets/luxury-bedroom.png";
+import luxuryTerrace from "@/assets/luxury-terrace.png";
+import luxuryPool from "@/assets/luxury-pool.png";
+import luxuryResort from "@/assets/luxury-resort.png";
+
+const STEP_BACKGROUNDS = [luxuryTerrace, luxuryResort, luxuryBedroom, luxuryPool];
+
 interface WizardContainerProps {
   intake: TripIntake;
   onUpdate: (intake: TripIntake) => void;
@@ -27,10 +34,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
     onUpdate({ ...intake, ...partial });
   };
 
-  const canProceed = () => {
-    if (step === 0) return true; // destination can be blank — AI will suggest
-    return true;
-  };
+  const canProceed = () => true;
 
   const next = () => {
     if (step < 3) setStep(step + 1);
@@ -43,42 +47,61 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="relative min-h-screen flex flex-col overflow-hidden">
+      {/* Background image */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6 }}
+          className="absolute inset-0 z-0"
+        >
+          <img
+            src={STEP_BACKGROUNDS[step]}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/50" />
+        </motion.div>
+      </AnimatePresence>
+
       {/* Header */}
-      <header className="border-b border-border px-6 py-4 flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <Plane className="w-5 h-5 text-primary-foreground" />
+      <header className="relative z-10 px-6 py-5 flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl glass flex items-center justify-center">
+            <Plane className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-foreground">TripCraft</h1>
-            <p className="text-xs text-muted-foreground font-body">Plan your trip</p>
+            <h1 className="text-xl font-display font-bold text-white">TripCraft</h1>
+            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">Luxury Travel Planner</p>
           </div>
         </div>
       </header>
 
-      {/* Progress */}
-      <div className="px-6 py-4 border-b border-border">
+      {/* Progress — gold line with diamond markers */}
+      <div className="relative z-10 px-6 py-3">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0">
             {STEPS.map((label, i) => (
-              <div key={label} className="flex items-center gap-2 flex-1">
-                <div className={cn(
-                  "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
-                  i <= step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                )}>
-                  {i + 1}
+              <div key={label} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center">
+                  <div className={cn(
+                    "w-3 h-3 rotate-45 transition-all duration-300",
+                    i <= step ? "bg-primary shadow-lg shadow-primary/30" : "bg-white/30 border border-white/40"
+                  )} />
+                  <span className={cn(
+                    "text-[10px] font-body mt-2 whitespace-nowrap hidden sm:block tracking-wide",
+                    i <= step ? "text-white font-medium" : "text-white/50"
+                  )}>
+                    {label}
+                  </span>
                 </div>
-                <span className={cn(
-                  "text-xs font-body hidden sm:block",
-                  i <= step ? "text-foreground" : "text-muted-foreground"
-                )}>
-                  {label}
-                </span>
                 {i < STEPS.length - 1 && (
                   <div className={cn(
-                    "flex-1 h-0.5 rounded-full",
-                    i < step ? "bg-primary" : "bg-border"
+                    "flex-1 h-[1px] mx-2",
+                    i < step ? "bg-primary" : "bg-white/20"
                   )} />
                 )}
               </div>
@@ -87,33 +110,48 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
         </div>
       </div>
 
-      {/* Step Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-8">
-        <div className="max-w-2xl mx-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              {step === 0 && <StepDestination intake={intake} onUpdate={update} />}
-              {step === 1 && <StepBudget intake={intake} onUpdate={update} />}
-              {step === 2 && <StepPreferences intake={intake} onUpdate={update} />}
-              {step === 3 && <StepPlanningMode intake={intake} onUpdate={update} />}
-            </motion.div>
-          </AnimatePresence>
+      {/* Step Content — glass card */}
+      <div className="relative z-10 flex-1 overflow-y-auto px-4 py-6 flex items-start justify-center">
+        <div className="w-full max-w-2xl">
+          <motion.div
+            className="glass-card rounded-3xl p-8 md:p-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {step === 0 && <StepDestination intake={intake} onUpdate={update} />}
+                {step === 1 && <StepBudget intake={intake} onUpdate={update} />}
+                {step === 2 && <StepPreferences intake={intake} onUpdate={update} />}
+                {step === 3 && <StepPlanningMode intake={intake} onUpdate={update} />}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border px-6 py-4">
+      <div className="relative z-10 px-6 py-4">
         <div className="max-w-2xl mx-auto flex justify-between">
-          <Button variant="ghost" onClick={back} className="gap-2">
+          <Button
+            variant="ghost"
+            onClick={back}
+            className="gap-2 text-white hover:bg-white/10 hover:text-white"
+          >
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
-          <Button onClick={next} disabled={!canProceed()} className="gap-2">
+          <Button
+            onClick={next}
+            disabled={!canProceed()}
+            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-6 shadow-lg shadow-primary/20"
+          >
             {step === 3 ? "Build My Trip" : "Next"} <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
@@ -143,7 +181,7 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
             value={intake.destination}
             onChange={(e) => onUpdate({ destination: e.target.value })}
             placeholder="e.g., Hokkaido, Japan — or leave blank and we'll suggest!"
-            className="rounded-xl"
+            className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm focus:bg-white/80 transition-all"
           />
         </div>
 
@@ -154,7 +192,7 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
             </label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left rounded-xl", !startDate && "text-muted-foreground")}>
+                <Button variant="outline" className={cn("w-full justify-start text-left rounded-xl border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80", !startDate && "text-muted-foreground")}>
                   {startDate ? format(startDate, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
@@ -172,7 +210,7 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
             <label className="text-sm font-body font-medium text-foreground mb-1.5 block">End Date</label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left rounded-xl", !endDate && "text-muted-foreground")}>
+                <Button variant="outline" className={cn("w-full justify-start text-left rounded-xl border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80", !endDate && "text-muted-foreground")}>
                   {endDate ? format(endDate, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
@@ -199,7 +237,7 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
               const count = type === "solo" ? 1 : type === "couple" ? 2 : intake.travelerCount;
               onUpdate({ travelerType: type, travelerCount: count });
             }}>
-              <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="solo">Solo</SelectItem>
                 <SelectItem value="couple">Couple</SelectItem>
@@ -212,12 +250,12 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
             <label className="text-sm font-body font-medium text-foreground mb-1.5 block">Group Size</label>
             <div className="flex items-center gap-3">
               <Button
-                variant="outline" size="icon" className="rounded-xl h-10 w-10"
+                variant="outline" size="icon" className="rounded-xl h-10 w-10 border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80"
                 onClick={() => onUpdate({ travelerCount: Math.max(1, intake.travelerCount - 1) })}
               >-</Button>
               <span className="text-lg font-semibold font-body w-8 text-center">{intake.travelerCount}</span>
               <Button
-                variant="outline" size="icon" className="rounded-xl h-10 w-10"
+                variant="outline" size="icon" className="rounded-xl h-10 w-10 border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80"
                 onClick={() => onUpdate({ travelerCount: intake.travelerCount + 1 })}
               >+</Button>
             </div>
@@ -231,7 +269,7 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
               value={intake.childAges.join(", ")}
               onChange={(e) => onUpdate({ childAges: e.target.value.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n)) })}
               placeholder="e.g., 5, 8, 12"
-              className="rounded-xl"
+              className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm"
             />
           </div>
         )}
@@ -253,28 +291,27 @@ function StepBudget({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Pa
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-display font-bold text-foreground mb-1">Set your budget</h2>
-        <p className="text-sm text-muted-foreground font-body">Pick a tier for each category. This guides our recommendations.</p>
+        <p className="text-sm text-muted-foreground font-body">Pick a tier for each category.</p>
       </div>
 
-      {/* Total budget input */}
-      <div className="bg-card border border-border rounded-xl p-4">
+      <div className="rounded-2xl bg-white/40 backdrop-blur-sm border border-white/30 p-4">
         <label className="text-sm font-body font-semibold text-foreground mb-1.5 block">
           <DollarSign className="w-4 h-4 inline mr-1.5" />Budget Per Person <span className="font-normal text-muted-foreground">(optional)</span>
         </label>
-        <p className="text-xs text-muted-foreground font-body mb-3">Set a per-person budget cap and we'll keep recommendations within range.</p>
+        <p className="text-xs text-muted-foreground font-body mb-3">Set a per-person budget cap.</p>
         <Input
           type="number"
           value={intake.budget.totalBudget || ""}
           onChange={(e) => onUpdate({ budget: { ...intake.budget, totalBudget: e.target.value ? Number(e.target.value) : undefined } })}
           placeholder="e.g., 5000"
-          className="rounded-xl max-w-[200px]"
+          className="rounded-xl max-w-[200px] border-border/50 bg-white/50 backdrop-blur-sm"
           min={0}
         />
       </div>
 
       <div className="space-y-4">
         {categories.map((cat) => (
-          <div key={cat} className="bg-card border border-border rounded-xl p-4">
+          <div key={cat} className="rounded-2xl bg-white/40 backdrop-blur-sm border border-white/30 p-4">
             <label className="text-sm font-body font-semibold text-foreground capitalize mb-3 block">
               {cat}
             </label>
@@ -288,8 +325,8 @@ function StepBudget({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Pa
                     className={cn(
                       "rounded-xl py-2.5 px-3 text-center transition-all border font-body text-sm",
                       isSelected
-                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                        : "bg-background border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                        ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                        : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50 hover:text-foreground hover:bg-white/70"
                     )}
                   >
                     <div className="font-semibold">{tierLabels[tier - 1]}</div>
@@ -336,8 +373,8 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
               className={cn(
                 "rounded-full px-4 py-2 text-sm font-body border transition-all",
                 intake.vibes.includes(v)
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                  ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                  : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50 hover:bg-white/70 backdrop-blur-sm"
               )}
             >
               {v}
@@ -356,8 +393,8 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
               className={cn(
                 "rounded-full px-4 py-2 text-sm font-body border transition-all",
                 intake.dietary.includes(d)
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                  ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20"
+                  : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50 hover:bg-white/70 backdrop-blur-sm"
               )}
             >
               {d}
@@ -369,7 +406,7 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
       <div>
         <label className="text-sm font-body font-semibold text-foreground mb-1.5 block">Mobility</label>
         <Select value={intake.mobility} onValueChange={(v) => onUpdate({ mobility: v as MobilityLevel })}>
-          <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="none">No limitations</SelectItem>
             <SelectItem value="limited">Limited walking</SelectItem>
@@ -386,7 +423,7 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
           value={intake.mustDos}
           onChange={(e) => onUpdate({ mustDos: e.target.value })}
           placeholder="e.g., Visit the fish market, try onsen, ski Niseko..."
-          className="rounded-xl resize-none"
+          className="rounded-xl resize-none border-border/50 bg-white/50 backdrop-blur-sm"
           rows={2}
         />
       </div>
@@ -399,7 +436,7 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
           value={intake.avoids}
           onChange={(e) => onUpdate({ avoids: e.target.value })}
           placeholder="e.g., Tourist traps, long bus rides..."
-          className="rounded-xl resize-none"
+          className="rounded-xl resize-none border-border/50 bg-white/50 backdrop-blur-sm"
           rows={2}
         />
       </div>
@@ -421,7 +458,7 @@ function StepPlanningMode({ intake, onUpdate }: { intake: TripIntake; onUpdate: 
       id: "collaborative",
       icon: Compass,
       title: "Plan Together",
-      desc: "Start with an empty itinerary and build it step by step with AI assistance. Tell it what you want each day and it finds the best options.",
+      desc: "Start with an empty itinerary and build it step by step with AI assistance.",
       sub: "Best if you want full control.",
     },
   ];
@@ -442,15 +479,15 @@ function StepPlanningMode({ intake, onUpdate }: { intake: TripIntake; onUpdate: 
               key={mode.id}
               onClick={() => onUpdate({ planningMode: mode.id })}
               className={cn(
-                "text-left rounded-xl border-2 p-6 transition-all",
+                "text-left rounded-2xl border-2 p-6 transition-all backdrop-blur-sm",
                 selected
-                  ? "border-primary bg-primary/5 shadow-md"
-                  : "border-border bg-card hover:border-primary/30"
+                  ? "border-primary bg-primary/10 shadow-lg shadow-primary/10"
+                  : "border-white/30 bg-white/40 hover:border-primary/30 hover:bg-white/60"
               )}
             >
               <div className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center mb-4",
-                selected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                "w-12 h-12 rounded-2xl flex items-center justify-center mb-4",
+                selected ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "bg-white/60 text-muted-foreground"
               )}>
                 <Icon className="w-6 h-6" />
               </div>

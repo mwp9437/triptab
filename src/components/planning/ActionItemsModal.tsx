@@ -35,17 +35,17 @@ export default function ActionItemsModal({ items, onToggle }: ActionItemsModalPr
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:shadow-xl transition-shadow relative"
+            className="w-12 h-12 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center hover:shadow-xl transition-all border border-primary/30 relative"
           >
             <ClipboardList className="w-5 h-5" />
             {totalCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-foreground text-background text-xs font-bold flex items-center justify-center">
                 {completedCount}/{totalCount}
               </span>
             )}
           </motion.button>
         </SheetTrigger>
-        <SheetContent className="w-[400px] sm:w-[440px]">
+        <SheetContent className="w-[400px] sm:w-[440px] bg-white/90 backdrop-blur-2xl border-l-white/20">
           <SheetHeader>
             <SheetTitle className="font-display flex items-center gap-2">
               <Check className="w-5 h-5 text-primary" />
@@ -63,7 +63,7 @@ export default function ActionItemsModal({ items, onToggle }: ActionItemsModalPr
                 <div key={category}>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
+                    <span className="text-[10px] font-semibold uppercase tracking-luxury text-muted-foreground font-body">
                       {category}
                     </span>
                   </div>
