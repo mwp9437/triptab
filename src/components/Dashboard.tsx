@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
@@ -12,9 +12,11 @@ import { Progress } from "@/components/ui/progress";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { TripPlan, ActionItem, BlockCategory, ActionCategory } from "@/types/itinerary";
+import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory } from "@/types/itinerary";
+import { BlockAlternative } from "@/lib/chat";
 import { downloadICS } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
+import BlockDetailModal from "./BlockDetailModal";
 
 const BLOCK_STYLES: Record<BlockCategory, { icon: typeof Plane; colorClass: string }> = {
   transport: { icon: Bus, colorClass: "bg-ocean-light text-ocean-dark border-l-4 border-l-ocean" },
@@ -39,6 +41,8 @@ interface DashboardProps {
   collaborative?: boolean;
   onAddActivity?: (dayIndex: number) => void;
   onDeleteBlock?: (dayIndex: number, blockId: string) => void;
+  onSwapBlock?: (original: TimeBlock, replacement: BlockAlternative) => void;
+  tripContext?: string;
   hideActionsSidebar?: boolean;
   hideFloatingChat?: boolean;
 }
@@ -50,10 +54,13 @@ export default function Dashboard({
   collaborative,
   onAddActivity,
   onDeleteBlock,
+  onSwapBlock,
+  tripContext,
   hideActionsSidebar,
   hideFloatingChat,
 }: DashboardProps) {
   const [actionItems, setActionItems] = useState<ActionItem[]>(plan.actionItems);
+  const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
 
   const toggleItem = (id: string) => {
     setActionItems((items) =>
@@ -132,7 +139,8 @@ export default function Dashboard({
                           key={block.id}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className={`rounded-lg p-3 ${style.colorClass} group relative`}
+                          className={`rounded-lg p-3 ${style.colorClass} group relative cursor-pointer hover:ring-2 hover:ring-primary/20 transition-shadow`}
+                          onClick={() => setSelectedBlock(block)}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-start gap-2">
@@ -162,7 +170,7 @@ export default function Dashboard({
                               )}
                               {onDeleteBlock && (
                                 <button
-                                  onClick={() => onDeleteBlock(idx, block.id)}
+                                  onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
                                   className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                                   title="Remove activity"
                                 >
@@ -277,6 +285,17 @@ export default function Dashboard({
       </div>
 
       {!hideFloatingChat && <FloatingChat conversationHistory={conversationHistory} />}
+
+      {/* Block Detail Modal */}
+      <BlockDetailModal
+        block={selectedBlock}
+        tripContext={tripContext || `${plan.destination}, ${plan.startDate} to ${plan.endDate}, ${plan.travelers} travelers`}
+        onClose={() => setSelectedBlock(null)}
+        onSwap={(original, replacement) => {
+          onSwapBlock?.(original, replacement);
+          setSelectedBlock(null);
+        }}
+      />
     </div>
   );
 }
