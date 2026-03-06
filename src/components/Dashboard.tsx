@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
