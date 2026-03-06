@@ -44,6 +44,13 @@ export interface PackingItem {
   reason?: string;
 }
 
+export interface LocalTip {
+  id: string;
+  emoji: string;
+  title: string;
+  detail: string;
+}
+
 export interface TripPlan {
   destination: string;
   startDate: string;
@@ -53,6 +60,7 @@ export interface TripPlan {
   actionItems: ActionItem[];
   budget: BudgetSummary;
   packingList?: PackingItem[];
+  localTips?: LocalTip[];
 }
 
 export interface ChatMessage {
