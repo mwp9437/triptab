@@ -508,9 +508,15 @@ export default function Dashboard({
           block={selectedBlock}
           tripContext={tripContext || `${plan.destination}, ${plan.startDate} to ${plan.endDate}, ${plan.travelers} travelers`}
           onClose={() => setSelectedBlock(null)}
+        />
+
+        <RemixModal
+          block={remixBlock}
+          tripContext={tripContext || `${plan.destination}, ${plan.startDate} to ${plan.endDate}, ${plan.travelers} travelers`}
+          onClose={() => setRemixBlock(null)}
           onSwap={(original, replacement) => {
             onSwapBlock?.(original, replacement);
-            setSelectedBlock(null);
+            setRemixBlock(null);
           }}
         />
       </div>
