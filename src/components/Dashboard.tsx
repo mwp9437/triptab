@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
-  Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package,
+  Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package, Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory, PackingItem, PackingCategory } from "@/types/itinerary";
+import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory, PackingItem, PackingCategory, LocalTip } from "@/types/itinerary";
 import { BlockAlternative } from "@/lib/chat";
 import { downloadICS } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
@@ -361,6 +361,29 @@ export default function Dashboard({
                 </CardContent>
               </Card>
             )}
+
+            {/* Local Tips */}
+            {plan.localTips && plan.localTips.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-display flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-primary" />
+                    Local Tips
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {plan.localTips.map((tip) => (
+                    <div key={tip.id} className="flex items-start gap-2.5">
+                      <span className="text-lg leading-none mt-0.5">{tip.emoji}</span>
+                      <div>
+                        <p className="text-sm font-semibold font-body text-foreground">{tip.title}</p>
+                        <p className="text-xs text-muted-foreground font-body mt-0.5">{tip.detail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )
           </div>
         )}
       </div>
