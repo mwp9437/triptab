@@ -1,5 +1,5 @@
 import { TripIntake } from "@/types/intake";
-import { TripPlan } from "@/types/itinerary";
+import { TripPlan, TimeBlock } from "@/types/itinerary";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
