@@ -131,7 +131,14 @@ export default function Dashboard({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-2 ml-11">
-                    {day.blocks.map((block) => {
+                    {/* Sort: non-accommodation first, then accommodation at bottom */}
+                    {[...day.blocks]
+                      .sort((a, b) => {
+                        if (a.category === "accommodation" && b.category !== "accommodation") return 1;
+                        if (a.category !== "accommodation" && b.category === "accommodation") return -1;
+                        return a.startTime.localeCompare(b.startTime);
+                      })
+                      .map((block) => {
                       const style = BLOCK_STYLES[block.category];
                       const Icon = style.icon;
                       return (

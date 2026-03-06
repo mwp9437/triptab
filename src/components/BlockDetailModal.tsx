@@ -84,7 +84,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
 
   return (
     <Dialog open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl border-border bg-card max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden rounded-2xl border-border bg-card max-h-[90vh] flex flex-col">
         {/* Header with category color */}
         <div className="px-6 pt-6 pb-4">
           <DialogHeader>
