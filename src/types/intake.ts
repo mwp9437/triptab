@@ -18,6 +18,7 @@ export interface TripIntake {
     meals: BudgetTier;
     activities: BudgetTier;
     transportation: BudgetTier;
+    totalBudget?: number;
   };
   vibes: string[];
   dietary: string[];
