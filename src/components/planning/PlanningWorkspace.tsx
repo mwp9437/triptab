@@ -15,9 +15,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import luxuryBedroom from "@/assets/luxury-bedroom.png";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-const supabase = createClientComponentClient();
-
 function createEmptyPlan(intake: TripIntake): TripPlan {
   const start = new Date(intake.startDate + "T00:00:00");
   const end = new Date(intake.endDate + "T00:00:00");
