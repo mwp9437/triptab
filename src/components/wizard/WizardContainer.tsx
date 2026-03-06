@@ -256,6 +256,22 @@ function StepBudget({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Pa
         <p className="text-sm text-muted-foreground font-body">Pick a tier for each category. This guides our recommendations.</p>
       </div>
 
+      {/* Total budget input */}
+      <div className="bg-card border border-border rounded-xl p-4">
+        <label className="text-sm font-body font-semibold text-foreground mb-1.5 block">
+          <DollarSign className="w-4 h-4 inline mr-1.5" />Total Trip Budget <span className="font-normal text-muted-foreground">(optional)</span>
+        </label>
+        <p className="text-xs text-muted-foreground font-body mb-3">Set a total budget cap and we'll keep recommendations within range.</p>
+        <Input
+          type="number"
+          value={intake.budget.totalBudget || ""}
+          onChange={(e) => onUpdate({ budget: { ...intake.budget, totalBudget: e.target.value ? Number(e.target.value) : undefined } })}
+          placeholder="e.g., 5000"
+          className="rounded-xl max-w-[200px]"
+          min={0}
+        />
+      </div>
+
       <div className="space-y-4">
         {categories.map((cat) => (
           <div key={cat} className="bg-card border border-border rounded-xl p-4">

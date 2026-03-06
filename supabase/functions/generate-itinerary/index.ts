@@ -15,13 +15,14 @@ const BUDGET_LABELS: Record<number, Record<string, string>> = {
 
 function buildPromptFromIntake(intake: any): string {
   const b = intake.budget || {};
+  const totalBudget = b.totalBudget ? `\nTotal budget cap: $${b.totalBudget} USD total for the entire trip.` : "";
   return `Plan a trip to ${intake.destination} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
 
 Budget preferences:
 - Accommodation: ${BUDGET_LABELS[b.accommodation]?.accommodation || "mid-range"}
 - Meals: ${BUDGET_LABELS[b.meals]?.meals || "casual"}
 - Activities: ${BUDGET_LABELS[b.activities]?.activities || "moderate"}
-- Transportation: ${BUDGET_LABELS[b.transportation]?.transportation || "rideshare"}
+- Transportation: ${BUDGET_LABELS[b.transportation]?.transportation || "rideshare"}${totalBudget}
 
 Trip vibes: ${(intake.vibes || []).join(", ") || "general sightseeing"}
 Dietary: ${(intake.dietary || []).join(", ") || "no restrictions"}
@@ -89,7 +90,8 @@ Rules:
 - Include realistic travel time between locations
 - Cost per person in USD
 - 6-10 blocks per day including meals and free time
-- Respect the budget tier preferences
+- IMPORTANT: Every day MUST include an accommodation block (category "accommodation") showing the hotel/lodging for that night
+- Respect the budget tier preferences. If a total budget cap is given, keep the total estimated cost under that cap.
 - Be opinionated about recommendations — pick the best options, don't hedge
 - Return ONLY JSON, no markdown`;
 
