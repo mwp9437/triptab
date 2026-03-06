@@ -7,12 +7,10 @@ import { BlockAlternative } from "@/lib/chat";
 import { generateFromIntake } from "@/lib/chat";
 import { toast } from "@/hooks/use-toast";
 import Dashboard from "@/components/Dashboard";
-import ChatPanel from "./ChatPanel";
 import OptionsPanel from "./OptionsPanel";
 import ActionItemsModal from "./ActionItemsModal";
 import FloatingChat from "@/components/FloatingChat";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import luxuryBedroom from "@/assets/luxury-bedroom.png";
 
 function createEmptyPlan(intake: TripIntake): TripPlan {
@@ -55,10 +53,8 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
     intake.planningMode === "collaborative" ? createEmptyPlan(intake) : null
   );
   const [isGenerating, setIsGenerating] = useState(intake.planningMode === "auto");
-  const [chatCollapsed, setChatCollapsed] = useState(false);
   const [options, setOptions] = useState<ActivityOption[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
-  const [mobileTab, setMobileTab] = useState("itinerary");
   const isMobile = useIsMobile();
 
   const intakeContext = intakeToContext(intake);
@@ -159,12 +155,6 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
 
   const handleSuggestionsReady = (opts: ActivityOption[], followUp: string) => {
     setOptions(opts);
-    if (isMobile) setMobileTab("options");
-  };
-
-  const handleAddActivity = (dayIndex: number) => {
-    if (isMobile) setMobileTab("chat");
-    setChatCollapsed(false);
   };
 
   // Luxury loading screen
@@ -192,87 +182,14 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
 
   const planWithActions = { ...plan, actionItems };
 
-  // Mobile layout
-  if (isMobile) {
-    return (
-      <div className="h-screen flex flex-col bg-background">
-        <div className="flex-1 overflow-hidden">
-          <Tabs value={mobileTab} onValueChange={setMobileTab} className="h-full flex flex-col">
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="chat" className="h-full m-0">
-                <ChatPanel
-                  conversationHistory={conversationHistory}
-                  collaborative={intake.planningMode === "collaborative"}
-                  onSuggestionsReady={handleSuggestionsReady}
-                  onPlanUpdate={handlePlanUpdate}
-                  currentPlan={plan}
-                  intakeContext={intakeContext}
-                />
-              </TabsContent>
-              <TabsContent value="options" className="h-full m-0">
-                {options.length > 0 ? (
-                  <OptionsPanel options={options} onSelect={handleSelectOption} onClose={() => { setOptions([]); setMobileTab("itinerary"); }} />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground font-body">
-                    No options yet. Ask for suggestions in chat.
-                  </div>
-                )}
-              </TabsContent>
-              <TabsContent value="itinerary" className="h-full m-0 overflow-y-auto">
-                <Dashboard
-                  plan={planWithActions}
-                  conversationHistory={[]}
-                  onBack={onBack}
-                  collaborative={intake.planningMode === "collaborative"}
-                  onAddActivity={handleAddActivity}
-                  onDeleteBlock={handleDeleteBlock}
-                  onSwapBlock={handleSwapBlock}
-                  tripContext={intakeContext}
-                  hideActionsSidebar
-                  hideFloatingChat
-                />
-              </TabsContent>
-            </div>
-            <TabsList className="w-full rounded-none border-t border-border h-12 bg-card/80 backdrop-blur-lg">
-              <TabsTrigger value="chat" className="flex-1 font-body text-xs">Chat</TabsTrigger>
-              <TabsTrigger value="options" className="flex-1 font-body text-xs relative">
-                Options
-                {options.length > 0 && (
-                  <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-primary" />
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="itinerary" className="flex-1 font-body text-xs">Itinerary</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-        <ActionItemsModal items={actionItems} onToggle={toggleActionItem} />
-      </div>
-    );
-  }
-
-  // Desktop layout
   return (
     <div className="h-screen flex bg-background">
-      <div className={chatCollapsed ? "w-10" : "w-[320px]"} style={{ transition: "width 0.2s" }}>
-        <ChatPanel
-          conversationHistory={conversationHistory}
-          collapsed={chatCollapsed}
-          onToggle={() => setChatCollapsed(!chatCollapsed)}
-          collaborative={intake.planningMode === "collaborative"}
-          onSuggestionsReady={handleSuggestionsReady}
-          onPlanUpdate={handlePlanUpdate}
-          currentPlan={plan}
-          intakeContext={intakeContext}
-        />
-      </div>
-
       <div className="flex-1 overflow-y-auto">
         <Dashboard
           plan={planWithActions}
           conversationHistory={[]}
           onBack={onBack}
           collaborative={intake.planningMode === "collaborative"}
-          onAddActivity={handleAddActivity}
           onDeleteBlock={handleDeleteBlock}
           onSwapBlock={handleSwapBlock}
           tripContext={intakeContext}
@@ -294,13 +211,14 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
 
       <ActionItemsModal items={actionItems} onToggle={toggleActionItem} />
 
-      {chatCollapsed && (
-        <FloatingChat
-          conversationHistory={conversationHistory}
-          currentPlan={plan}
-          onPlanUpdate={handlePlanUpdate}
-        />
-      )}
+      <FloatingChat
+        conversationHistory={conversationHistory}
+        currentPlan={plan}
+        onPlanUpdate={handlePlanUpdate}
+        onSuggestionsReady={handleSuggestionsReady}
+        collaborative={intake.planningMode === "collaborative"}
+        intakeContext={intakeContext}
+      />
     </div>
   );
 }
