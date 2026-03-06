@@ -28,11 +28,11 @@ const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
 };
 
 const BLOCK_STYLES: Record<BlockCategory, { icon: typeof Plane; colorClass: string }> = {
-  transport: { icon: Bus, colorClass: "bg-ocean-light text-ocean-dark border-l-4 border-l-ocean" },
-  activity: { icon: Palmtree, colorClass: "bg-coral-light text-foreground border-l-4 border-l-coral" },
-  meal: { icon: Coffee, colorClass: "bg-secondary text-secondary-foreground border-l-4 border-l-sand-dark" },
-  free: { icon: Palmtree, colorClass: "bg-seafoam-light text-foreground border-l-4 border-l-seafoam" },
-  accommodation: { icon: Bed, colorClass: "bg-muted text-foreground border-l-4 border-l-muted-foreground" },
+  transport: { icon: Bus, colorClass: "bg-indigo-light/60 text-foreground border-l-4 border-l-indigo" },
+  activity: { icon: Palmtree, colorClass: "bg-rose-light/60 text-foreground border-l-4 border-l-rose" },
+  meal: { icon: Coffee, colorClass: "bg-gold-light/60 text-foreground border-l-4 border-l-gold" },
+  free: { icon: Palmtree, colorClass: "bg-sage-light/60 text-foreground border-l-4 border-l-sage" },
+  accommodation: { icon: Bed, colorClass: "bg-muted/60 text-foreground border-l-4 border-l-stone-dark" },
 };
 
 const ACTION_ICONS: Record<ActionCategory, typeof Plane> = {
@@ -98,27 +98,27 @@ export default function Dashboard({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <header className="border-b border-border px-6 py-3 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur z-40">
+      {/* Top bar — glass */}
+      <header className="border-b border-border/50 px-6 py-3 flex items-center justify-between sticky top-0 bg-card/80 backdrop-blur-xl z-40">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div>
             <h1 className="font-display font-bold text-lg text-foreground">{plan.destination}</h1>
-            <p className="text-xs text-muted-foreground font-body">
+            <p className="text-xs text-muted-foreground font-body tracking-wide">
               {plan.startDate} → {plan.endDate} · {plan.travelers} traveler{plan.travelers > 1 ? "s" : ""}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2 rounded-lg" onClick={handlePrint}>
+          <Button variant="outline" size="sm" className="gap-2 rounded-xl border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80" onClick={handlePrint}>
             <Download className="w-4 h-4" /> PDF
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 rounded-lg"
+            className="gap-2 rounded-xl border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80"
             onClick={() => downloadICS(plan)}
           >
             <CalendarDays className="w-4 h-4" /> Sync with Calendar
@@ -129,25 +129,24 @@ export default function Dashboard({
       {/* Content */}
       <div className="flex flex-col lg:flex-row">
         {/* Left: Itinerary */}
-        <div className={`flex-1 p-6 ${!hideActionsSidebar ? "lg:border-r border-border" : ""}`}>
+        <div className={`flex-1 p-6 ${!hideActionsSidebar ? "lg:border-r border-border/50" : ""}`}>
           <h2 className="font-display font-bold text-xl text-foreground mb-4">Itinerary</h2>
           <Accordion type="multiple" defaultValue={plan.itinerary.map((_, i) => `day-${i}`)}>
             {plan.itinerary.map((day, idx) => (
-              <AccordionItem key={idx} value={`day-${idx}`}>
+              <AccordionItem key={idx} value={`day-${idx}`} className="border-border/50">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3 text-left">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      D{day.dayNumber}
+                    <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <span className="font-display font-bold text-primary text-sm">{day.dayNumber}</span>
                     </div>
                     <div>
                       <span className="font-display font-semibold text-foreground">{day.title}</span>
-                      <p className="text-xs text-muted-foreground font-body">{day.date}</p>
+                      <p className="text-[10px] text-muted-foreground font-body tracking-luxury uppercase">{day.date}</p>
                     </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className="space-y-2 ml-11">
-                    {/* Sort: non-accommodation first, then accommodation at bottom */}
+                  <div className="space-y-2 ml-[52px]">
                     {[...day.blocks]
                       .sort((a, b) => {
                         if (a.category === "accommodation" && b.category !== "accommodation") return 1;
@@ -162,12 +161,12 @@ export default function Dashboard({
                           key={block.id}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className={`rounded-lg p-3 ${style.colorClass} group relative cursor-pointer hover:ring-2 hover:ring-primary/20 transition-shadow`}
+                          className={`rounded-2xl p-3.5 ${style.colorClass} group relative cursor-pointer hover:shadow-md transition-all backdrop-blur-sm`}
                           onClick={() => setSelectedBlock(block)}
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-start gap-2">
-                              <Icon className="w-4 h-4 mt-0.5 shrink-0" />
+                            <div className="flex items-start gap-2.5">
+                              <Icon className="w-4 h-4 mt-0.5 shrink-0 opacity-70" />
                               <div>
                                 <p className="font-body font-medium text-sm">{block.title}</p>
                                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
@@ -194,7 +193,7 @@ export default function Dashboard({
                               {onDeleteBlock && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                                   title="Remove activity"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -203,17 +202,16 @@ export default function Dashboard({
                             </div>
                           </div>
                           {block.notes && (
-                            <p className="text-xs text-muted-foreground mt-1.5 ml-6 font-body">{block.notes}</p>
+                            <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body">{block.notes}</p>
                           )}
                         </motion.div>
                       );
                     })}
 
-                    {/* Add Activity button — always show in planning workspace */}
                     {onAddActivity && (
                       <button
                         onClick={() => onAddActivity(idx)}
-                        className="w-full rounded-lg border-2 border-dashed border-border hover:border-primary/50 p-3 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-body"
+                        className="w-full rounded-2xl border-2 border-dashed border-border/50 hover:border-primary/40 p-3 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-body"
                       >
                         <Plus className="w-4 h-4" /> Add Activity
                       </button>
@@ -229,10 +227,10 @@ export default function Dashboard({
           </Accordion>
         </div>
 
-        {/* Right: Actions & Budget */}
+        {/* Right: Actions & Budget — glass cards */}
         {!hideActionsSidebar && (
-          <div className="lg:w-[380px] p-6 space-y-6">
-            <Card>
+          <div className="lg:w-[380px] p-6 space-y-5">
+            <Card className="rounded-2xl border-border/50 bg-card/80 backdrop-blur-lg shadow-lg">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-display flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-primary" />
@@ -256,7 +254,7 @@ export default function Dashboard({
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="rounded-2xl border-border/50 bg-card/80 backdrop-blur-lg shadow-lg">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-display flex items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -275,7 +273,7 @@ export default function Dashboard({
                     <div key={category}>
                       <div className="flex items-center gap-2 mb-2">
                         <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
+                        <span className="text-[10px] font-semibold uppercase tracking-luxury text-muted-foreground font-body">
                           {category}
                         </span>
                       </div>
@@ -306,7 +304,7 @@ export default function Dashboard({
 
             {/* Packing List */}
             {packingList.length > 0 && (
-              <Card>
+              <Card className="rounded-2xl border-border/50 bg-card/80 backdrop-blur-lg shadow-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-display flex items-center justify-between">
                     <span className="flex items-center gap-2">
@@ -330,7 +328,7 @@ export default function Dashboard({
                       <div key={category}>
                         <div className="flex items-center gap-2 mb-2">
                           <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-body">
+                          <span className="text-[10px] font-semibold uppercase tracking-luxury text-muted-foreground font-body">
                             {category}
                           </span>
                         </div>
@@ -364,7 +362,7 @@ export default function Dashboard({
 
             {/* Local Tips */}
             {plan.localTips && plan.localTips.length > 0 && (
-              <Card>
+              <Card className="rounded-2xl border-border/50 bg-card/80 backdrop-blur-lg shadow-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-display flex items-center gap-2">
                     <Globe className="w-4 h-4 text-primary" />
@@ -390,7 +388,6 @@ export default function Dashboard({
 
       {!hideFloatingChat && <FloatingChat conversationHistory={conversationHistory} />}
 
-      {/* Block Detail Modal */}
       <BlockDetailModal
         block={selectedBlock}
         tripContext={tripContext || `${plan.destination}, ${plan.startDate} to ${plan.endDate}, ${plan.travelers} travelers`}

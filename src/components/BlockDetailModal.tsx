@@ -5,7 +5,6 @@ import {
   Bus, Palmtree, Coffee, Bed, Sparkles,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
 import { TimeBlock, BlockCategory } from "@/types/itinerary";
 import { fetchBlockAlternatives, BlockDetails, BlockAlternative } from "@/lib/chat";
 
@@ -46,29 +45,13 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!block) {
-      setData(null);
-      return;
-    }
-
+    if (!block) { setData(null); return; }
     let cancelled = false;
     setLoading(true);
     setError(null);
-
     fetchBlockAlternatives(block, tripContext)
-      .then((result) => {
-        if (!cancelled) {
-          setData(result);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError("Couldn't load details. Try again.");
-          setLoading(false);
-        }
-      });
-
+      .then((result) => { if (!cancelled) { setData(result); setLoading(false); } })
+      .catch(() => { if (!cancelled) { setError("Couldn't load details. Try again."); setLoading(false); } });
     return () => { cancelled = true; };
   }, [block?.id]);
 
@@ -80,12 +63,11 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
 
   return (
     <Dialog open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden rounded-2xl border-border bg-card max-h-[85vh] flex flex-col [&>button]:z-10">
-        {/* Header with category color */}
+      <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden rounded-3xl border-white/20 bg-white/90 backdrop-blur-2xl shadow-2xl max-h-[85vh] flex flex-col [&>button]:z-10">
         <div className="px-6 pt-6 pb-4">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary font-body">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-luxury text-primary font-body">
                 <Icon className="w-3.5 h-3.5" />
                 {categoryLabel}
               </span>
@@ -95,7 +77,6 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
             </DialogTitle>
           </DialogHeader>
 
-          {/* Key details */}
           <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground font-body">
             <span className="flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
@@ -116,15 +97,12 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
           </div>
         </div>
 
-        {/* Scrollable body */}
         <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden">
           <div className="w-full min-w-0 px-6 pb-6 space-y-5">
-            {/* Notes */}
             {block.notes && (
               <p className="text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">{block.notes}</p>
             )}
 
-            {/* AI-fetched details */}
             {loading && (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -138,7 +116,6 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
 
             {data && (
               <>
-                {/* Description & highlights */}
                 <div className="space-y-3 overflow-x-hidden w-full min-w-0">
                   <p className="w-full max-w-full text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">
                     {data.details.description}
@@ -157,13 +134,17 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
                     </div>
                   )}
                   {data.details.tip && (
-                    <div className="w-full max-w-full rounded-lg bg-muted p-3 text-xs text-muted-foreground font-body break-words whitespace-normal overflow-x-hidden">
-                      <span className="font-semibold text-foreground">Tip:</span> {data.details.tip}
+                    <div className="w-full max-w-full rounded-2xl bg-primary/5 border border-primary/10 p-3 text-xs text-muted-foreground font-body break-words whitespace-normal overflow-x-hidden">
+                      <span className="font-semibold text-primary">Tip:</span> {data.details.tip}
                     </div>
                   )}
                 </div>
 
-                {/* Alternatives */}
+                {/* Divider */}
+                {data.alternatives.length > 0 && (
+                  <div className="border-t border-primary/10" />
+                )}
+
                 {data.alternatives.length > 0 && (
                   <div className="w-full min-w-0">
                     <h3 className="font-display font-semibold text-sm text-foreground mb-3">{altLabel}</h3>
@@ -171,12 +152,12 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
                       {data.alternatives.map((alt) => (
                         <motion.button
                           key={alt.id}
-                          whileHover={{ y: -2 }}
+                          whileHover={{ y: -3 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => onSwap?.(block, alt)}
-                          className="flex-none w-[220px] rounded-xl border border-border bg-background overflow-hidden text-left snap-start hover:border-primary/50 transition-colors group"
+                          className="flex-none w-[220px] rounded-2xl border border-border/50 bg-white/60 backdrop-blur-sm overflow-hidden text-left snap-start hover:border-primary/40 hover:shadow-lg transition-all group"
                         >
-                          <div className="p-3 space-y-1.5">
+                          <div className="p-3.5 space-y-1.5">
                             <p className="font-body font-medium text-sm text-foreground leading-tight line-clamp-1">
                               {alt.title}
                             </p>
@@ -190,7 +171,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
                                 <span className="text-muted-foreground ml-0.5">{alt.priceTier}</span>
                               </span>
                               <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                                <Star className="w-3 h-3 fill-accent text-accent" />
+                                <Star className="w-3 h-3 fill-primary text-primary" />
                                 {alt.rating}
                               </span>
                             </div>
