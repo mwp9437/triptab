@@ -4,6 +4,7 @@ import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
   Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package, Globe,
+  Shuffle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,7 @@ import { BlockAlternative } from "@/lib/chat";
 import { downloadICS } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
+import RemixModal from "./RemixModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 
 const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
@@ -105,6 +107,7 @@ export default function Dashboard({
   const [actionItems, setActionItems] = useState<ActionItem[]>(plan.actionItems);
   const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
+  const [remixBlock, setRemixBlock] = useState<TimeBlock | null>(null);
 
   const togglePackingItem = (id: string) => {
     setPackingList((items) =>
@@ -257,6 +260,14 @@ export default function Dashboard({
                                   {block.notes && (
                                     <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body line-clamp-2">{block.notes}</p>
                                   )}
+                                  {/* Remix button */}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                    title="Find alternatives"
+                                  >
+                                    <Shuffle className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               </motion.div>
                             );
@@ -313,6 +324,13 @@ export default function Dashboard({
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 )}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                  title="Find alternatives"
+                                >
+                                  <Shuffle className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
                           </motion.div>
@@ -490,9 +508,15 @@ export default function Dashboard({
           block={selectedBlock}
           tripContext={tripContext || `${plan.destination}, ${plan.startDate} to ${plan.endDate}, ${plan.travelers} travelers`}
           onClose={() => setSelectedBlock(null)}
+        />
+
+        <RemixModal
+          block={remixBlock}
+          tripContext={tripContext || `${plan.destination}, ${plan.startDate} to ${plan.endDate}, ${plan.travelers} travelers`}
+          onClose={() => setRemixBlock(null)}
           onSwap={(original, replacement) => {
             onSwapBlock?.(original, replacement);
-            setSelectedBlock(null);
+            setRemixBlock(null);
           }}
         />
       </div>
