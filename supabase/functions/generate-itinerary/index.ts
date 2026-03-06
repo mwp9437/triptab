@@ -16,7 +16,8 @@ const BUDGET_LABELS: Record<number, Record<string, string>> = {
 function buildPromptFromIntake(intake: any): string {
   const b = intake.budget || {};
   const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip.` : "";
-  return `Plan a trip to ${intake.destination} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
+  const dest = intake.destination?.trim() || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
+  return `Plan a trip to ${dest} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
 
 Budget preferences:
 - Accommodation: ${BUDGET_LABELS[b.accommodation]?.accommodation || "mid-range"}
@@ -118,6 +119,7 @@ Rules:
 - packingList category: "clothing" | "gear" | "toiletries" | "electronics" | "documents" | "misc"
 - Unique IDs: "block-X-Y", "action-X", or "pack-X"
 - Include realistic travel time between locations
+- IMPORTANT: Day 1 MUST start with an arrival flight block (category "transport") and the last day MUST end with a departure flight block (category "transport"). Include realistic flight times and airline suggestions.
 - Cost per person in USD
 - 6-10 blocks per day including meals and free time
 - IMPORTANT: Every day MUST include an accommodation block (category "accommodation") showing the hotel/lodging for that night

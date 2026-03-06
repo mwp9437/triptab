@@ -28,7 +28,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
   };
 
   const canProceed = () => {
-    if (step === 0) return intake.destination.trim().length > 0;
+    if (step === 0) return true; // destination can be blank — AI will suggest
     return true;
   };
 
@@ -142,7 +142,7 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
           <Input
             value={intake.destination}
             onChange={(e) => onUpdate({ destination: e.target.value })}
-            placeholder="e.g., Hokkaido, Japan"
+            placeholder="e.g., Hokkaido, Japan — or leave blank and we'll suggest!"
             className="rounded-xl"
           />
         </div>
