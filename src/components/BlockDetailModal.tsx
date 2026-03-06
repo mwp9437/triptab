@@ -118,10 +118,10 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
 
         {/* Scrollable body */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="px-6 pb-6 space-y-5 overflow-hidden">
+          <div className="px-6 pb-6 space-y-5">
             {/* Notes */}
             {block.notes && (
-              <p className="text-sm text-foreground font-body leading-relaxed">{block.notes}</p>
+              <p className="text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">{block.notes}</p>
             )}
 
             {/* AI-fetched details */}
@@ -139,7 +139,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
             {data && (
               <>
                 {/* Description & highlights */}
-                <div className="space-y-3">
+                <div className="space-y-3 overflow-x-hidden">
                   <p className="text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">
                     {data.details.description}
                   </p>
@@ -148,16 +148,16 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
                       {data.details.highlights.map((h, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary font-body"
+                          className="inline-flex max-w-full items-start gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary font-body whitespace-normal break-words leading-snug"
                         >
-                          <Sparkles className="w-3 h-3" />
-                          {h}
+                          <Sparkles className="w-3 h-3 shrink-0 mt-0.5" />
+                          <span className="break-words">{h}</span>
                         </span>
                       ))}
                     </div>
                   )}
                   {data.details.tip && (
-                    <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground font-body break-words whitespace-normal">
+                    <div className="rounded-lg bg-muted p-3 text-xs text-muted-foreground font-body break-words whitespace-normal overflow-x-hidden">
                       <span className="font-semibold text-foreground">Tip:</span> {data.details.tip}
                     </div>
                   )}
