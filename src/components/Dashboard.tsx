@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
-  Coffee, Bed, Plus, Download, Share2,
+  Coffee, Bed, Plus, Download, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,7 @@ interface DashboardProps {
   onBack: () => void;
   collaborative?: boolean;
   onAddActivity?: (dayIndex: number) => void;
+  onDeleteBlock?: (dayIndex: number, blockId: string) => void;
   hideActionsSidebar?: boolean;
   hideFloatingChat?: boolean;
 }
@@ -48,6 +49,7 @@ export default function Dashboard({
   onBack,
   collaborative,
   onAddActivity,
+  onDeleteBlock,
   hideActionsSidebar,
   hideFloatingChat,
 }: DashboardProps) {
@@ -130,7 +132,7 @@ export default function Dashboard({
                           key={block.id}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className={`rounded-lg p-3 ${style.colorClass}`}
+                          className={`rounded-lg p-3 ${style.colorClass} group relative`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-start gap-2">
@@ -151,12 +153,23 @@ export default function Dashboard({
                                 </div>
                               </div>
                             </div>
-                            {block.cost != null && block.cost > 0 && (
-                              <span className="text-xs font-medium whitespace-nowrap flex items-center gap-0.5">
-                                <DollarSign className="w-3 h-3" />
-                                {block.cost}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1">
+                              {block.cost != null && block.cost > 0 && (
+                                <span className="text-xs font-medium whitespace-nowrap flex items-center gap-0.5">
+                                  <DollarSign className="w-3 h-3" />
+                                  {block.cost}
+                                </span>
+                              )}
+                              {onDeleteBlock && (
+                                <button
+                                  onClick={() => onDeleteBlock(idx, block.id)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                                  title="Remove activity"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                           {block.notes && (
                             <p className="text-xs text-muted-foreground mt-1.5 ml-6 font-body">{block.notes}</p>
@@ -165,17 +178,17 @@ export default function Dashboard({
                       );
                     })}
 
-                    {/* Collaborative: Add Activity button */}
-                    {collaborative && (
+                    {/* Add Activity button — always show in planning workspace */}
+                    {onAddActivity && (
                       <button
-                        onClick={() => onAddActivity?.(idx)}
+                        onClick={() => onAddActivity(idx)}
                         className="w-full rounded-lg border-2 border-dashed border-border hover:border-primary/50 p-3 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-body"
                       >
                         <Plus className="w-4 h-4" /> Add Activity
                       </button>
                     )}
 
-                    {!collaborative && day.blocks.length === 0 && (
+                    {!onAddActivity && day.blocks.length === 0 && (
                       <p className="text-sm text-muted-foreground font-body py-3 text-center">No activities planned yet.</p>
                     )}
                   </div>
@@ -185,10 +198,9 @@ export default function Dashboard({
           </Accordion>
         </div>
 
-        {/* Right: Actions & Budget (desktop, non-collaborative or when not hidden) */}
+        {/* Right: Actions & Budget */}
         {!hideActionsSidebar && (
           <div className="lg:w-[380px] p-6 space-y-6">
-            {/* Budget Card */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-display flex items-center gap-2">
@@ -213,7 +225,6 @@ export default function Dashboard({
               </CardContent>
             </Card>
 
-            {/* Action Items */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-display flex items-center justify-between">
@@ -265,7 +276,6 @@ export default function Dashboard({
         )}
       </div>
 
-      {/* Floating Chat */}
       {!hideFloatingChat && <FloatingChat conversationHistory={conversationHistory} />}
     </div>
   );

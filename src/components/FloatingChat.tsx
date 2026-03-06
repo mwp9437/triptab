@@ -3,16 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChatMessage } from "@/types/itinerary";
-import { streamChat, createMessageId } from "@/lib/chat";
+import { ChatMessage, TripPlan } from "@/types/itinerary";
+import { streamChat, createMessageId, modifyItinerary } from "@/lib/chat";
 import ReactMarkdown from "react-markdown";
 
 interface FloatingChatProps {
   conversationHistory: { role: string; content: string }[];
-  onPlanUpdate?: (messages: { role: string; content: string }[]) => void;
+  currentPlan?: TripPlan | null;
+  onPlanUpdate?: (plan: TripPlan) => void;
 }
 
-export default function FloatingChat({ conversationHistory, onPlanUpdate }: FloatingChatProps) {
+export default function FloatingChat({ conversationHistory, currentPlan, onPlanUpdate }: FloatingChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -35,8 +36,33 @@ export default function FloatingChat({ conversationHistory, onPlanUpdate }: Floa
 
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
+    const userRequest = input.trim();
     setInput("");
+    setIsStreaming(true);
 
+    // If we have a plan, use modify-itinerary
+    if (currentPlan && onPlanUpdate) {
+      try {
+        const chatHistory = updatedMessages.slice(0, -1).map((m) => ({ role: m.role, content: m.content }));
+        const result = await modifyItinerary(currentPlan, userRequest, chatHistory);
+        if (result.plan) {
+          onPlanUpdate(result.plan);
+          const assistantMsg: ChatMessage = {
+            id: createMessageId(),
+            role: "assistant",
+            content: result.message || "Done — itinerary updated.",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+          setIsStreaming(false);
+          return;
+        }
+      } catch {
+        // Fall through to regular chat
+      }
+    }
+
+    // Regular streaming chat
     const assistantMsg: ChatMessage = {
       id: createMessageId(),
       role: "assistant",
@@ -44,7 +70,6 @@ export default function FloatingChat({ conversationHistory, onPlanUpdate }: Floa
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, assistantMsg]);
-    setIsStreaming(true);
 
     try {
       const apiMessages = [
@@ -61,14 +86,12 @@ export default function FloatingChat({ conversationHistory, onPlanUpdate }: Floa
             prev.map((m) => (m.id === assistantMsg.id ? { ...m, content: fullContent } : m))
           );
         },
-        () => {
-          setIsStreaming(false);
-        }
+        () => setIsStreaming(false)
       );
     } catch {
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === assistantMsg.id ? { ...m, content: "Connection lost. Try again! 🌊" } : m
+          m.id === assistantMsg.id ? { ...m, content: "Connection issue. Try again." } : m
         )
       );
       setIsStreaming(false);
@@ -92,22 +115,20 @@ export default function FloatingChat({ conversationHistory, onPlanUpdate }: Floa
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="absolute bottom-16 right-0 w-[360px] h-[480px] bg-card border border-border rounded-2xl shadow-xl flex flex-col overflow-hidden"
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-primary" />
-                <span className="font-display font-semibold text-sm text-card-foreground">Refine your plan</span>
+                <span className="font-display font-semibold text-sm text-card-foreground">Edit your plan</span>
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
 
-            {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
               {messages.length === 0 && (
                 <p className="text-xs text-muted-foreground text-center mt-8 font-body">
-                  Ask me to adjust your itinerary, add activities, or change the budget ✨
+                  Ask me to adjust your itinerary — add activities, move things, swap options, or find alternatives.
                 </p>
               )}
               {messages.map((msg) => (
@@ -123,9 +144,15 @@ export default function FloatingChat({ conversationHistory, onPlanUpdate }: Floa
                   </div>
                 </div>
               ))}
+              {isStreaming && messages[messages.length - 1]?.role === "user" && (
+                <div className="flex justify-start">
+                  <div className="bg-muted rounded-xl px-3 py-2">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Input */}
             <div className="border-t border-border p-2">
               <div className="flex gap-1.5">
                 <Textarea
@@ -151,7 +178,6 @@ export default function FloatingChat({ conversationHistory, onPlanUpdate }: Floa
         )}
       </AnimatePresence>
 
-      {/* FAB */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}

@@ -3,16 +3,23 @@ import { Send, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage } from "@/types/itinerary";
+import { TripPlan } from "@/types/itinerary";
 import { ActivityOption } from "@/types/intake";
-import { streamChat, createMessageId, suggestActivities } from "@/lib/chat";
+import { streamChat, createMessageId, suggestActivities, modifyItinerary } from "@/lib/chat";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
-const PROMPTS = [
+const PROMPTS_COLLABORATIVE = [
   "Try: 'I want to explore temples on Day 3'",
   "Try: 'Find a sunset dinner spot'",
   "Try: 'Add a day trip on Thursday'",
-  "Try: 'Just fill in the rest for me'",
+];
+
+const PROMPTS_AUTO = [
+  "Try: 'Add ski après on Wednesday afternoon'",
+  "Try: 'Move the onsen back two hours'",
+  "Try: 'Find a cheaper hotel option'",
+  "Try: 'Swap Day 2 lunch for ramen'",
 ];
 
 interface ChatPanelProps {
@@ -20,6 +27,8 @@ interface ChatPanelProps {
   collapsed?: boolean;
   onToggle?: () => void;
   onSuggestionsReady?: (options: ActivityOption[], followUp: string) => void;
+  onPlanUpdate?: (plan: TripPlan) => void;
+  currentPlan?: TripPlan | null;
   collaborative?: boolean;
   intakeContext?: string;
 }
@@ -29,6 +38,8 @@ export default function ChatPanel({
   collapsed,
   onToggle,
   onSuggestionsReady,
+  onPlanUpdate,
+  currentPlan,
   collaborative,
   intakeContext,
 }: ChatPanelProps) {
@@ -53,6 +64,7 @@ export default function ChatPanel({
 
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
+    const userRequest = input.trim();
     setInput("");
     setIsStreaming(true);
 
@@ -65,7 +77,7 @@ export default function ChatPanel({
     // In collaborative mode, try to get structured suggestions
     if (collaborative && onSuggestionsReady) {
       try {
-        const result = await suggestActivities(apiMessages, input.trim());
+        const result = await suggestActivities(apiMessages, userRequest);
         if (result.suggestions && result.suggestions.length > 0) {
           onSuggestionsReady(result.suggestions, result.followUp || "");
           const assistantMsg: ChatMessage = {
@@ -79,11 +91,33 @@ export default function ChatPanel({
           return;
         }
       } catch {
+        // Fall through
+      }
+    }
+
+    // In auto mode with a current plan, use modify-itinerary
+    if (!collaborative && currentPlan && onPlanUpdate) {
+      try {
+        const chatHistory = updatedMessages.slice(0, -1).map((m) => ({ role: m.role, content: m.content }));
+        const result = await modifyItinerary(currentPlan, userRequest, chatHistory);
+        if (result.plan) {
+          onPlanUpdate(result.plan);
+          const assistantMsg: ChatMessage = {
+            id: createMessageId(),
+            role: "assistant",
+            content: result.message || "Done — itinerary updated.",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+          setIsStreaming(false);
+          return;
+        }
+      } catch {
         // Fall through to regular chat
       }
     }
 
-    // Regular streaming chat
+    // Regular streaming chat fallback
     const assistantMsg: ChatMessage = {
       id: createMessageId(),
       role: "assistant",
@@ -132,6 +166,8 @@ export default function ChatPanel({
     );
   }
 
+  const prompts = collaborative ? PROMPTS_COLLABORATIVE : PROMPTS_AUTO;
+
   return (
     <div className="flex flex-col h-full bg-card border-r border-border">
       {/* Header */}
@@ -151,10 +187,10 @@ export default function ChatPanel({
             <p className="text-xs text-muted-foreground text-center font-body px-2">
               {collaborative
                 ? "Tell me what you want to do each day and I'll find the best options."
-                : "Ask me to adjust your itinerary, swap activities, or change plans."}
+                : "Ask me to adjust your itinerary — add activities, move things around, or swap options."}
             </p>
             <div className="space-y-1.5 px-2">
-              {PROMPTS.slice(0, 3).map((p) => (
+              {prompts.map((p) => (
                 <button
                   key={p}
                   onClick={() => { setInput(p.replace("Try: '", "").replace("'", "")); }}
@@ -182,6 +218,13 @@ export default function ChatPanel({
             </div>
           </div>
         ))}
+        {isStreaming && messages[messages.length - 1]?.role === "user" && (
+          <div className="flex justify-start">
+            <div className="bg-muted rounded-xl px-3 py-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Input */}

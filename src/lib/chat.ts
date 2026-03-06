@@ -96,6 +96,28 @@ export async function suggestActivities(
   return response.json();
 }
 
+export async function modifyItinerary(
+  plan: any,
+  request: string,
+  chatHistory?: { role: string; content: string }[]
+): Promise<{ plan: any; message: string }> {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/modify-itinerary`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      apikey: SUPABASE_KEY,
+    },
+    body: JSON.stringify({ plan, request, chatHistory }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Modify error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export function createMessageId(): string {
   return crypto.randomUUID();
 }
