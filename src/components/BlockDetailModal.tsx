@@ -117,7 +117,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
         </div>
 
         {/* Scrollable body */}
-        <ScrollArea className="flex-1 min-h-0 w-full">
+        <ScrollArea className="flex-1 min-h-0 w-full [&_[data-radix-scroll-area-viewport]]:overflow-x-hidden">
           <div className="w-full min-w-0 px-6 pb-6 space-y-5">
             {/* Notes */}
             {block.notes && (
