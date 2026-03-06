@@ -24,14 +24,6 @@ const CATEGORY_ICONS: Record<BlockCategory, typeof Bus> = {
   accommodation: Bed,
 };
 
-const CATEGORY_ALT_LABELS: Record<BlockCategory, string> = {
-  transport: "Other transport options",
-  activity: "Other activities nearby",
-  meal: "Other restaurants nearby",
-  free: "Other things to do",
-  accommodation: "Other places to stay",
-};
-
 interface BlockDetailModalProps {
   block: TimeBlock | null;
   tripContext: string;
@@ -59,7 +51,6 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
 
   const Icon = CATEGORY_ICONS[block.category] || Palmtree;
   const categoryLabel = CATEGORY_LABELS[block.category];
-  const altLabel = CATEGORY_ALT_LABELS[block.category];
 
   return (
     <Dialog open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -106,7 +97,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
             {loading && (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="ml-2 text-sm text-muted-foreground font-body">Finding details & alternatives...</span>
+                <span className="ml-2 text-sm text-muted-foreground font-body">Loading details...</span>
               </div>
             )}
 
@@ -115,79 +106,29 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
             )}
 
             {data && (
-              <>
-                <div className="space-y-3 overflow-x-hidden w-full min-w-0">
-                  <p className="w-full max-w-full text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">
-                    {data.details.description}
-                  </p>
-                  {data.details.highlights.length > 0 && (
-                    <div className="flex flex-wrap gap-2 w-full">
-                      {data.details.highlights.map((h, i) => (
-                        <span
-                          key={i}
-                          className="inline-flex max-w-full items-start gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary font-body whitespace-normal break-words leading-snug"
-                        >
-                          <Sparkles className="w-3 h-3 shrink-0 mt-0.5" />
-                          <span className="break-words">{h}</span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {data.details.tip && (
-                    <div className="w-full max-w-full rounded-2xl bg-primary/5 border border-primary/10 p-3 text-xs text-muted-foreground font-body break-words whitespace-normal overflow-x-hidden">
-                      <span className="font-semibold text-primary">Tip:</span> {data.details.tip}
-                    </div>
-                  )}
-                </div>
-
-                {/* Divider */}
-                {data.alternatives.length > 0 && (
-                  <div className="border-t border-primary/10" />
-                )}
-
-                {data.alternatives.length > 0 && (
-                  <div className="w-full min-w-0">
-                    <h3 className="font-display font-semibold text-sm text-foreground mb-3">{altLabel}</h3>
-                    <div className="flex w-full max-w-full gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x">
-                      {data.alternatives.map((alt) => (
-                        <motion.button
-                          key={alt.id}
-                          whileHover={{ y: -3 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => onSwap?.(block, alt)}
-                          className="flex-none w-[220px] rounded-2xl border border-border/50 bg-white/60 backdrop-blur-sm overflow-hidden text-left snap-start hover:border-primary/40 hover:shadow-lg transition-all group"
-                        >
-                          <div className="p-3.5 space-y-1.5">
-                            <p className="font-body font-medium text-sm text-foreground leading-tight line-clamp-1">
-                              {alt.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground font-body line-clamp-2 leading-relaxed">
-                              {alt.description}
-                            </p>
-                            <div className="flex items-center justify-between">
-                              <span className="flex items-center gap-0.5 text-xs font-medium text-foreground">
-                                <DollarSign className="w-3 h-3" />
-                                {alt.cost}
-                                <span className="text-muted-foreground ml-0.5">{alt.priceTier}</span>
-                              </span>
-                              <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                                <Star className="w-3 h-3 fill-primary text-primary" />
-                                {alt.rating}
-                              </span>
-                            </div>
-                            {alt.location && (
-                              <p className="flex items-center gap-1 text-[10px] text-muted-foreground font-body line-clamp-1">
-                                <MapPin className="w-2.5 h-2.5 shrink-0" />
-                                {alt.location}
-                              </p>
-                            )}
-                          </div>
-                        </motion.button>
-                      ))}
-                    </div>
+              <div className="space-y-3 overflow-x-hidden w-full min-w-0">
+                <p className="w-full max-w-full text-sm text-foreground font-body leading-relaxed break-words whitespace-normal">
+                  {data.details.description}
+                </p>
+                {data.details.highlights.length > 0 && (
+                  <div className="flex flex-wrap gap-2 w-full">
+                    {data.details.highlights.map((h, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex max-w-full items-start gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary font-body whitespace-normal break-words leading-snug"
+                      >
+                        <Sparkles className="w-3 h-3 shrink-0 mt-0.5" />
+                        <span className="break-words">{h}</span>
+                      </span>
+                    ))}
                   </div>
                 )}
-              </>
+                {data.details.tip && (
+                  <div className="w-full max-w-full rounded-2xl bg-primary/5 border border-primary/10 p-3 text-xs text-muted-foreground font-body break-words whitespace-normal overflow-x-hidden">
+                    <span className="font-semibold text-primary">Tip:</span> {data.details.tip}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
