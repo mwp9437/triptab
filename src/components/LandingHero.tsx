@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Send, Plane, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import luxuryPool from "@/assets/luxury-pool.png";
+import luxuryTerrace from "@/assets/luxury-terrace.png";
 
 const SUGGESTIONS = [
   "🏖️ Plan a beach getaway for 2",
