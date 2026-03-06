@@ -15,7 +15,7 @@ const BUDGET_LABELS: Record<number, Record<string, string>> = {
 
 function buildPromptFromIntake(intake: any): string {
   const b = intake.budget || {};
-  const totalBudget = b.totalBudget ? `\nTotal budget cap: $${b.totalBudget} USD total for the entire trip.` : "";
+  const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip.` : "";
   return `Plan a trip to ${intake.destination} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
 
 Budget preferences:
@@ -101,7 +101,7 @@ Rules:
 - Cost per person in USD
 - 6-10 blocks per day including meals and free time
 - IMPORTANT: Every day MUST include an accommodation block (category "accommodation") showing the hotel/lodging for that night
-- Respect the budget tier preferences. If a total budget cap is given, keep the total estimated cost under that cap.
+- Respect the budget tier preferences. If a per-person budget cap is given, keep all estimated costs per person under that cap.
 - Be opinionated about recommendations — pick the best options, don't hedge
 - Generate 15-30 packing items based on: destination climate/weather for the travel dates, planned activities (hiking gear, swimwear, formal wear etc.), location-specific needs (adapters, sunscreen, mosquito repellent etc.), and trip duration
 - Each packing item should have a brief "reason" explaining why it's needed
