@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
-  Coffee, Bed, Plus, Download, Trash2,
+  Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +12,11 @@ import { Progress } from "@/components/ui/progress";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
-import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory } from "@/types/itinerary";
+import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory, PackingItem, PackingCategory } from "@/types/itinerary";
 import { BlockAlternative } from "@/lib/chat";
+import { downloadICS } from "@/lib/calendar-export";
+import FloatingChat from "./FloatingChat";
+import BlockDetailModal from "./BlockDetailModal";
 import { downloadICS } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
