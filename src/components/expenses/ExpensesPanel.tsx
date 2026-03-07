@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DollarSign, Plane, Hotel, UtensilsCrossed, Ticket, Bus, Package,
-  Plus, Trash2, ChevronDown, ChevronUp, ArrowRight, Check,
+  Plus, Trash2, ChevronDown, ChevronUp, ArrowRight, Check, Users,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,9 @@ import { cn } from "@/lib/utils";
 import { Expense, Traveler } from "@/types/expenses";
 import { TripPlan } from "@/types/itinerary";
 import { calculateSettlements, getCategoryTotals } from "@/lib/settlements";
+import { toast } from "@/hooks/use-toast";
 import AddExpenseModal from "./AddExpenseModal";
+import type { ExpenseInitialValues } from "./AddExpenseModal";
 
 const CATEGORY_ICONS: Record<string, typeof Plane> = {
   flights: Plane,
@@ -41,6 +43,9 @@ interface ExpensesPanelProps {
   onAddExpense: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
   onDeleteExpense: (id: string) => Promise<void>;
   onSave?: () => void;
+  onOpenTravelers?: () => void;
+  initialValues?: ExpenseInitialValues;
+  onClearInitialValues?: () => void;
 }
 
 export default function ExpensesPanel({
