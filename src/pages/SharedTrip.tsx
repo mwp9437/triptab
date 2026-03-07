@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TripPlan } from "@/types/itinerary";
@@ -9,6 +9,8 @@ import { ArrowLeft, MapPin, Loader2 } from "lucide-react";
 
 export default function SharedTrip() {
   const { tripId } = useParams<{ tripId: string }>();
+  const [searchParams] = useSearchParams();
+  const role = searchParams.get("role") || "viewer";
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<TripPlan | null>(null);
@@ -54,7 +56,7 @@ export default function SharedTrip() {
             trip_id: tripId,
             user_id: user!.id,
             invited_email: user!.email || "",
-            role: "viewer" as any,
+            role: role as any,
             accepted: true,
           } as any);
         }

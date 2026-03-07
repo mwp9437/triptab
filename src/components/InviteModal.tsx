@@ -24,7 +24,7 @@ export default function InviteModal({ tripId }: InviteModalProps) {
   const [linkRole, setLinkRole] = useState<string>("viewer");
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
 
-  const shareUrl = `${window.location.origin}/trip/${tripId}`;
+  const shareUrl = `${window.location.origin}/trip/${tripId}?role=${linkRole}`;
 
   useEffect(() => {
     if (!open) return;
