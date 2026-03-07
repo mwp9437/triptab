@@ -21,6 +21,12 @@ import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 
+/** Build an Unsplash URL for a destination-themed background */
+function getDestinationBackground(destination: string): string {
+  const query = encodeURIComponent(destination + " travel landscape");
+  return `https://source.unsplash.com/1920x1080/?${query}`;
+}
+
 const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
   clothing: Shirt,
   gear: Backpack,
@@ -135,9 +141,14 @@ export default function Dashboard({
 
   return (
     <div className="relative min-h-screen">
-      {/* Luxury background */}
+      {/* Destination-themed background */}
       <div className="fixed inset-0 z-0">
-        <img src={luxuryResort} alt="" className="w-full h-full object-cover" />
+        <img
+          src={getDestinationBackground(plan.destination)}
+          alt=""
+          className="w-full h-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).src = luxuryResort; }}
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/90 to-background/95 backdrop-blur-sm" />
       </div>
 
