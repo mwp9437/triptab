@@ -110,8 +110,36 @@ function deduplicateBlocks(blocks: TimeBlock[]): TimeBlock[] {
   // Deduplicate accommodation: keep one per unique name (normalized)
   const seenAccommodations = new Map<string, TimeBlock>();
   for (const block of accommodationBlocks) {
-    const key = block.title.toLowerCase().replace(/^(check[- ]?in|check[- ]?out)[:\s]*/i, "").trim();
-    if (!seenAccommodations.has(key)) {
+    // Strip all common prefixes the AI generates
+    const key = block.title
+      .toLowerCase()
+      .replace(/^(check[- ]?in[:\s]*|check[- ]?out[:\s]*|accommodation[:\s]*)/i, "")
+      .replace(/@\s*[\d:]+\s*(am|pm)?/i, "")
+      .replace(/\b(at|in)\s+(hotel\s+in\s+)?/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    
+    const locationKey = block.location?.toLowerCase().trim() || "";
+    
+    let isDuplicate = false;
+    for (const [existingKey, existingBlock] of seenAccommodations) {
+      if (key.includes(existingKey) || existingKey.includes(key)) {
+        isDuplicate = true;
+        if ((block.cost && !existingBlock.cost) || block.title.length > existingBlock.title.length) {
+          seenAccommodations.set(existingKey, block);
+        }
+        break;
+      }
+      if (locationKey && existingBlock.location?.toLowerCase().trim() === locationKey) {
+        isDuplicate = true;
+        if ((block.cost && !existingBlock.cost) || block.title.length > existingBlock.title.length) {
+          seenAccommodations.set(existingKey, block);
+        }
+        break;
+      }
+    }
+    
+    if (!isDuplicate) {
       seenAccommodations.set(key, block);
     }
   }
