@@ -56,12 +56,26 @@ export default function ExpensesPanel({
   onAddExpense,
   onDeleteExpense,
   onSave,
+  onOpenTravelers,
+  initialValues,
+  onClearInitialValues,
 }: ExpensesPanelProps) {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [settleOpen, setSettleOpen] = useState(false);
   const [expandedExpense, setExpandedExpense] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [settledItems, setSettledItems] = useState<Set<number>>(new Set());
+
+  // Auto-open modal when initialValues are provided
+  const handleAddModalChange = (open: boolean) => {
+    setAddModalOpen(open);
+    if (!open && onClearInitialValues) onClearInitialValues();
+  };
+
+  // Open modal if initialValues arrive
+  if (initialValues && !addModalOpen) {
+    setAddModalOpen(true);
+  }
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const categoryTotals = useMemo(() => getCategoryTotals(expenses), [expenses]);
@@ -84,7 +98,9 @@ export default function ExpensesPanel({
   if (!tripId) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <DollarSign className="w-10 h-10 text-muted-foreground/40 mb-3" />
+        <div className="w-16 h-16 rounded-full glass flex items-center justify-center mb-4">
+          <DollarSign className="w-8 h-8 text-muted-foreground/50" />
+        </div>
         <p className="font-display font-semibold text-foreground mb-1">Save your trip first</p>
         <p className="text-sm text-muted-foreground font-body mb-4">
           Expenses are stored in the cloud. Save your trip to start tracking spending.
@@ -94,6 +110,52 @@ export default function ExpensesPanel({
             Save Trip
           </Button>
         )}
+      </div>
+    );
+  }
+
+  // No travelers yet
+  if (travelers.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+        <div className="w-16 h-16 rounded-full glass flex items-center justify-center mb-4">
+          <Users className="w-8 h-8 text-muted-foreground/50" />
+        </div>
+        <p className="font-display font-semibold text-foreground mb-1">Add travelers first</p>
+        <p className="text-sm text-muted-foreground font-body mb-4">
+          Add travelers to start splitting expenses
+        </p>
+        {onOpenTravelers && (
+          <Button onClick={onOpenTravelers} className="rounded-xl gap-1.5">
+            <Users className="w-4 h-4" /> Manage Travelers
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // No expenses yet (with travelers)
+  if (expenses.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+        <div className="w-16 h-16 rounded-full glass flex items-center justify-center mb-4">
+          <DollarSign className="w-8 h-8 text-muted-foreground/50" />
+        </div>
+        <p className="font-display font-semibold text-foreground mb-1">No expenses logged yet</p>
+        <p className="text-sm text-muted-foreground font-body mb-4">
+          Start tracking spending to see who owes what
+        </p>
+        <Button onClick={() => setAddModalOpen(true)} className="rounded-xl gap-1.5">
+          <Plus className="w-4 h-4" /> Add Expense
+        </Button>
+        <AddExpenseModal
+          open={addModalOpen}
+          onOpenChange={handleAddModalChange}
+          travelers={travelers}
+          plan={plan}
+          onAddExpense={onAddExpense}
+          initialValues={initialValues}
+        />
       </div>
     );
   }
