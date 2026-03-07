@@ -300,7 +300,7 @@ export default function Dashboard({
             >
               <CalendarDays className="w-4 h-4" /> <span className="hidden md:inline">Sync</span>
             </Button>
-            <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => downloadICS(plan)}>
+            <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => downloadICS(plan, expenses, travelers)}>
               <CalendarDays className="w-4 h-4" />
             </Button>
             {user && (
