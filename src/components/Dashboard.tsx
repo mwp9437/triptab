@@ -568,168 +568,234 @@ export default function Dashboard({
 
           {/* Right: Actions & Budget — glass cards */}
           {!hideActionsSidebar && (
-            <div className={`lg:w-[380px] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 ${mobileTab !== "details" ? "hidden lg:block" : ""}`}>
-              {/* Personal budget panel for group trips */}
-              {tripId && isOptedIn && onSetBudgetCap && (
-                <MyBudgetPanel
-                  plan={plan}
-                  isOptedIn={isOptedIn}
-                  budgetCap={budgetCap ?? null}
-                  onSetBudgetCap={onSetBudgetCap}
-                  tripId={tripId}
-                />
-              )}
-              <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-display flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-primary" />
-                    Budget
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between text-sm font-body">
-                    <span className="text-muted-foreground">Estimated total</span>
-                    <span className="font-semibold text-foreground">${plan.budget.total.toLocaleString()}</span>
-                  </div>
-                  <Progress value={budgetPercent} className="h-2" />
-                  <div className="grid grid-cols-2 gap-2">
-                    {Object.entries(plan.budget.categories).map(([cat, amount]) => (
-                      <div key={cat} className="flex justify-between text-xs font-body text-muted-foreground">
-                        <span className="capitalize">{cat}</span>
-                        <span>${(amount as number).toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+            <div className={`lg:w-[380px] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 ${mobileTab === "schedule" ? "hidden lg:block" : mobileTab === "expenses" ? "hidden lg:block" : ""}`}>
+              {/* Desktop sidebar toggle */}
+              <div className="hidden lg:flex gap-1 glass rounded-xl p-1 mb-2">
+                <button
+                  onClick={() => setSidebarView("details")}
+                  className={cn(
+                    "flex-1 py-1.5 rounded-lg text-xs font-display font-semibold transition-all",
+                    sidebarView === "details"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Plan Details
+                </button>
+                <button
+                  onClick={() => setSidebarView("expenses")}
+                  className={cn(
+                    "flex-1 py-1.5 rounded-lg text-xs font-display font-semibold transition-all",
+                    sidebarView === "expenses"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Expenses
+                  {expenses.length > 0 && (
+                    <span className="ml-1.5 text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">{expenses.length}</span>
+                  )}
+                </button>
+              </div>
 
-              <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-display flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-primary" />
-                      Action Items
-                    </span>
-                    <span className="text-xs font-body text-muted-foreground font-normal">
-                      {completedCount}/{actionItems.length}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {Object.entries(groupedActions).map(([category, items]) => {
-                    const Icon = ACTION_ICONS[category as ActionCategory] || Ticket;
-                    return (
-                      <div key={category}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-[10px] font-semibold uppercase tracking-luxury text-muted-foreground font-body">
-                            {category}
-                          </span>
-                        </div>
-                        <div className="space-y-1.5 ml-5">
-                          {items.map((item) => (
-                            <label key={item.id} className="flex items-start gap-2 cursor-pointer group">
-                              <Checkbox
-                                checked={item.completed}
-                                onCheckedChange={() => toggleItem(item.id)}
-                                className="mt-0.5"
-                              />
-                              <span className={`text-sm font-body leading-tight ${
-                                item.completed ? "line-through text-muted-foreground" : "text-foreground"
-                              }`}>
-                                {item.text}
-                                {item.cost != null && item.cost > 0 && (
-                                  <span className="text-xs text-muted-foreground ml-1">(~${item.cost})</span>
-                                )}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
+              {sidebarView === "details" && (
+                <>
+                  {/* Personal budget panel for group trips */}
+                  {tripId && isOptedIn && onSetBudgetCap && (
+                    <MyBudgetPanel
+                      plan={plan}
+                      isOptedIn={isOptedIn}
+                      budgetCap={budgetCap ?? null}
+                      onSetBudgetCap={onSetBudgetCap}
+                      tripId={tripId}
+                    />
+                  )}
+                  <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-display flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-primary" />
+                        Budget
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between text-sm font-body">
+                        <span className="text-muted-foreground">Estimated total</span>
+                        <span className="font-semibold text-foreground">${plan.budget.total.toLocaleString()}</span>
                       </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-
-              {/* Packing List */}
-              {packingList.length > 0 && (
-                <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-display flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Luggage className="w-4 h-4 text-primary" />
-                        Packing List
-                      </span>
-                      <span className="text-xs font-body text-muted-foreground font-normal">
-                        {packingList.filter(i => i.checked).length}/{packingList.length}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {Object.entries(
-                      packingList.reduce<Record<string, PackingItem[]>>((acc, item) => {
-                        (acc[item.category] ||= []).push(item);
-                        return acc;
-                      }, {})
-                    ).map(([category, items]) => {
-                      const Icon = PACKING_ICONS[category as PackingCategory] || Package;
-                      return (
-                        <div key={category}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-[10px] font-semibold uppercase tracking-luxury text-muted-foreground font-body">
-                              {category}
-                            </span>
+                      <Progress value={budgetPercent} className="h-2" />
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(plan.budget.categories).map(([cat, amount]) => (
+                          <div key={cat} className="flex justify-between text-xs font-body text-muted-foreground">
+                            <span className="capitalize">{cat}</span>
+                            <span>${(amount as number).toLocaleString()}</span>
                           </div>
-                          <div className="space-y-1.5 ml-5">
-                            {items.map((item) => (
-                              <label key={item.id} className="flex items-start gap-2 cursor-pointer group">
-                                <Checkbox
-                                  checked={item.checked}
-                                  onCheckedChange={() => togglePackingItem(item.id)}
-                                  className="mt-0.5"
-                                />
-                                <div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base font-display flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-primary" />
+                          Action Items
+                        </span>
+                        <span className="text-xs font-body text-muted-foreground font-normal">
+                          {completedCount}/{actionItems.length}
+                        </span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {Object.entries(groupedActions).map(([category, items]) => {
+                        const Icon = ACTION_ICONS[category as ActionCategory] || Ticket;
+                        return (
+                          <div key={category}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-[10px] font-semibold uppercase tracking-luxury text-muted-foreground font-body">
+                                {category}
+                              </span>
+                            </div>
+                            <div className="space-y-1.5 ml-5">
+                              {items.map((item) => (
+                                <label key={item.id} className="flex items-start gap-2 cursor-pointer group">
+                                  <Checkbox
+                                    checked={item.completed}
+                                    onCheckedChange={() => toggleItem(item.id)}
+                                    className="mt-0.5"
+                                  />
                                   <span className={`text-sm font-body leading-tight ${
-                                    item.checked ? "line-through text-muted-foreground" : "text-foreground"
+                                    item.completed ? "line-through text-muted-foreground" : "text-foreground"
                                   }`}>
                                     {item.text}
+                                    {item.cost != null && item.cost > 0 && (
+                                      <span className="text-xs text-muted-foreground ml-1">(~${item.cost})</span>
+                                    )}
                                   </span>
-                                  {item.reason && (
-                                    <p className="text-xs text-muted-foreground font-body mt-0.5">{item.reason}</p>
-                                  )}
-                                </div>
-                              </label>
-                            ))}
+                                </label>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+
+                  {/* Packing List */}
+                  {packingList.length > 0 && (
+                    <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-display flex items-center justify-between">
+                          <span className="flex items-center gap-2">
+                            <Luggage className="w-4 h-4 text-primary" />
+                            Packing List
+                          </span>
+                          <span className="text-xs font-body text-muted-foreground font-normal">
+                            {packingList.filter(i => i.checked).length}/{packingList.length}
+                          </span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {Object.entries(
+                          packingList.reduce<Record<string, PackingItem[]>>((acc, item) => {
+                            (acc[item.category] ||= []).push(item);
+                            return acc;
+                          }, {})
+                        ).map(([category, items]) => {
+                          const Icon = PACKING_ICONS[category as PackingCategory] || Package;
+                          return (
+                            <div key={category}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span className="text-[10px] font-semibold uppercase tracking-luxury text-muted-foreground font-body">
+                                  {category}
+                                </span>
+                              </div>
+                              <div className="space-y-1.5 ml-5">
+                                {items.map((item) => (
+                                  <label key={item.id} className="flex items-start gap-2 cursor-pointer group">
+                                    <Checkbox
+                                      checked={item.checked}
+                                      onCheckedChange={() => togglePackingItem(item.id)}
+                                      className="mt-0.5"
+                                    />
+                                    <div>
+                                      <span className={`text-sm font-body leading-tight ${
+                                        item.checked ? "line-through text-muted-foreground" : "text-foreground"
+                                      }`}>
+                                        {item.text}
+                                      </span>
+                                      {item.reason && (
+                                        <p className="text-xs text-muted-foreground font-body mt-0.5">{item.reason}</p>
+                                      )}
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Local Tips */}
+                  {plan.localTips && plan.localTips.length > 0 && (
+                    <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base font-display flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-primary" />
+                          Local Tips
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {plan.localTips.map((tip) => (
+                          <div key={tip.id} className="flex items-start gap-2.5">
+                            <span className="text-lg leading-none mt-0.5">{tip.emoji}</span>
+                            <div>
+                              <p className="text-sm font-semibold font-body text-foreground">{tip.title}</p>
+                              <p className="text-xs text-muted-foreground font-body mt-0.5">{tip.detail}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
               )}
 
-              {/* Local Tips */}
-              {plan.localTips && plan.localTips.length > 0 && (
-                <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-display flex items-center gap-2">
-                      <Globe className="w-4 h-4 text-primary" />
-                      Local Tips
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {plan.localTips.map((tip) => (
-                      <div key={tip.id} className="flex items-start gap-2.5">
-                        <span className="text-lg leading-none mt-0.5">{tip.emoji}</span>
-                        <div>
-                          <p className="text-sm font-semibold font-body text-foreground">{tip.title}</p>
-                          <p className="text-xs text-muted-foreground font-body mt-0.5">{tip.detail}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
+              {sidebarView === "expenses" && onAddExpense && onDeleteExpense && (
+                <ExpensesPanel
+                  expenses={expenses}
+                  travelers={travelers}
+                  plan={plan}
+                  tripId={tripId ?? null}
+                  onAddExpense={onAddExpense}
+                  onDeleteExpense={onDeleteExpense}
+                  onSave={onSave}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Mobile expenses tab */}
+          {!hideActionsSidebar && mobileTab === "expenses" && (
+            <div className="lg:hidden flex-1 overflow-y-auto p-4">
+              {onAddExpense && onDeleteExpense ? (
+                <ExpensesPanel
+                  expenses={expenses}
+                  travelers={travelers}
+                  plan={plan}
+                  tripId={tripId ?? null}
+                  onAddExpense={onAddExpense}
+                  onDeleteExpense={onDeleteExpense}
+                  onSave={onSave}
+                />
+              ) : (
+                <div className="text-center py-12 text-muted-foreground text-sm font-body">
+                  Expenses not available
+                </div>
               )}
             </div>
           )}
