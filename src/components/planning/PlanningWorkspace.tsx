@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TripIntake } from "@/types/intake";
 import { TripPlan, TimeBlock, ActionItem } from "@/types/itinerary";
@@ -58,6 +58,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const { travelers, expenses, addExpense, deleteExpense, addTraveler, removeTraveler } = useExpenses(tripId);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showTravelers, setShowTravelers] = useState(false);
+  const pendingSaveRef = useRef(false);
 
   const intakeContext = intakeToContext(intake);
   const conversationHistory = [{ role: "system", content: intakeContext }];
@@ -124,25 +125,35 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const handleSave = async () => {
     if (!plan) return;
     if (!user) {
+      pendingSaveRef.current = true;
       setShowAuthPrompt(true);
       return;
     }
     await performSave();
   };
 
+  useEffect(() => {
+    if (user && pendingSaveRef.current) {
+      pendingSaveRef.current = false;
+      performSave();
+    }
+  }, [user]);
+
   const performSave = async () => {
+    console.log("performSave called", { hasPlan: !!plan, hasUser: !!user, tripId });
     if (!plan || !user) return;
     setSaving(true);
     const planWithActions = { ...plan, actionItems };
 
     try {
       if (tripId) {
-        await supabase.from("trips").update({
+        const { error } = await supabase.from("trips").update({
           plan_data: planWithActions as any,
           intake_data: intake as any,
           title: plan.destination,
           updated_at: new Date().toISOString(),
         } as any).eq("id", tripId);
+        if (error) throw error;
         toast({ title: "Saved!", description: "Your trip has been updated." });
       } else {
         const { data, error } = await supabase.from("trips").insert({
@@ -156,6 +167,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
         toast({ title: "Saved!", description: "Your trip has been saved." });
       }
     } catch (err: any) {
+      console.error("Save error:", err);
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     }
     setSaving(false);
@@ -232,7 +244,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
         open={showAuthPrompt}
         onOpenChange={setShowAuthPrompt}
         onAuthenticated={() => {
-          setTimeout(() => performSave(), 500);
+          // Save will be triggered by the useEffect watching for user
         }}
       />
     </div>
