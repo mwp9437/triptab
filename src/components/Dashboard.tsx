@@ -4,9 +4,13 @@ import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
   Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package, Globe,
-  Shuffle,
+  Shuffle, Save, LogOut, FolderOpen,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import EditablePrice from "@/components/EditablePrice";
+import InviteModal from "@/components/InviteModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -93,9 +97,13 @@ interface DashboardProps {
   onAddActivity?: (dayIndex: number) => void;
   onDeleteBlock?: (dayIndex: number, blockId: string) => void;
   onSwapBlock?: (original: TimeBlock, replacement: BlockAlternative) => void;
+  onUpdateBlockCost?: (dayIndex: number, blockId: string, cost: number) => void;
   tripContext?: string;
   hideActionsSidebar?: boolean;
   hideFloatingChat?: boolean;
+  onSave?: () => void;
+  saving?: boolean;
+  tripId?: string | null;
 }
 
 export default function Dashboard({
@@ -106,10 +114,16 @@ export default function Dashboard({
   onAddActivity,
   onDeleteBlock,
   onSwapBlock,
+  onUpdateBlockCost,
   tripContext,
   hideActionsSidebar,
   hideFloatingChat,
+  onSave,
+  saving,
+  tripId,
 }: DashboardProps) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [actionItems, setActionItems] = useState<ActionItem[]>(plan.actionItems);
   const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
