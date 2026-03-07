@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, Sparkles, Compass } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, Sparkles, Compass, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +12,7 @@ import { TripIntake, BudgetTier, TravelerType, VIBE_OPTIONS, DIETARY_OPTIONS, BU
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
+import { useAuth } from "@/contexts/AuthContext";
 
 const POPULAR_DESTINATIONS = [
   "Tokyo, Japan", "Kyoto, Japan", "Osaka, Japan", "Hokkaido, Japan",
@@ -50,6 +52,8 @@ const STEPS = ["Destination & Dates", "Preferences", "Planning Mode"];
 
 export default function WizardContainer({ intake, onUpdate, onComplete, onBack }: WizardContainerProps) {
   const [step, setStep] = useState(0);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const update = (partial: Partial<TripIntake>) => {
     onUpdate({ ...intake, ...partial });
@@ -89,7 +93,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
       </AnimatePresence>
 
       {/* Header */}
-      <header className="relative z-10 px-6 py-5 flex items-center gap-3">
+      <header className="relative z-10 px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-2xl glass flex items-center justify-center">
             <Plane className="w-5 h-5 text-foreground" />
@@ -99,6 +103,17 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             <p className="text-xs text-white/70 font-body tracking-luxury uppercase">AI Trip Manager</p>
           </div>
         </div>
+        {!user && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full glass border-white/20 text-white hover:bg-white/30 hover:text-white"
+            onClick={() => navigate("/auth")}
+          >
+            <LogIn className="w-4 h-4 mr-1.5" />
+            Sign In
+          </Button>
+        )}
       </header>
 
       {/* Progress — gold line with diamond markers */}
