@@ -4,6 +4,7 @@ import { DollarSign } from "lucide-react";
 interface EditablePriceProps {
   cost: number | undefined;
   suffix?: string;
+  isUserPrice?: boolean;
   onUpdate: (newCost: number) => void;
 }
 
