@@ -62,7 +62,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
   const canProceed = () => true;
 
   const next = () => {
-    if (step < 2) setStep(step + 1);
+    if (step < 1) setStep(step + 1);
     else onComplete(intake);
   };
 
