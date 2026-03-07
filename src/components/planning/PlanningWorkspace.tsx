@@ -58,6 +58,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const { travelers, expenses, addExpense, deleteExpense, addTraveler, removeTraveler } = useExpenses(tripId);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showTravelers, setShowTravelers] = useState(false);
+  const pendingSaveRef = useRef(false);
 
   const intakeContext = intakeToContext(intake);
   const conversationHistory = [{ role: "system", content: intakeContext }];
