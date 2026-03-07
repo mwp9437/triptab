@@ -4,7 +4,7 @@ import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
   Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package, Globe,
-  Shuffle, Save, LogOut, FolderOpen, UserCheck, UserX, Wallet,
+  Shuffle, Save, LogOut, FolderOpen, UserCheck, UserX, Wallet, CircleDollarSign,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,13 @@ import {
 } from "@/components/ui/accordion";
 import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory, PackingItem, PackingCategory, LocalTip } from "@/types/itinerary";
 import { BlockAlternative } from "@/lib/chat";
-import { downloadICS } from "@/lib/calendar-export";
+import { downloadICS, generateExpensePrintHTML } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
 import ExpensesPanel from "./expenses/ExpensesPanel";
 import { Expense, Traveler } from "@/types/expenses";
+import type { ExpenseInitialValues } from "./expenses/AddExpenseModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 import { cn } from "@/lib/utils";
 
@@ -143,6 +144,7 @@ interface DashboardProps {
   travelers?: Traveler[];
   onAddExpense?: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
   onDeleteExpense?: (id: string) => Promise<void>;
+  onOpenTravelers?: () => void;
 }
 
 export default function Dashboard({
@@ -168,6 +170,7 @@ export default function Dashboard({
   travelers = [],
   onAddExpense,
   onDeleteExpense,
+  onOpenTravelers,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -177,12 +180,35 @@ export default function Dashboard({
   const [remixBlock, setRemixBlock] = useState<TimeBlock | null>(null);
   const [mobileTab, setMobileTab] = useState<"schedule" | "details" | "expenses">("schedule");
   const [sidebarView, setSidebarView] = useState<"details" | "expenses">("details");
+  const [quickAddValues, setQuickAddValues] = useState<ExpenseInitialValues | undefined>(undefined);
 
   // Build a set of blockIds that have expenses linked
   const expenseBlockIds = useMemo(
     () => new Set(expenses.filter((e) => e.blockId).map((e) => e.blockId!)),
     [expenses]
   );
+
+  const BLOCK_TO_EXPENSE_CAT: Record<string, Expense["category"]> = {
+    activity: "activities",
+    meal: "food",
+    transport: "transport",
+    accommodation: "accommodation",
+    free: "other",
+  };
+
+  const handleQuickAddExpense = (block: TimeBlock, dayDate: string) => {
+    const cat = BLOCK_TO_EXPENSE_CAT[block.category] || "other";
+    setQuickAddValues({
+      description: block.title,
+      category: cat,
+      date: new Date(dayDate + "T00:00:00"),
+      amount: block.cost || undefined,
+      blockId: block.id,
+    });
+    setSidebarView("expenses");
+    // On mobile, switch tab
+    setMobileTab("expenses");
+  };
 
   const togglePackingItem = (id: string) => {
     setPackingList((items) =>
@@ -205,7 +231,18 @@ export default function Dashboard({
   }, {});
 
   const handlePrint = () => {
-    window.print();
+    // Inject expense summary for print if expenses exist
+    if (expenses.length > 0 && travelers.length > 0) {
+      const html = generateExpensePrintHTML(expenses, travelers, plan);
+      const div = document.createElement("div");
+      div.className = "print-expense-summary";
+      div.innerHTML = html;
+      document.body.appendChild(div);
+      window.print();
+      document.body.removeChild(div);
+    } else {
+      window.print();
+    }
   };
 
   const { bgUrl } = useDestinationBackground(plan.destination, luxuryResort);
@@ -270,11 +307,11 @@ export default function Dashboard({
               variant="outline"
               size="sm"
               className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex"
-              onClick={() => downloadICS(plan)}
+              onClick={() => downloadICS(plan, expenses, travelers)}
             >
               <CalendarDays className="w-4 h-4" /> <span className="hidden md:inline">Sync</span>
             </Button>
-            <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => downloadICS(plan)}>
+            <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => downloadICS(plan, expenses, travelers)}>
               <CalendarDays className="w-4 h-4" />
             </Button>
             {user && (
@@ -455,6 +492,16 @@ export default function Dashboard({
                                   </div>
                                   {block.notes && (
                                     <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body line-clamp-2">{block.notes}</p>
+                                  )}
+                                  {/* Quick-add expense */}
+                                  {onAddExpense && tripId && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleQuickAddExpense(block, day.date); }}
+                                      className="absolute bottom-2 right-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-sage/10 text-muted-foreground hover:text-sage"
+                                      title="Log expense"
+                                    >
+                                      <CircleDollarSign className="w-3.5 h-3.5" />
+                                    </button>
                                   )}
                                   {/* Remix button */}
                                   <button
@@ -774,6 +821,9 @@ export default function Dashboard({
                   onAddExpense={onAddExpense}
                   onDeleteExpense={onDeleteExpense}
                   onSave={onSave}
+                  onOpenTravelers={onOpenTravelers}
+                  initialValues={quickAddValues}
+                  onClearInitialValues={() => setQuickAddValues(undefined)}
                 />
               )}
             </div>
@@ -791,6 +841,9 @@ export default function Dashboard({
                   onAddExpense={onAddExpense}
                   onDeleteExpense={onDeleteExpense}
                   onSave={onSave}
+                  onOpenTravelers={onOpenTravelers}
+                  initialValues={quickAddValues}
+                  onClearInitialValues={() => setQuickAddValues(undefined)}
                 />
               ) : (
                 <div className="text-center py-12 text-muted-foreground text-sm font-body">

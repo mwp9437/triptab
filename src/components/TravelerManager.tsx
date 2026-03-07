@@ -14,6 +14,8 @@ interface TravelerManagerProps {
   travelerCount?: number;
   onAddTraveler: (name: string, email?: string) => Promise<void>;
   onRemoveTraveler: (id: string) => Promise<void>;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
 export default function TravelerManager({
@@ -22,9 +24,16 @@ export default function TravelerManager({
   travelerCount = 1,
   onAddTraveler,
   onRemoveTraveler,
+  externalOpen,
+  onExternalOpenChange,
 }: TravelerManagerProps) {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (onExternalOpenChange) onExternalOpenChange(v);
+    setInternalOpen(v);
+  };
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [adding, setAdding] = useState(false);
