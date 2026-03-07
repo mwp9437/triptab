@@ -213,6 +213,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           travelers={travelers}
           onAddExpense={addExpense}
           onDeleteExpense={deleteExpense}
+          onOpenTravelers={() => setShowTravelers(true)}
         />
       </div>
 
