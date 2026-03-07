@@ -51,7 +51,7 @@ export default function LandingHero({ onSubmitIdea }: LandingHeroProps) {
           </div>
           <div>
             <h1 className="text-xl font-display font-bold text-white">TripCraft</h1>
-            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">Luxury Travel Planner</p>
+            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">Your Personal Travel Planner</p>
           </div>
         </div>
       </header>

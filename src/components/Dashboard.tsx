@@ -21,6 +21,12 @@ import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 
+/** Build an Unsplash URL for a destination-themed background */
+function getDestinationBackground(destination: string): string {
+  const query = encodeURIComponent(destination + " travel landscape");
+  return `https://source.unsplash.com/1920x1080/?${query}`;
+}
+
 const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
   clothing: Shirt,
   gear: Backpack,
