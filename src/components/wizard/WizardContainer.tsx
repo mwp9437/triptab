@@ -50,7 +50,7 @@ interface WizardContainerProps {
   onBack: () => void;
 }
 
-const STEPS = ["Destination & Dates", "Preferences"];
+const STEPS = ["Destination & Dates", "Preferences", "Planning"];
 
 export default function WizardContainer({ intake, onUpdate, onComplete, onBack }: WizardContainerProps) {
   const [step, setStep] = useState(0);
@@ -119,27 +119,27 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
       </header>
 
       {/* Progress — gold line with diamond markers */}
-      <div className="relative z-10 px-4 sm:px-6 py-2 sm:py-3">
+      <div className="relative z-10 px-4 sm:px-6 py-3 sm:py-4">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-0">
             {STEPS.map((label, i) => (
               <div key={label} className="flex items-center flex-1 last:flex-none">
                 <div className="flex flex-col items-center">
                   <div className={cn(
-                    "w-2.5 h-2.5 sm:w-3 sm:h-3 rotate-45 transition-all duration-300",
-                    i <= step ? "bg-primary shadow-lg shadow-primary/30" : "bg-foreground/15 border border-foreground/20"
+                    "w-3 h-3 sm:w-3.5 sm:h-3.5 rotate-45 transition-all duration-300",
+                    i <= step ? "bg-primary shadow-lg shadow-primary/30" : "bg-foreground/25 border border-foreground/30"
                   )} />
                   <span className={cn(
-                    "text-[9px] sm:text-[10px] font-body mt-1.5 sm:mt-2 whitespace-nowrap tracking-wide",
-                    i <= step ? "text-foreground font-medium" : "text-muted-foreground"
+                    "text-xs sm:text-sm font-body mt-2 sm:mt-2.5 whitespace-nowrap tracking-wide",
+                    i <= step ? "text-foreground font-semibold" : "text-foreground/50 font-medium"
                   )}>
                     {label}
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
                   <div className={cn(
-                    "flex-1 h-[1px] mx-1.5 sm:mx-2",
-                    i < step ? "bg-primary" : "bg-foreground/15"
+                    "flex-1 h-[1.5px] mx-2 sm:mx-3",
+                    i < step ? "bg-primary" : "bg-foreground/20"
                   )} />
                 )}
               </div>
