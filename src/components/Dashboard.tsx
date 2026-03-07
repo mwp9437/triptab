@@ -155,6 +155,7 @@ export default function Dashboard({
   onToggleOptIn,
   budgetCap,
   onSetBudgetCap,
+  travelerSlot,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
