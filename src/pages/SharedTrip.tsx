@@ -9,6 +9,8 @@ import { ArrowLeft, MapPin, Loader2 } from "lucide-react";
 
 export default function SharedTrip() {
   const { tripId } = useParams<{ tripId: string }>();
+  const [searchParams] = useSearchParams();
+  const role = searchParams.get("role") || "viewer";
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<TripPlan | null>(null);
