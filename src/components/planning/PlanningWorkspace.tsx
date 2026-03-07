@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TripIntake } from "@/types/intake";
 import { TripPlan, TimeBlock, ActionItem } from "@/types/itinerary";
