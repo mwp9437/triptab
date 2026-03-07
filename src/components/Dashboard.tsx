@@ -4,9 +4,13 @@ import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
   Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package, Globe,
-  Shuffle,
+  Shuffle, Save, LogOut, FolderOpen,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import EditablePrice from "@/components/EditablePrice";
+import InviteModal from "@/components/InviteModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -93,9 +97,13 @@ interface DashboardProps {
   onAddActivity?: (dayIndex: number) => void;
   onDeleteBlock?: (dayIndex: number, blockId: string) => void;
   onSwapBlock?: (original: TimeBlock, replacement: BlockAlternative) => void;
+  onUpdateBlockCost?: (dayIndex: number, blockId: string, cost: number) => void;
   tripContext?: string;
   hideActionsSidebar?: boolean;
   hideFloatingChat?: boolean;
+  onSave?: () => void;
+  saving?: boolean;
+  tripId?: string | null;
 }
 
 export default function Dashboard({
@@ -106,10 +114,16 @@ export default function Dashboard({
   onAddActivity,
   onDeleteBlock,
   onSwapBlock,
+  onUpdateBlockCost,
   tripContext,
   hideActionsSidebar,
   hideFloatingChat,
+  onSave,
+  saving,
+  tripId,
 }: DashboardProps) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [actionItems, setActionItems] = useState<ActionItem[]>(plan.actionItems);
   const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
@@ -167,6 +181,17 @@ export default function Dashboard({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {user && (
+              <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={() => navigate("/my-trips")}>
+                <FolderOpen className="w-4 h-4" /> My Trips
+              </Button>
+            )}
+            {tripId && <InviteModal tripId={tripId} />}
+            {onSave && user && (
+              <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={onSave} disabled={saving}>
+                <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}
+              </Button>
+            )}
             <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={handlePrint}>
               <Download className="w-4 h-4" /> PDF
             </Button>
@@ -178,6 +203,11 @@ export default function Dashboard({
             >
               <CalendarDays className="w-4 h-4" /> Sync
             </Button>
+            {user && (
+              <Button variant="ghost" size="sm" className="gap-2 rounded-xl" onClick={signOut}>
+                <LogOut className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </header>
 
@@ -277,12 +307,10 @@ export default function Dashboard({
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      {block.cost != null && block.cost > 0 && (
-                                        <span className="text-xs font-medium whitespace-nowrap flex items-center gap-0.5">
-                                          <DollarSign className="w-3 h-3" />
-                                          {block.cost}
-                                        </span>
-                                      )}
+                                      <EditablePrice
+                                        cost={block.cost}
+                                        onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
+                                      />
                                       {onDeleteBlock && (
                                         <button
                                           onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
@@ -373,11 +401,11 @@ export default function Dashboard({
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                {block.cost != null && block.cost > 0 && (
-                                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-0.5">
-                                    <DollarSign className="w-3 h-3" />{block.cost}/night
-                                  </span>
-                                )}
+                                <EditablePrice
+                                  cost={block.cost}
+                                  suffix="/night"
+                                  onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
+                                />
                                 {onDeleteBlock && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}

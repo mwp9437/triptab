@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
 import { TripIntake, ActivityOption } from "@/types/intake";
 import { TripPlan, TimeBlock, ActionItem } from "@/types/itinerary";
 import { BlockAlternative } from "@/lib/chat";
 import { generateFromIntake } from "@/lib/chat";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import Dashboard from "@/components/Dashboard";
 import OptionsPanel from "./OptionsPanel";
 import ActionItemsModal from "./ActionItemsModal";
@@ -20,27 +21,14 @@ function createEmptyPlan(intake: TripIntake): TripPlan {
   const d = new Date(start);
   let dayNum = 1;
   while (d <= end) {
-    days.push({
-      date: d.toISOString().split("T")[0],
-      dayNumber: dayNum,
-      title: `Day ${dayNum}`,
-      blocks: [],
-    });
+    days.push({ date: d.toISOString().split("T")[0], dayNumber: dayNum, title: `Day ${dayNum}`, blocks: [] });
     d.setDate(d.getDate() + 1);
     dayNum++;
   }
   if (days.length === 0) {
     days.push({ date: intake.startDate || new Date().toISOString().split("T")[0], dayNumber: 1, title: "Day 1", blocks: [] });
   }
-  return {
-    destination: intake.destination,
-    startDate: intake.startDate,
-    endDate: intake.endDate,
-    travelers: intake.travelerCount,
-    itinerary: days,
-    actionItems: [],
-    budget: { total: 0, spent: 0, categories: {} },
-  };
+  return { destination: intake.destination, startDate: intake.startDate, endDate: intake.endDate, travelers: intake.travelerCount, itinerary: days, actionItems: [], budget: { total: 0, spent: 0, categories: {} } };
 }
 
 function intakeToContext(intake: TripIntake): string {
@@ -48,66 +36,69 @@ function intakeToContext(intake: TripIntake): string {
   return `Trip context: ${intake.destination}, ${intake.startDate} to ${intake.endDate}, ${intake.travelerCount} travelers (${intake.travelerType}). Budget: accommodation ${budgetLabels[intake.budget.accommodation]}, meals ${budgetLabels[intake.budget.meals]}, activities ${budgetLabels[intake.budget.activities]}, transport ${budgetLabels[intake.budget.transportation]}. Vibes: ${intake.vibes.join(", ") || "none specified"}. Dietary: ${intake.dietary.join(", ") || "none"}. Mobility: ${intake.mobility}. Must-dos: ${intake.mustDos || "none"}. Avoid: ${intake.avoids || "none"}.`;
 }
 
-export default function PlanningWorkspace({ intake, onBack }: { intake: TripIntake; onBack: () => void }) {
+interface PlanningWorkspaceProps {
+  intake: TripIntake;
+  onBack: () => void;
+  loadedTripId?: string | null;
+  loadedPlan?: any;
+}
+
+export default function PlanningWorkspace({ intake, onBack, loadedTripId, loadedPlan }: PlanningWorkspaceProps) {
+  const { user } = useAuth();
+  const [tripId, setTripId] = useState<string | null>(loadedTripId || null);
   const [plan, setPlan] = useState<TripPlan | null>(
-    intake.planningMode === "collaborative" ? createEmptyPlan(intake) : null
+    loadedPlan ? loadedPlan : intake.planningMode === "collaborative" ? createEmptyPlan(intake) : null
   );
-  const [isGenerating, setIsGenerating] = useState(intake.planningMode === "auto");
+  const [isGenerating, setIsGenerating] = useState(!loadedPlan && intake.planningMode === "auto");
   const [options, setOptions] = useState<ActivityOption[]>([]);
-  const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [actionItems, setActionItems] = useState<ActionItem[]>(loadedPlan?.actionItems || []);
+  const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
 
   const intakeContext = intakeToContext(intake);
   const conversationHistory = [{ role: "system", content: intakeContext }];
 
   useEffect(() => {
-    if (intake.planningMode !== "auto") return;
+    if (loadedPlan || intake.planningMode !== "auto") return;
     let cancelled = false;
-
     (async () => {
       try {
         const generated = await generateFromIntake(intake);
-        if (!cancelled) {
-          setPlan(generated);
-          setActionItems(generated.actionItems || []);
-          setIsGenerating(false);
-        }
+        if (!cancelled) { setPlan(generated); setActionItems(generated.actionItems || []); setIsGenerating(false); }
       } catch {
         if (!cancelled) {
-          toast({
-            title: "Generation failed",
-            description: "Couldn't create your itinerary. Please try again.",
-            variant: "destructive",
-          });
+          toast({ title: "Generation failed", description: "Couldn't create your itinerary. Please try again.", variant: "destructive" });
           setIsGenerating(false);
           setPlan(createEmptyPlan(intake));
         }
       }
     })();
-
     return () => { cancelled = true; };
   }, []);
 
   const toggleActionItem = (id: string) => {
-    setActionItems((items) =>
-      items.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
-    );
+    setActionItems((items) => items.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item)));
   };
 
   const handlePlanUpdate = (updatedPlan: TripPlan) => {
     setPlan(updatedPlan);
-    if (updatedPlan.actionItems) {
-      setActionItems(updatedPlan.actionItems);
-    }
+    if (updatedPlan.actionItems) setActionItems(updatedPlan.actionItems);
     toast({ title: "Itinerary updated", description: "Your changes have been applied." });
   };
 
   const handleDeleteBlock = (dayIndex: number, blockId: string) => {
     if (!plan) return;
     const updatedDays = [...plan.itinerary];
+    updatedDays[dayIndex] = { ...updatedDays[dayIndex], blocks: updatedDays[dayIndex].blocks.filter((b) => b.id !== blockId) };
+    setPlan({ ...plan, itinerary: updatedDays });
+  };
+
+  const handleUpdateBlockCost = (dayIndex: number, blockId: string, cost: number) => {
+    if (!plan) return;
+    const updatedDays = [...plan.itinerary];
     updatedDays[dayIndex] = {
       ...updatedDays[dayIndex],
-      blocks: updatedDays[dayIndex].blocks.filter((b) => b.id !== blockId),
+      blocks: updatedDays[dayIndex].blocks.map((b) => b.id === blockId ? { ...b, cost } : b),
     };
     setPlan({ ...plan, itinerary: updatedDays });
   };
@@ -118,13 +109,7 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
       ...day,
       blocks: day.blocks.map((b) =>
         b.id === original.id
-          ? {
-              ...b,
-              title: replacement.title,
-              location: replacement.location,
-              cost: replacement.cost,
-              notes: replacement.description,
-            }
+          ? { ...b, title: replacement.title, location: replacement.location, cost: replacement.cost, notes: replacement.description }
           : b
       ),
     }));
@@ -135,29 +120,52 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
   const handleSelectOption = (opt: ActivityOption) => {
     if (!plan) return;
     const block: TimeBlock = {
-      id: `block-${Date.now()}`,
-      startTime: opt.startTime,
-      endTime: opt.endTime,
-      title: opt.title,
-      location: opt.location,
-      cost: opt.estimatedCost,
-      category: opt.category,
-      notes: opt.description,
+      id: `block-${Date.now()}`, startTime: opt.startTime, endTime: opt.endTime,
+      title: opt.title, location: opt.location, cost: opt.estimatedCost, category: opt.category, notes: opt.description,
     };
-
     const updatedDays = [...plan.itinerary];
     const targetDay = updatedDays.reduce((a, b) => a.blocks.length <= b.blocks.length ? a : b);
     targetDay.blocks = [...targetDay.blocks, block].sort((a, b) => a.startTime.localeCompare(b.startTime));
-
     setPlan({ ...plan, itinerary: updatedDays });
     setOptions([]);
   };
 
-  const handleSuggestionsReady = (opts: ActivityOption[], followUp: string) => {
-    setOptions(opts);
+  const handleSuggestionsReady = (opts: ActivityOption[]) => { setOptions(opts); };
+
+  const handleSave = async () => {
+    if (!plan || !user) {
+      toast({ title: "Sign in required", description: "Please sign in to save your trip.", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    const planWithActions = { ...plan, actionItems };
+
+    try {
+      if (tripId) {
+        await supabase.from("trips").update({
+          plan_data: planWithActions as any,
+          intake_data: intake as any,
+          title: plan.destination,
+          updated_at: new Date().toISOString(),
+        } as any).eq("id", tripId);
+        toast({ title: "Saved!", description: "Your trip has been updated." });
+      } else {
+        const { data, error } = await supabase.from("trips").insert({
+          user_id: user.id,
+          title: plan.destination,
+          intake_data: intake as any,
+          plan_data: planWithActions as any,
+        } as any).select().single();
+        if (error) throw error;
+        setTripId((data as any).id);
+        toast({ title: "Saved!", description: "Your trip has been saved." });
+      }
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    }
+    setSaving(false);
   };
 
-  // Loading screen
   if (isGenerating) {
     return (
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -165,11 +173,7 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
           <img src={luxuryBedroom} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
         </div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative z-10 text-center glass-card rounded-3xl p-12 max-w-md mx-4"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 text-center glass-card rounded-3xl p-12 max-w-md mx-4">
           <div className="w-16 h-16 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto mb-6" />
           <h2 className="font-display font-bold text-2xl text-foreground mb-2 italic">Curating your experience</h2>
           <p className="text-sm text-muted-foreground font-body">This usually takes 10–20 seconds...</p>
@@ -192,19 +196,19 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
           collaborative={intake.planningMode === "collaborative"}
           onDeleteBlock={handleDeleteBlock}
           onSwapBlock={handleSwapBlock}
+          onUpdateBlockCost={handleUpdateBlockCost}
           tripContext={intakeContext}
           hideFloatingChat
+          onSave={handleSave}
+          saving={saving}
+          tripId={tripId}
         />
       </div>
 
       <AnimatePresence>
         {options.length > 0 && (
           <div className="w-[350px]">
-            <OptionsPanel
-              options={options}
-              onSelect={handleSelectOption}
-              onClose={() => setOptions([])}
-            />
+            <OptionsPanel options={options} onSelect={handleSelectOption} onClose={() => setOptions([])} />
           </div>
         )}
       </AnimatePresence>
