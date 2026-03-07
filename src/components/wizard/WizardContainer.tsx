@@ -118,28 +118,34 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
         )}
       </header>
 
-      {/* Progress — gold line with diamond markers */}
-      <div className="relative z-10 px-4 sm:px-6 py-3 sm:py-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-0">
+      {/* Progress timeline */}
+      <div className="relative z-10 px-4 sm:px-6 py-4 sm:py-5">
+        <div className="max-w-xl mx-auto">
+          <div className="glass rounded-2xl px-6 py-4 flex items-center">
             {STEPS.map((label, i) => (
               <div key={label} className="flex items-center flex-1 last:flex-none">
-                <div className="flex flex-col items-center">
+                <div className="flex items-center gap-2.5">
                   <div className={cn(
-                    "w-3 h-3 sm:w-3.5 sm:h-3.5 rotate-45 transition-all duration-300",
-                    i <= step ? "bg-primary shadow-lg shadow-primary/30" : "bg-foreground/25 border border-foreground/30"
-                  )} />
+                    "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-body transition-all duration-300 shrink-0",
+                    i < step
+                      ? "bg-primary text-primary-foreground"
+                      : i === step
+                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-white/30"
+                        : "bg-foreground/10 text-foreground/40"
+                  )}>
+                    {i < step ? "✓" : i + 1}
+                  </div>
                   <span className={cn(
-                    "text-xs sm:text-sm font-body mt-2 sm:mt-2.5 whitespace-nowrap tracking-wide",
-                    i <= step ? "text-foreground font-semibold" : "text-foreground/50 font-medium"
+                    "text-sm font-body whitespace-nowrap transition-all duration-300",
+                    i <= step ? "text-foreground font-semibold" : "text-foreground/40 font-medium"
                   )}>
                     {label}
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
                   <div className={cn(
-                    "flex-1 h-[1.5px] mx-2 sm:mx-3",
-                    i < step ? "bg-primary" : "bg-foreground/20"
+                    "flex-1 h-[2px] mx-4 rounded-full transition-all duration-300",
+                    i < step ? "bg-primary" : "bg-foreground/15"
                   )} />
                 )}
               </div>
