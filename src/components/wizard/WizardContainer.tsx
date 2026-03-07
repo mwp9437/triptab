@@ -48,7 +48,7 @@ interface WizardContainerProps {
   onBack: () => void;
 }
 
-const STEPS = ["Destination & Dates", "Preferences", "Planning Mode"];
+const STEPS = ["Destination & Dates", "Preferences"];
 
 export default function WizardContainer({ intake, onUpdate, onComplete, onBack }: WizardContainerProps) {
   const [step, setStep] = useState(0);
