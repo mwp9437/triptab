@@ -307,12 +307,10 @@ export default function Dashboard({
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      {block.cost != null && block.cost > 0 && (
-                                        <span className="text-xs font-medium whitespace-nowrap flex items-center gap-0.5">
-                                          <DollarSign className="w-3 h-3" />
-                                          {block.cost}
-                                        </span>
-                                      )}
+                                      <EditablePrice
+                                        cost={block.cost}
+                                        onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
+                                      />
                                       {onDeleteBlock && (
                                         <button
                                           onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
@@ -403,11 +401,11 @@ export default function Dashboard({
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                {block.cost != null && block.cost > 0 && (
-                                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-0.5">
-                                    <DollarSign className="w-3 h-3" />{block.cost}/night
-                                  </span>
-                                )}
+                                <EditablePrice
+                                  cost={block.cost}
+                                  suffix="/night"
+                                  onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
+                                />
                                 {onDeleteBlock && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
