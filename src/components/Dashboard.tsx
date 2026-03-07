@@ -456,6 +456,16 @@ export default function Dashboard({
           {/* Right: Actions & Budget — glass cards */}
           {!hideActionsSidebar && (
             <div className="lg:w-[380px] overflow-y-auto p-6 space-y-5">
+              {/* Personal budget panel for group trips */}
+              {tripId && isOptedIn && onSetBudgetCap && (
+                <MyBudgetPanel
+                  plan={plan}
+                  isOptedIn={isOptedIn}
+                  budgetCap={budgetCap ?? null}
+                  onSetBudgetCap={onSetBudgetCap}
+                  tripId={tripId}
+                />
+              )}
               <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-display flex items-center gap-2">
