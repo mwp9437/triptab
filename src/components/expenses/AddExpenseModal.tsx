@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import {
   Plane, Hotel, UtensilsCrossed, Ticket, Bus, Package,
   DollarSign, CalendarIcon, Link2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Expense, Traveler, SplitMethod } from "@/types/expenses";
 import { TripPlan, TimeBlock } from "@/types/itinerary";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "@/hooks/use-toast";
 
 const CATEGORIES = [
   { value: "flights", label: "Flights", icon: Plane },
@@ -26,12 +29,21 @@ const CATEGORIES = [
 
 type ExpenseCategory = Expense["category"];
 
+export interface ExpenseInitialValues {
+  description?: string;
+  category?: ExpenseCategory;
+  date?: Date;
+  amount?: number;
+  blockId?: string | null;
+}
+
 interface AddExpenseModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   travelers: Traveler[];
   plan: TripPlan;
   onAddExpense: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
+  initialValues?: ExpenseInitialValues;
 }
 
 export default function AddExpenseModal({
@@ -40,7 +52,9 @@ export default function AddExpenseModal({
   travelers,
   plan,
   onAddExpense,
+  initialValues,
 }: AddExpenseModalProps) {
+  const isMobile = useIsMobile();
   const currentUser = travelers.find((t) => t.isCurrentUser);
 
   const [amount, setAmount] = useState("");
@@ -57,7 +71,6 @@ export default function AddExpenseModal({
   const [linkedBlockId, setLinkedBlockId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Reset when travelers change or modal opens
   const resetForm = () => {
     setAmount("");
     setDescription("");
@@ -70,6 +83,19 @@ export default function AddExpenseModal({
     setCustomPercents({});
     setLinkedBlockId(null);
   };
+
+  // Apply initial values when modal opens with them
+  useEffect(() => {
+    if (open && initialValues) {
+      if (initialValues.description) setDescription(initialValues.description);
+      if (initialValues.category) setCategory(initialValues.category);
+      if (initialValues.date) setDate(initialValues.date);
+      if (initialValues.amount) setAmount(String(initialValues.amount));
+      if (initialValues.blockId !== undefined) setLinkedBlockId(initialValues.blockId ?? null);
+      setPaidBy(currentUser?.id || travelers[0]?.id || "");
+      setSelectedParticipants(new Set(travelers.map((t) => t.id)));
+    }
+  }, [open, initialValues]);
 
   // Trip date constraints
   const tripStart = plan.startDate ? new Date(plan.startDate + "T00:00:00") : undefined;
