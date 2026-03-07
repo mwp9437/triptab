@@ -88,7 +88,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/50" />
+          <div className="absolute inset-0 bg-gradient-to-b from-sand/60 via-sand/40 to-sand/70" />
         </motion.div>
       </AnimatePresence>
 
@@ -99,15 +99,15 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             <Plane className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-white">TripTab</h1>
-            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">AI Trip Manager</p>
+            <h1 className="text-xl font-display font-bold text-foreground">TripTab</h1>
+            <p className="text-xs text-muted-foreground font-body tracking-luxury uppercase">AI Trip Manager</p>
           </div>
         </div>
         {!user && (
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full glass border-white/20 text-white hover:bg-white/30 hover:text-white"
+            className="rounded-full bg-foreground text-background hover:bg-foreground/80 border-0"
             onClick={() => navigate("/auth")}
           >
             <LogIn className="w-4 h-4 mr-1.5" />
@@ -178,7 +178,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
           <Button
             variant="ghost"
             onClick={back}
-            className="gap-2 text-white hover:bg-white/10 hover:text-white"
+            className="gap-2 text-foreground hover:bg-foreground/10 hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
