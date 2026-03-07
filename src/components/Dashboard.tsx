@@ -4,12 +4,13 @@ import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
   Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package, Globe,
-  Shuffle, Save, LogOut, FolderOpen,
+  Shuffle, Save, LogOut, FolderOpen, UserCheck, UserX,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import EditablePrice from "@/components/EditablePrice";
 import InviteModal from "@/components/InviteModal";
+import MyBudgetPanel from "@/components/MyBudgetPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
