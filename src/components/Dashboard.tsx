@@ -230,6 +230,7 @@ export default function Dashboard({
               </Button>
             )}
             {tripId && <InviteModal tripId={tripId} />}
+            {travelerSlot}
             {onSave && (
               <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={onSave} disabled={saving}>
                 <Save className="w-4 h-4" />
