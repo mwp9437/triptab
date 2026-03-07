@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import MyTrips from "./pages/MyTrips";
 import NotFound from "./pages/NotFound";
+import SharedTrip from "./pages/SharedTrip";
 
 const queryClient = new QueryClient();
 
