@@ -170,6 +170,7 @@ export default function Dashboard({
   travelers = [],
   onAddExpense,
   onDeleteExpense,
+  onOpenTravelers,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -179,12 +180,35 @@ export default function Dashboard({
   const [remixBlock, setRemixBlock] = useState<TimeBlock | null>(null);
   const [mobileTab, setMobileTab] = useState<"schedule" | "details" | "expenses">("schedule");
   const [sidebarView, setSidebarView] = useState<"details" | "expenses">("details");
+  const [quickAddValues, setQuickAddValues] = useState<ExpenseInitialValues | undefined>(undefined);
 
   // Build a set of blockIds that have expenses linked
   const expenseBlockIds = useMemo(
     () => new Set(expenses.filter((e) => e.blockId).map((e) => e.blockId!)),
     [expenses]
   );
+
+  const BLOCK_TO_EXPENSE_CAT: Record<string, Expense["category"]> = {
+    activity: "activities",
+    meal: "food",
+    transport: "transport",
+    accommodation: "accommodation",
+    free: "other",
+  };
+
+  const handleQuickAddExpense = (block: TimeBlock, dayDate: string) => {
+    const cat = BLOCK_TO_EXPENSE_CAT[block.category] || "other";
+    setQuickAddValues({
+      description: block.title,
+      category: cat,
+      date: new Date(dayDate + "T00:00:00"),
+      amount: block.cost || undefined,
+      blockId: block.id,
+    });
+    setSidebarView("expenses");
+    // On mobile, switch tab
+    setMobileTab("expenses");
+  };
 
   const togglePackingItem = (id: string) => {
     setPackingList((items) =>
