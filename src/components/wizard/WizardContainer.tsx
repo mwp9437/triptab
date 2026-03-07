@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, Sparkles, Compass, LogIn } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
