@@ -26,6 +26,7 @@ import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
 import ExpensesPanel from "./expenses/ExpensesPanel";
 import { Expense, Traveler } from "@/types/expenses";
+import type { ExpenseInitialValues } from "./expenses/AddExpenseModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 import { cn } from "@/lib/utils";
 
