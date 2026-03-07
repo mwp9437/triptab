@@ -99,8 +99,8 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             <Plane className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-white">TripTab</h1>
-            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">AI Trip Manager</p>
+            <h1 className="text-xl font-display font-bold text-foreground">TripTab</h1>
+            <p className="text-xs text-muted-foreground font-body tracking-luxury uppercase">AI Trip Manager</p>
           </div>
         </div>
         {!user && (
@@ -178,7 +178,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
           <Button
             variant="ghost"
             onClick={back}
-            className="gap-2 text-white hover:bg-white/10 hover:text-white"
+            className="gap-2 text-foreground hover:bg-foreground/10 hover:text-foreground"
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
