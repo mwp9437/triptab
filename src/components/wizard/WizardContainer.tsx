@@ -182,8 +182,58 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
 
 /* ─── Step 1: Destination & Dates ─── */
 function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Partial<TripIntake>) => void }) {
+  const [destQuery, setDestQuery] = useState(intake.destination);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const filteredDestinations = useMemo(() => {
+    if (!destQuery.trim()) return POPULAR_DESTINATIONS.slice(0, 8);
+    const q = destQuery.toLowerCase();
+    return POPULAR_DESTINATIONS.filter(d => d.toLowerCase().includes(q)).slice(0, 8);
+  }, [destQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectDestination = (dest: string) => {
+    setDestQuery(dest);
+    onUpdate({ destination: dest });
+    setShowSuggestions(false);
+  };
+
   const startDate = intake.startDate ? new Date(intake.startDate + "T00:00:00") : undefined;
   const endDate = intake.endDate ? new Date(intake.endDate + "T00:00:00") : undefined;
+
+  const dateRange: DateRange | undefined = startDate ? { from: startDate, to: endDate } : undefined;
+
+  const handleRangeSelect = (range: DateRange | undefined) => {
+    if (range?.from) {
+      onUpdate({
+        startDate: format(range.from, "yyyy-MM-dd"),
+        endDate: range.to ? format(range.to, "yyyy-MM-dd") : "",
+      });
+      // Auto-close when both dates selected
+      if (range.from && range.to) {
+        setTimeout(() => setCalendarOpen(false), 300);
+      }
+    } else {
+      onUpdate({ startDate: "", endDate: "" });
+    }
+  };
+
+  const dateLabel = startDate
+    ? endDate
+      ? `${format(startDate, "MMM d")} – ${format(endDate, "MMM d, yyyy")}`
+      : `${format(startDate, "MMM d, yyyy")} – pick end date`
+    : "Select trip dates";
 
   return (
     <div className="space-y-6">
@@ -193,58 +243,69 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
       </div>
 
       <div className="space-y-4">
-        <div>
+        {/* Destination autocomplete */}
+        <div ref={wrapperRef} className="relative">
           <label className="text-sm font-body font-medium text-foreground mb-1.5 block">
             <MapPin className="w-4 h-4 inline mr-1.5" />Destination
           </label>
           <Input
-            value={intake.destination}
-            onChange={(e) => onUpdate({ destination: e.target.value })}
+            value={destQuery}
+            onChange={(e) => {
+              setDestQuery(e.target.value);
+              onUpdate({ destination: e.target.value });
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
             placeholder="e.g., Hokkaido, Japan — or leave blank and we'll suggest!"
             className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm focus:bg-white/80 transition-all"
+            autoComplete="off"
           />
+          {showSuggestions && filteredDestinations.length > 0 && (
+            <div className="absolute z-50 top-full mt-1 w-full rounded-xl border border-border bg-popover shadow-lg overflow-hidden">
+              {filteredDestinations.map((dest) => (
+                <button
+                  key={dest}
+                  className="w-full text-left px-3 py-2.5 text-sm font-body text-popover-foreground hover:bg-accent/50 transition-colors flex items-center gap-2"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => selectDestination(dest)}
+                >
+                  <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  {dest}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-body font-medium text-foreground mb-1.5 block">
-              <CalendarDays className="w-4 h-4 inline mr-1.5" />Start Date
-            </label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left rounded-xl border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80", !startDate && "text-muted-foreground")}>
-                  {startDate ? format(startDate, "PPP") : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={(d) => d && onUpdate({ startDate: format(d, "yyyy-MM-dd") })}
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div>
-            <label className="text-sm font-body font-medium text-foreground mb-1.5 block">End Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className={cn("w-full justify-start text-left rounded-xl border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80", !endDate && "text-muted-foreground")}>
-                  {endDate ? format(endDate, "PPP") : "Pick a date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={(d) => d && onUpdate({ endDate: format(d, "yyyy-MM-dd") })}
-                  disabled={(d) => startDate ? d < startDate : false}
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+        {/* Date range picker — single calendar */}
+        <div>
+          <label className="text-sm font-body font-medium text-foreground mb-1.5 block">
+            <CalendarDays className="w-4 h-4 inline mr-1.5" />Trip Dates
+          </label>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left rounded-xl border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80",
+                  !startDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarDays className="w-4 h-4 mr-2 text-muted-foreground" />
+                {dateLabel}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={handleRangeSelect}
+                numberOfMonths={2}
+                disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
