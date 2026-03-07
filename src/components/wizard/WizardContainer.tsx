@@ -399,10 +399,10 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
             <label className="text-sm font-body font-medium text-foreground mb-1.5 block">Group Size</label>
             <div className="flex items-center gap-3">
               <Button
-                variant="outline" size="icon" className="rounded-xl h-10 w-10 border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80"
+                variant="outline" size="icon" className="rounded-xl h-10 w-10 border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80 text-sm"
                 onClick={() => onUpdate({ travelerCount: Math.max(1, intake.travelerCount - 1) })}
               >-</Button>
-              <span className="text-lg font-semibold font-body w-8 text-center">{intake.travelerCount}</span>
+              <span className="text-sm font-semibold font-body w-8 text-center">{intake.travelerCount}</span>
               <Button
                 variant="outline" size="icon" className="rounded-xl h-10 w-10 border-border/50 bg-white/50 backdrop-blur-sm hover:bg-white/80"
                 onClick={() => onUpdate({ travelerCount: intake.travelerCount + 1 })}
