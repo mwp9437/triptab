@@ -468,6 +468,7 @@ export default function Dashboard({
                                     <div className="flex items-center gap-1">
                                       <EditablePrice
                                         cost={block.cost}
+                                        isUserPrice={block.isUserPrice}
                                         onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
                                       />
                                       {onToggleOptIn && tripId && (
