@@ -393,6 +393,7 @@ export default function ExpensesPanel({
                             className="rounded-xl flex-1 h-7 text-xs"
                             onClick={async () => {
                               await onDeleteExpense(exp.id);
+                              toast({ title: "Expense deleted", description: `"${exp.description}" removed.` });
                               setDeleteConfirm(null);
                               setExpandedExpense(null);
                             }}
