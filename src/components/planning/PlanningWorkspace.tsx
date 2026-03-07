@@ -244,7 +244,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
         open={showAuthPrompt}
         onOpenChange={setShowAuthPrompt}
         onAuthenticated={() => {
-          setTimeout(() => performSave(), 500);
+          // Save will be triggered by the useEffect watching for user
         }}
       />
     </div>
