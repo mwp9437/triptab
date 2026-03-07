@@ -55,7 +55,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
   const { isOptedIn, toggleOptIn, budgetCap, setBudgetCap } = useMemberOptIns(tripId);
-  const { travelers, expenses, addTraveler, removeTraveler } = useExpenses(tripId);
+  const { travelers, expenses, addExpense, deleteExpense, addTraveler, removeTraveler } = useExpenses(tripId);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   const intakeContext = intakeToContext(intake);
