@@ -140,7 +140,6 @@ export default function Dashboard({
   plan,
   conversationHistory,
   onBack,
-  collaborative,
   onAddActivity,
   onDeleteBlock,
   onSwapBlock,
