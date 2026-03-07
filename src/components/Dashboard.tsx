@@ -68,16 +68,14 @@ function getDurationMinutes(start: string, end: string): number {
 /** Deduplicate transport blocks — keep only the main flight/ride, remove "arrive at airport" etc. */
 function deduplicateBlocks(blocks: TimeBlock[]): TimeBlock[] {
   const transportBlocks = blocks.filter(b => b.category === "transport");
-  const otherBlocks = blocks.filter(b => b.category !== "transport");
+  const accommodationBlocks = blocks.filter(b => b.category === "accommodation");
+  const otherBlocks = blocks.filter(b => b.category !== "transport" && b.category !== "accommodation");
   
-  // Group overlapping/adjacent transport blocks and keep the most descriptive one
-  const keptTransport: TimeBlock[] = [];
+  // Deduplicate transport: remove "go to airport" if a flight exists
   const skipPatterns = /\b(arrive at|go to|head to|drive to|taxi to|uber to|get to|transfer to)\b.*\b(airport|terminal|station|port)\b/i;
   const flightPattern = /\b(flight|fly|plane|depart|departure|landing|arrive)\b/i;
-  
+  const keptTransport: TimeBlock[] = [];
   for (const block of transportBlocks) {
-    const title = block.title.toLowerCase();
-    // Skip blocks that are just "go to airport" type duplicates if there's a flight block
     if (skipPatterns.test(block.title)) {
       const hasRelatedFlight = transportBlocks.some(
         other => other.id !== block.id && flightPattern.test(other.title)
@@ -86,8 +84,17 @@ function deduplicateBlocks(blocks: TimeBlock[]): TimeBlock[] {
     }
     keptTransport.push(block);
   }
-  
-  return [...otherBlocks, ...keptTransport];
+
+  // Deduplicate accommodation: keep one per unique name (normalized)
+  const seenAccommodations = new Map<string, TimeBlock>();
+  for (const block of accommodationBlocks) {
+    const key = block.title.toLowerCase().replace(/^(check[- ]?in|check[- ]?out)[:\s]*/i, "").trim();
+    if (!seenAccommodations.has(key)) {
+      seenAccommodations.set(key, block);
+    }
+  }
+
+  return [...otherBlocks, ...keptTransport, ...Array.from(seenAccommodations.values())];
 }
 
 interface DashboardProps {
