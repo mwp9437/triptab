@@ -52,6 +52,8 @@ const STEPS = ["Destination & Dates", "Preferences", "Planning Mode"];
 
 export default function WizardContainer({ intake, onUpdate, onComplete, onBack }: WizardContainerProps) {
   const [step, setStep] = useState(0);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const update = (partial: Partial<TripIntake>) => {
     onUpdate({ ...intake, ...partial });
