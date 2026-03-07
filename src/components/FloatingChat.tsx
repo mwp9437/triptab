@@ -4,18 +4,11 @@ import { MessageCircle, X, Send, Loader2, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChatMessage, TripPlan } from "@/types/itinerary";
-import { ActivityOption } from "@/types/intake";
-import { streamChat, createMessageId, suggestActivities, modifyItinerary } from "@/lib/chat";
+import { streamChat, createMessageId, modifyItinerary } from "@/lib/chat";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
-const PROMPTS_COLLABORATIVE = [
-  "I want to explore temples on Day 3",
-  "Find a sunset dinner spot",
-  "Add a day trip on Thursday",
-];
-
-const PROMPTS_AUTO = [
+const PROMPTS = [
   "Add ski après on Wednesday afternoon",
   "Move the onsen back two hours",
   "Find a cheaper hotel option",
@@ -26,8 +19,6 @@ interface FloatingChatProps {
   conversationHistory: { role: string; content: string }[];
   currentPlan?: TripPlan | null;
   onPlanUpdate?: (plan: TripPlan) => void;
-  onSuggestionsReady?: (options: ActivityOption[], followUp: string) => void;
-  collaborative?: boolean;
   intakeContext?: string;
 }
 
@@ -35,8 +26,6 @@ export default function FloatingChat({
   conversationHistory,
   currentPlan,
   onPlanUpdate,
-  onSuggestionsReady,
-  collaborative,
   intakeContext,
 }: FloatingChatProps) {
   const [state, setState] = useState<"closed" | "open" | "minimized">("closed");
@@ -65,23 +54,8 @@ export default function FloatingChat({
       ...updatedMessages.map((m) => ({ role: m.role, content: m.content })),
     ];
 
-    // Collaborative mode: suggest activities
-    if (collaborative && onSuggestionsReady) {
-      try {
-        const result = await suggestActivities(apiMessages, msg);
-        if (result.suggestions && result.suggestions.length > 0) {
-          onSuggestionsReady(result.suggestions, result.followUp || "");
-          const assistantMsg: ChatMessage = { id: createMessageId(), role: "assistant", content: result.followUp || "Here are some options. Pick one to add it.", timestamp: new Date() };
-          setMessages((prev) => [...prev, assistantMsg]);
-          if (state !== "open") setUnread((n) => n + 1);
-          setIsStreaming(false);
-          return;
-        }
-      } catch { /* Fall through */ }
-    }
-
-    // Auto mode: modify itinerary
-    if (!collaborative && currentPlan && onPlanUpdate) {
+    // Modify itinerary
+    if (currentPlan && onPlanUpdate) {
       try {
         const chatHistory = updatedMessages.slice(0, -1).map((m) => ({ role: m.role, content: m.content }));
         const result = await modifyItinerary(currentPlan, msg, chatHistory);
@@ -127,8 +101,6 @@ export default function FloatingChat({
   const minimizeChat = () => setState("minimized");
   const closeChat = () => setState("closed");
 
-  const prompts = collaborative ? PROMPTS_COLLABORATIVE : PROMPTS_AUTO;
-
   return (
     <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
       <AnimatePresence>
@@ -143,9 +115,7 @@ export default function FloatingChat({
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/15">
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-primary" />
-                <span className="font-display font-semibold text-sm text-foreground">
-                  {collaborative ? "Plan Together" : "Edit Your Plan"}
-                </span>
+                <span className="font-display font-semibold text-sm text-foreground">Edit Your Plan</span>
               </div>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-white/20" onClick={minimizeChat} title="Minimize">
@@ -162,12 +132,10 @@ export default function FloatingChat({
               {messages.length === 0 && (
                 <div className="space-y-2 mt-4">
                   <p className="text-xs text-muted-foreground text-center font-body px-2">
-                    {collaborative
-                      ? "Tell me what you want to do each day and I'll find the best options."
-                      : "Ask me to adjust your itinerary — add activities, move things around, or swap options."}
+                    Ask me to adjust your itinerary — add activities, move things around, or swap options.
                   </p>
                   <div className="space-y-1 px-2">
-                    {prompts.map((p) => (
+                    {PROMPTS.map((p) => (
                       <button
                         key={p}
                         onClick={() => sendMessage(p)}
@@ -211,7 +179,7 @@ export default function FloatingChat({
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={collaborative ? "What do you want to do?" : "Adjust your plan..."}
+                  placeholder="Adjust your plan..."
                   className="min-h-[36px] max-h-[72px] resize-none text-xs rounded-xl border-white/20 bg-white/40 backdrop-blur-sm font-body focus:bg-white/60 transition-all"
                   rows={1}
                   disabled={isStreaming}
