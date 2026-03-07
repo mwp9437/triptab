@@ -24,7 +24,6 @@ export interface TripIntake {
   mobility: MobilityLevel;
   mustDos: string;
   avoids: string;
-  planningMode: PlanningMode;
 }
 
 export interface ActivityOption {
