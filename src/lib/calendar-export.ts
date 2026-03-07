@@ -18,7 +18,7 @@ export function generateICS(plan: TripPlan): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//TripCraft//EN",
+    "PRODID:-//TripTab//EN",
     "CALSCALE:GREGORIAN",
     `X-WR-CALNAME:${escapeICS(plan.destination)} Trip`,
   ];

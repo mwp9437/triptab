@@ -50,8 +50,8 @@ export default function LandingHero({ onSubmitIdea }: LandingHeroProps) {
             <Plane className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-white">TripCraft</h1>
-            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">Your Personal Travel Planner</p>
+            <h1 className="text-xl font-display font-bold text-white">TripTab</h1>
+            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">AI Trip Manager</p>
           </div>
         </div>
       </header>

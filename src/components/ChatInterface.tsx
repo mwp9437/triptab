@@ -113,8 +113,8 @@ export default function ChatInterface({ onGenerateItinerary, isGenerating }: Cha
             <Plane className="w-5 h-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-foreground">TripCraft</h1>
-            <p className="text-xs text-muted-foreground font-body">AI Travel Planner</p>
+            <h1 className="text-xl font-display font-bold text-foreground">TripTab</h1>
+            <p className="text-xs text-muted-foreground font-body">AI Trip Manager</p>
           </div>
         </div>
       </header>
