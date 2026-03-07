@@ -177,43 +177,59 @@ export default function Dashboard({
 
       <div className="relative z-10">
         {/* Top bar — glass */}
-        <header className="border-b border-white/15 px-6 py-3 flex items-center justify-between sticky top-0 glass-card z-40">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 hover:bg-white/20">
+        <header className="border-b border-white/15 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sticky top-0 glass-card z-40">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 hover:bg-white/20 shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <div>
-              <h1 className="font-display font-bold text-lg text-foreground">{plan.destination}</h1>
-              <p className="text-xs text-muted-foreground font-body tracking-wide">
+            <div className="min-w-0">
+              <h1 className="font-display font-bold text-base sm:text-lg text-foreground truncate">{plan.destination}</h1>
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-body tracking-wide">
                 {plan.startDate} → {plan.endDate} · {plan.travelers} traveler{plan.travelers > 1 ? "s" : ""}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {user && (
-              <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={() => navigate("/my-trips")}>
-                <FolderOpen className="w-4 h-4" /> My Trips
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex" onClick={() => navigate("/my-trips")}>
+                <FolderOpen className="w-4 h-4" /> <span className="hidden md:inline">My Trips</span>
+              </Button>
+            )}
+            {user && (
+              <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => navigate("/my-trips")}>
+                <FolderOpen className="w-4 h-4" />
               </Button>
             )}
             {tripId && <InviteModal tripId={tripId} />}
             {onSave && (
-              <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={onSave} disabled={saving}>
+              <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={onSave} disabled={saving}>
+                <Save className="w-4 h-4" />
+              </Button>
+            )}
+            {onSave && (
+              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex" onClick={onSave} disabled={saving}>
                 <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}
               </Button>
             )}
-            <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={handlePrint}>
-              <Download className="w-4 h-4" /> PDF
+            <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={handlePrint}>
+              <Download className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex" onClick={handlePrint}>
+              <Download className="w-4 h-4" /> <span className="hidden md:inline">PDF</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30"
+              className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex"
               onClick={() => downloadICS(plan)}
             >
-              <CalendarDays className="w-4 h-4" /> Sync
+              <CalendarDays className="w-4 h-4" /> <span className="hidden md:inline">Sync</span>
+            </Button>
+            <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => downloadICS(plan)}>
+              <CalendarDays className="w-4 h-4" />
             </Button>
             {user && (
-              <Button variant="ghost" size="sm" className="gap-2 rounded-xl" onClick={signOut}>
+              <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={signOut}>
                 <LogOut className="w-4 h-4" />
               </Button>
             )}
@@ -221,14 +237,14 @@ export default function Dashboard({
         </header>
 
         {/* Content — independent scroll panes */}
-        <div className="flex flex-col lg:flex-row" style={{ height: "calc(100vh - 57px)" }}>
+        <div className="flex flex-col lg:flex-row" style={{ height: "calc(100vh - 49px)" }}>
           {/* Left: Itinerary */}
           <div className={`flex-1 flex flex-col overflow-hidden ${!hideActionsSidebar ? "lg:border-r border-white/10" : ""}`}>
             {/* Sticky header + day bubbles */}
-            <div className="px-6 pt-6 pb-0">
-              <h2 className="font-display font-bold text-xl text-foreground mb-4 italic">Your Itinerary</h2>
+            <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
+              <h2 className="font-display font-bold text-lg sm:text-xl text-foreground mb-3 sm:mb-4 italic">Your Itinerary</h2>
             </div>
-            <div className="px-6 pb-3 flex gap-2 overflow-x-auto sticky top-0 z-30 glass-card border-b border-white/10">
+            <div className="px-4 sm:px-6 pb-2 sm:pb-3 flex gap-1.5 sm:gap-2 overflow-x-auto sticky top-0 z-30 glass-card border-b border-white/10">
               {plan.itinerary.map((day, idx) => {
                 const d = new Date(day.date + "T00:00:00");
                 const dayLetter = d.toLocaleDateString("en-US", { weekday: "short" }).charAt(0);
@@ -240,17 +256,17 @@ export default function Dashboard({
                       const el = document.getElementById(`day-section-${idx}`);
                       el?.scrollIntoView({ behavior: "smooth", block: "start" });
                     }}
-                    className="flex flex-col items-center min-w-[40px] px-2 py-1.5 rounded-2xl glass hover:bg-primary/15 transition-colors group"
+                    className="flex flex-col items-center min-w-[36px] sm:min-w-[40px] px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-2xl glass hover:bg-primary/15 transition-colors group"
                   >
-                    <span className="text-xs font-display font-bold text-muted-foreground group-hover:text-primary transition-colors">{dayLetter}</span>
-                    <span className="text-sm font-body font-semibold text-foreground group-hover:text-primary transition-colors">{dateNum}</span>
+                    <span className="text-[10px] sm:text-xs font-display font-bold text-muted-foreground group-hover:text-primary transition-colors">{dayLetter}</span>
+                    <span className="text-xs sm:text-sm font-body font-semibold text-foreground group-hover:text-primary transition-colors">{dateNum}</span>
                   </button>
                 );
               })}
             </div>
 
             {/* Scrollable itinerary */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6">
             <Accordion type="multiple" defaultValue={plan.itinerary.map((_, i) => `day-${i}`)}>
               {plan.itinerary.map((day, idx) => {
                 const dedupedBlocks = deduplicateBlocks(day.blocks);
@@ -455,7 +471,7 @@ export default function Dashboard({
 
           {/* Right: Actions & Budget — glass cards */}
           {!hideActionsSidebar && (
-            <div className="lg:w-[380px] overflow-y-auto p-6 space-y-5">
+            <div className="lg:w-[380px] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
               {/* Personal budget panel for group trips */}
               {tripId && isOptedIn && onSetBudgetCap && (
                 <MyBudgetPanel

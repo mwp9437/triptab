@@ -47,24 +47,24 @@ export default function MyTrips() {
       </div>
 
       <div className="relative z-10">
-        <header className="border-b border-white/15 px-6 py-3 flex items-center justify-between sticky top-0 glass-card z-40">
-          <div className="flex items-center gap-3">
+        <header className="border-b border-white/15 px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 glass-card z-40">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="h-8 w-8">
               <ArrowLeft className="w-4 h-4" />
             </Button>
-            <h1 className="font-display font-bold text-lg text-foreground italic">My Trips</h1>
+            <h1 className="font-display font-bold text-base sm:text-lg text-foreground italic">My Trips</h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2 rounded-xl glass border-white/20" onClick={() => navigate("/")}>
-              <Plus className="w-4 h-4" /> New Trip
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Button variant="outline" size="sm" className="gap-1.5 rounded-xl glass border-white/20 text-xs sm:text-sm" onClick={() => navigate("/")}>
+              <Plus className="w-4 h-4" /> <span className="hidden sm:inline">New Trip</span>
             </Button>
-            <Button variant="ghost" size="sm" className="gap-2 rounded-xl" onClick={signOut}>
-              <LogOut className="w-4 h-4" /> Sign Out
+            <Button variant="ghost" size="sm" className="gap-1.5 rounded-xl text-xs sm:text-sm" onClick={signOut}>
+              <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </header>
 
-        <div className="max-w-4xl mx-auto px-6 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           {loading ? (
             <div className="flex justify-center py-20">
               <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
