@@ -137,6 +137,7 @@ export default function Dashboard({
   const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
   const [remixBlock, setRemixBlock] = useState<TimeBlock | null>(null);
+  const [mobileTab, setMobileTab] = useState<"schedule" | "details">("schedule");
 
   const togglePackingItem = (id: string) => {
     setPackingList((items) =>
@@ -238,8 +239,39 @@ export default function Dashboard({
 
         {/* Content — independent scroll panes */}
         <div className="flex flex-col lg:flex-row" style={{ height: "calc(100vh - 49px)" }}>
+          {/* Mobile tab toggle */}
+          {!hideActionsSidebar && (
+            <div className="flex lg:hidden px-4 pt-3 pb-1 gap-1">
+              <button
+                onClick={() => setMobileTab("schedule")}
+                className={`flex-1 py-2 rounded-xl text-sm font-display font-semibold transition-all ${
+                  mobileTab === "schedule"
+                    ? "glass-card text-foreground shadow-md"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <CalendarDays className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                Schedule
+              </button>
+              <button
+                onClick={() => setMobileTab("details")}
+                className={`flex-1 py-2 rounded-xl text-sm font-display font-semibold transition-all ${
+                  mobileTab === "details"
+                    ? "glass-card text-foreground shadow-md"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Check className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                Details
+                {actionItems.length > 0 && (
+                  <span className="ml-1.5 text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{completedCount}/{actionItems.length}</span>
+                )}
+              </button>
+            </div>
+          )}
+
           {/* Left: Itinerary */}
-          <div className={`flex-1 flex flex-col overflow-hidden ${!hideActionsSidebar ? "lg:border-r border-white/10" : ""}`}>
+          <div className={`flex-1 flex flex-col overflow-hidden ${!hideActionsSidebar ? "lg:border-r border-white/10" : ""} ${mobileTab !== "schedule" ? "hidden lg:flex" : ""}`}>
             {/* Sticky header + day bubbles */}
             <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-0">
               <h2 className="font-display font-bold text-lg sm:text-xl text-foreground mb-3 sm:mb-4 italic">Your Itinerary</h2>
@@ -471,7 +503,7 @@ export default function Dashboard({
 
           {/* Right: Actions & Budget — glass cards */}
           {!hideActionsSidebar && (
-            <div className="lg:w-[380px] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
+            <div className={`lg:w-[380px] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 ${mobileTab !== "details" ? "hidden lg:block" : ""}`}>
               {/* Personal budget panel for group trips */}
               {tripId && isOptedIn && onSetBudgetCap && (
                 <MyBudgetPanel
