@@ -134,6 +134,7 @@ interface DashboardProps {
   onToggleOptIn?: (blockId: string) => void;
   budgetCap?: number | null;
   onSetBudgetCap?: (cap: number | null) => void;
+  travelerSlot?: React.ReactNode;
 }
 
 export default function Dashboard({
@@ -154,6 +155,7 @@ export default function Dashboard({
   onToggleOptIn,
   budgetCap,
   onSetBudgetCap,
+  travelerSlot,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -228,6 +230,7 @@ export default function Dashboard({
               </Button>
             )}
             {tripId && <InviteModal tripId={tripId} />}
+            {travelerSlot}
             {onSave && (
               <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={onSave} disabled={saving}>
                 <Save className="w-4 h-4" />

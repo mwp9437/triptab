@@ -11,8 +11,10 @@ import Dashboard from "@/components/Dashboard";
 import ActionItemsModal from "./ActionItemsModal";
 import FloatingChat from "@/components/FloatingChat";
 import AuthPromptDialog from "@/components/AuthPromptDialog";
+import TravelerManager from "@/components/TravelerManager";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberOptIns } from "@/hooks/use-member-optins";
+import { useExpenses } from "@/hooks/use-expenses";
 import luxuryBedroom from "@/assets/luxury-bedroom.png";
 
 function createEmptyPlan(intake: TripIntake): TripPlan {
@@ -53,6 +55,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
   const { isOptedIn, toggleOptIn, budgetCap, setBudgetCap } = useMemberOptIns(tripId);
+  const { travelers, expenses, addTraveler, removeTraveler } = useExpenses(tripId);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   const intakeContext = intakeToContext(intake);
@@ -196,6 +199,15 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onToggleOptIn={toggleOptIn}
           budgetCap={budgetCap}
           onSetBudgetCap={setBudgetCap}
+          travelerSlot={tripId ? (
+            <TravelerManager
+              travelers={travelers}
+              expenses={expenses}
+              travelerCount={intake.travelerCount}
+              onAddTraveler={addTraveler}
+              onRemoveTraveler={removeTraveler}
+            />
+          ) : undefined}
         />
       </div>
 
