@@ -170,14 +170,15 @@ export default function Dashboard({
           </div>
         </header>
 
-        {/* Content */}
-        <div className="flex flex-col lg:flex-row">
+        {/* Content — independent scroll panes */}
+        <div className="flex flex-col lg:flex-row" style={{ height: "calc(100vh - 57px)" }}>
           {/* Left: Itinerary */}
-          <div className={`flex-1 p-6 ${!hideActionsSidebar ? "lg:border-r border-white/10" : ""}`}>
-            <h2 className="font-display font-bold text-xl text-foreground mb-4 italic">Your Itinerary</h2>
-
-            {/* Day bubbles navigation */}
-            <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+          <div className={`flex-1 flex flex-col overflow-hidden ${!hideActionsSidebar ? "lg:border-r border-white/10" : ""}`}>
+            {/* Sticky header + day bubbles */}
+            <div className="px-6 pt-6 pb-0">
+              <h2 className="font-display font-bold text-xl text-foreground mb-4 italic">Your Itinerary</h2>
+            </div>
+            <div className="px-6 pb-3 flex gap-2 overflow-x-auto sticky top-0 z-30 glass-card border-b border-white/10">
               {plan.itinerary.map((day, idx) => {
                 const d = new Date(day.date + "T00:00:00");
                 const dayLetter = d.toLocaleDateString("en-US", { weekday: "short" }).charAt(0);
@@ -198,6 +199,8 @@ export default function Dashboard({
               })}
             </div>
 
+            {/* Scrollable itinerary */}
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
             <Accordion type="multiple" defaultValue={plan.itinerary.map((_, i) => `day-${i}`)}>
               {plan.itinerary.map((day, idx) => {
                 const dedupedBlocks = deduplicateBlocks(day.blocks);
@@ -390,11 +393,12 @@ export default function Dashboard({
                 );
               })}
             </Accordion>
+            </div>
           </div>
 
           {/* Right: Actions & Budget — glass cards */}
           {!hideActionsSidebar && (
-            <div className="lg:w-[380px] p-6 space-y-5">
+            <div className="lg:w-[380px] overflow-y-auto p-6 space-y-5">
               <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-display flex items-center gap-2">
