@@ -582,6 +582,7 @@ export default function Dashboard({
                               <div className="flex items-center gap-2">
                                 <EditablePrice
                                   cost={block.cost}
+                                  isUserPrice={block.isUserPrice}
                                   suffix="/night"
                                   onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
                                 />
