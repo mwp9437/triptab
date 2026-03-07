@@ -8,7 +8,7 @@ interface EditablePriceProps {
   onUpdate: (newCost: number) => void;
 }
 
-export default function EditablePrice({ cost, suffix, onUpdate }: EditablePriceProps) {
+export default function EditablePrice({ cost, suffix, isUserPrice, onUpdate }: EditablePriceProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(cost ?? 0));
   const inputRef = useRef<HTMLInputElement>(null);
