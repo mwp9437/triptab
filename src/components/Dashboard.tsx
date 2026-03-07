@@ -137,6 +137,7 @@ export default function Dashboard({
   const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
   const [remixBlock, setRemixBlock] = useState<TimeBlock | null>(null);
+  const [mobileTab, setMobileTab] = useState<"schedule" | "details">("schedule");
 
   const togglePackingItem = (id: string) => {
     setPackingList((items) =>
