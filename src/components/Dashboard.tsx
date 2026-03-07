@@ -830,6 +830,9 @@ export default function Dashboard({
                   onAddExpense={onAddExpense}
                   onDeleteExpense={onDeleteExpense}
                   onSave={onSave}
+                  onOpenTravelers={onOpenTravelers}
+                  initialValues={quickAddValues}
+                  onClearInitialValues={() => setQuickAddValues(undefined)}
                 />
               ) : (
                 <div className="text-center py-12 text-muted-foreground text-sm font-body">
