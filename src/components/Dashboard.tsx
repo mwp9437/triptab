@@ -134,6 +134,7 @@ interface DashboardProps {
   onToggleOptIn?: (blockId: string) => void;
   budgetCap?: number | null;
   onSetBudgetCap?: (cap: number | null) => void;
+  travelerSlot?: React.ReactNode;
 }
 
 export default function Dashboard({
