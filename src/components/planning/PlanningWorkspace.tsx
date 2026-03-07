@@ -140,18 +140,20 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   }, [user]);
 
   const performSave = async () => {
+    console.log("performSave called", { hasPlan: !!plan, hasUser: !!user, tripId });
     if (!plan || !user) return;
     setSaving(true);
     const planWithActions = { ...plan, actionItems };
 
     try {
       if (tripId) {
-        await supabase.from("trips").update({
+        const { error } = await supabase.from("trips").update({
           plan_data: planWithActions as any,
           intake_data: intake as any,
           title: plan.destination,
           updated_at: new Date().toISOString(),
         } as any).eq("id", tripId);
+        if (error) throw error;
         toast({ title: "Saved!", description: "Your trip has been updated." });
       } else {
         const { data, error } = await supabase.from("trips").insert({
@@ -165,6 +167,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
         toast({ title: "Saved!", description: "Your trip has been saved." });
       }
     } catch (err: any) {
+      console.error("Save error:", err);
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     }
     setSaving(false);
