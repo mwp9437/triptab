@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
@@ -26,20 +26,28 @@ import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 
-/** Build an Unsplash URL for a destination-themed luxury travel background */
-function getDestinationBackground(destination: string): string {
-  const query = encodeURIComponent(destination + " luxury travel resort");
-  return `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80&fit=crop`; // fallback
+/** Build Unsplash embed URLs for destination-themed luxury backgrounds */
+function getDestinationImageUrl(destination: string): string {
+  const q = encodeURIComponent(destination.trim() + " luxury travel");
+  return `https://source.unsplash.com/1920x1080/?${q}`;
 }
 
-/** Use multiple curated Unsplash search URLs for destination backgrounds */
-function getDestinationBackgrounds(destination: string): string[] {
-  const q = encodeURIComponent(destination.trim());
-  return [
-    `https://source.unsplash.com/1920x1080/?${q}+luxury+resort`,
-    `https://source.unsplash.com/1920x1080/?${q}+travel+landscape`,
-    `https://source.unsplash.com/1920x1080/?${q}+hotel+pool`,
-  ];
+/** Hook: resolve a high-quality destination background with fallback */
+function useDestinationBackground(destination: string, fallback: string) {
+  const [bgUrl, setBgUrl] = useState<string>("");
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const primary = getDestinationImageUrl(destination);
+    const img = new Image();
+    img.onload = () => { setBgUrl(primary); setLoaded(true); };
+    img.onerror = () => { setBgUrl(fallback); setLoaded(true); };
+    img.src = primary;
+    // Start showing fallback immediately while loading
+    setBgUrl(fallback);
+  }, [destination, fallback]);
+
+  return { bgUrl, loaded };
 }
 
 const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
@@ -180,17 +188,19 @@ export default function Dashboard({
     window.print();
   };
 
+  const { bgUrl } = useDestinationBackground(plan.destination, luxuryResort);
+
   return (
     <div className="relative min-h-screen">
       {/* Destination-themed background */}
       <div className="fixed inset-0 z-0">
         <img
-          src={getDestinationBackground(plan.destination)}
+          src={bgUrl}
           alt=""
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-opacity duration-700"
           onError={(e) => { (e.target as HTMLImageElement).src = luxuryResort; }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/90 to-background/95 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/75 to-background/85 backdrop-blur-sm" />
       </div>
 
       <div className="relative z-10">
