@@ -15,7 +15,7 @@ const BUDGET_LABELS: Record<number, Record<string, string>> = {
 
 function buildPromptFromIntake(intake: any): string {
   const b = intake.budget || {};
-  const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip.` : "";
+  const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip. Target ~85% of this cap ($${Math.round(b.totalBudget * 0.85)}) to leave a buffer for spontaneous spending.` : "";
   const dest = intake.destination?.trim() || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
   return `Plan a trip to ${dest} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
 
