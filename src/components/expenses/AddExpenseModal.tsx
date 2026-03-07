@@ -182,20 +182,13 @@ export default function AddExpenseModal({
     });
   };
 
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) resetForm();
-        onOpenChange(v);
-      }}
-    >
-      <DialogContent className="glass-card border-white/15 sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-display text-lg">Add Expense</DialogTitle>
-        </DialogHeader>
+  const handleOpenChange = (v: boolean) => {
+    if (!v) resetForm();
+    onOpenChange(v);
+  };
 
-        <div className="space-y-4">
+  const formContent = (
+    <div className="space-y-4 px-1">
           {/* Amount */}
           <div className="flex items-center gap-2 glass rounded-2xl px-4 py-3">
             <DollarSign className="w-5 h-5 text-primary shrink-0" />
