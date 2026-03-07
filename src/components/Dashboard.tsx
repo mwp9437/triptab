@@ -283,15 +283,15 @@ export default function Dashboard({
                             const style = BLOCK_STYLES[block.category];
                             const Icon = style.icon;
                             const duration = getDurationMinutes(block.startTime, block.endTime);
-                            // Map duration to min-height: 30min → 60px, 60min → 80px, 120min+ → 100px+
                             const minHeight = Math.min(Math.max(Math.round(duration * 0.6 + 40), 56), 140);
+                            const optedIn = isOptedIn ? isOptedIn(block.id) : true;
                             
                             return (
                               <motion.div
                                 key={block.id}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className={`glass rounded-2xl ${style.colorClass} group relative cursor-pointer hover:shadow-lg transition-all mb-2 flex flex-col justify-center`}
+                                className={`glass rounded-2xl ${style.colorClass} group relative cursor-pointer hover:shadow-lg transition-all mb-2 flex flex-col justify-center ${!optedIn ? "opacity-50" : ""}`}
                                 style={{ minHeight: `${minHeight}px` }}
                                 onClick={() => setSelectedBlock(block)}
                               >
@@ -320,6 +320,15 @@ export default function Dashboard({
                                         cost={block.cost}
                                         onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
                                       />
+                                      {onToggleOptIn && tripId && (
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); onToggleOptIn(block.id); }}
+                                          className={`transition-opacity p-1 rounded-lg ${optedIn ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:bg-muted/30"}`}
+                                          title={optedIn ? "Opted in — click to opt out" : "Opted out — click to opt in"}
+                                        >
+                                          {optedIn ? <UserCheck className="w-3.5 h-3.5" /> : <UserX className="w-3.5 h-3.5" />}
+                                        </button>
+                                      )}
                                       {onDeleteBlock && (
                                         <button
                                           onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
