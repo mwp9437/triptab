@@ -132,7 +132,7 @@ Rules:
 - Cost per person in USD
 - 6-10 blocks per day including meals and free time
 - IMPORTANT: Every day MUST include an accommodation block (category "accommodation") showing the hotel/lodging for that night
-- Respect the budget tier preferences. If a per-person budget cap is given, keep all estimated costs per person under that cap.
+- Respect the budget tier preferences. If a per-person budget cap is given, target approximately 85% of that cap for your planned costs — this leaves a ~15% buffer for spontaneous spending, tips, price variations, and upgrades. For example, if the cap is $3,000, plan for roughly $2,500–$2,600 in total estimated costs. Do NOT plan right up to the limit. The budget summary 'total' field should reflect your planned amount, not the cap.
 - Be opinionated about recommendations — pick the best options, don't hedge
 - Generate 15-30 packing items based on: destination climate/weather for the travel dates, planned activities (hiking gear, swimwear, formal wear etc.), location-specific needs (adapters, sunscreen, mosquito repellent etc.), and trip duration
 - Each packing item should have a brief "reason" explaining why it's needed
