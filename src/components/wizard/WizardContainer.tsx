@@ -239,7 +239,7 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-display font-bold text-foreground mb-1">Where are you headed?</h2>
-        <p className="text-sm text-muted-foreground font-body">We've pre-filled what we could from your input.</p>
+        <p className="text-sm text-muted-foreground font-body">Let's start with the basics.</p>
       </div>
 
       <div className="space-y-4">
