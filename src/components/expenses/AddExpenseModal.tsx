@@ -435,7 +435,31 @@ export default function AddExpenseModal({
           >
             {submitting ? "Adding..." : "Add Expense"}
           </Button>
-        </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={handleOpenChange}>
+        <DrawerContent className="glass-card border-white/15 max-h-[92vh]">
+          <DrawerHeader>
+            <DrawerTitle className="font-display text-lg">Add Expense</DrawerTitle>
+          </DrawerHeader>
+          <div className="overflow-y-auto px-4 pb-6">
+            {formContent}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="glass-card border-white/15 sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="font-display text-lg">Add Expense</DialogTitle>
+        </DialogHeader>
+        {formContent}
       </DialogContent>
     </Dialog>
   );
