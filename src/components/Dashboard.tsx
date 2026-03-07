@@ -468,6 +468,7 @@ export default function Dashboard({
                                     <div className="flex items-center gap-1">
                                       <EditablePrice
                                         cost={block.cost}
+                                        isUserPrice={block.isUserPrice}
                                         onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
                                       />
                                       {onToggleOptIn && tripId && (
@@ -581,6 +582,7 @@ export default function Dashboard({
                               <div className="flex items-center gap-2">
                                 <EditablePrice
                                   cost={block.cost}
+                                  isUserPrice={block.isUserPrice}
                                   suffix="/night"
                                   onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
                                 />
@@ -666,7 +668,10 @@ export default function Dashboard({
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex justify-between text-sm font-body">
-                        <span className="text-muted-foreground">Estimated total</span>
+                        <div>
+                          <span className="text-muted-foreground">Estimated total</span>
+                          <p className="text-[10px] text-muted-foreground/70 font-body">(AI estimates — actual costs may vary)</p>
+                        </div>
                         <span className="font-semibold text-foreground">${plan.budget.total.toLocaleString()}</span>
                       </div>
                       <Progress value={budgetPercent} className="h-2" />
@@ -717,7 +722,7 @@ export default function Dashboard({
                                   }`}>
                                     {item.text}
                                     {item.cost != null && item.cost > 0 && (
-                                      <span className="text-xs text-muted-foreground ml-1">(~${item.cost})</span>
+                                      <span className="text-xs text-muted-foreground ml-1">(~${item.cost} est.)</span>
                                     )}
                                   </span>
                                 </label>

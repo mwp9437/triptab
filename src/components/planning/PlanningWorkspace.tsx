@@ -102,7 +102,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     const updatedDays = [...plan.itinerary];
     updatedDays[dayIndex] = {
       ...updatedDays[dayIndex],
-      blocks: updatedDays[dayIndex].blocks.map((b) => b.id === blockId ? { ...b, cost } : b),
+      blocks: updatedDays[dayIndex].blocks.map((b) => b.id === blockId ? { ...b, cost, isUserPrice: true } : b),
     };
     setPlan({ ...plan, itinerary: updatedDays });
   };

@@ -4,10 +4,11 @@ import { DollarSign } from "lucide-react";
 interface EditablePriceProps {
   cost: number | undefined;
   suffix?: string;
+  isUserPrice?: boolean;
   onUpdate: (newCost: number) => void;
 }
 
-export default function EditablePrice({ cost, suffix, onUpdate }: EditablePriceProps) {
+export default function EditablePrice({ cost, suffix, isUserPrice, onUpdate }: EditablePriceProps) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(cost ?? 0));
   const inputRef = useRef<HTMLInputElement>(null);
@@ -62,9 +63,11 @@ export default function EditablePrice({ cost, suffix, onUpdate }: EditablePriceP
       }}
       title="Click to edit price"
     >
+      {!isUserPrice && <span className="text-muted-foreground">~</span>}
       <DollarSign className="w-3 h-3" />
       {cost}
       {suffix && <span className="text-muted-foreground">{suffix}</span>}
+      {!isUserPrice && !suffix && <span className="text-muted-foreground ml-0.5 text-[10px]">est.</span>}
     </span>
   );
 }

@@ -31,6 +31,10 @@ Modification rules:
 - Be opinionated: pick the best option, don't hedge
 - Return ONLY valid JSON, no markdown fences
 
+When adding flights or transport, reference the user's home city from the trip context. Estimate costs realistically based on actual route distances and market rates. For ALL cost estimates, base them on realistic market rates for the destination — hotels, meals, activities, and transport should reflect typical prices for that city and budget tier. NEVER make up round numbers that don't reflect reality.
+
+Before returning, verify: flights reference correct cities, hotels are in the right city for each night, timing is logical (no museum at 6am, no dinner at 3pm), activities on a given day are in the same area, and no activities teleport between distant locations without transport blocks.
+
 Schema reminder:
 - block category: "transport" | "activity" | "meal" | "free" | "accommodation"
 - actionItem category: "flights" | "hotels" | "restaurants" | "tickets" | "packing"
