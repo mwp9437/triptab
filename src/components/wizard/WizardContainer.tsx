@@ -39,7 +39,7 @@ import luxuryBedroom from "@/assets/luxury-bedroom.png";
 import luxuryTerrace from "@/assets/luxury-terrace.png";
 import luxuryResort from "@/assets/luxury-resort.png";
 
-const STEP_BACKGROUNDS = [luxuryTerrace, luxuryResort, luxuryBedroom];
+const STEP_BACKGROUNDS = [luxuryTerrace, luxuryResort];
 
 interface WizardContainerProps {
   intake: TripIntake;
