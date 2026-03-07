@@ -392,11 +392,12 @@ export default function Dashboard({
                 );
               })}
             </Accordion>
+            </div>
           </div>
 
           {/* Right: Actions & Budget — glass cards */}
           {!hideActionsSidebar && (
-            <div className="lg:w-[380px] p-6 space-y-5">
+            <div className="lg:w-[380px] overflow-y-auto p-6 space-y-5">
               <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-display flex items-center gap-2">
