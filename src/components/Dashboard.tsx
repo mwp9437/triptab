@@ -24,7 +24,10 @@ import { downloadICS } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
+import ExpensesPanel from "./expenses/ExpensesPanel";
+import { Expense, Traveler } from "@/types/expenses";
 import luxuryResort from "@/assets/luxury-resort.png";
+import { cn } from "@/lib/utils";
 
 /** Build Unsplash embed URLs for destination-themed luxury backgrounds */
 function getDestinationImageUrl(destination: string): string {
