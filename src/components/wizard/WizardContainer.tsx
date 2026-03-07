@@ -186,7 +186,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             disabled={!canProceed()}
             className="gap-1.5 sm:gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 sm:px-6 shadow-lg shadow-primary/20 text-sm"
           >
-            {step === 2 ? "Build My Trip" : "Next"} <ArrowRight className="w-4 h-4" />
+            {step === 1 ? "Build My Trip" : "Next"} <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </div>
