@@ -405,6 +405,9 @@ export default function Dashboard({
                                 style={{ minHeight: `${minHeight}px` }}
                                 onClick={() => setSelectedBlock(block)}
                               >
+                                {expenseBlockIds.has(block.id) && (
+                                  <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-sage/20 text-sage flex items-center justify-center text-[10px] font-bold z-10" title="Has expense logged">$</span>
+                                )}
                                 <div className="p-3.5">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-start gap-2.5">
