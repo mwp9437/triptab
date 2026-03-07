@@ -150,7 +150,7 @@ export default function AddExpenseModal({
     setSubmitting(true);
     try {
       await onAddExpense({
-        tripId: plan.destination, // will be overridden by hook
+        tripId: plan.destination,
         blockId: linkedBlockId,
         description: description.trim(),
         amount: numericAmount,
@@ -164,6 +164,7 @@ export default function AddExpenseModal({
         })),
         splitMethod,
       });
+      toast({ title: "Expense added", description: `$${numericAmount.toFixed(2)} for ${description.trim()}` });
       resetForm();
       onOpenChange(false);
     } catch {
