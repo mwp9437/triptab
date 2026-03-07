@@ -482,6 +482,16 @@ export default function Dashboard({
                                   {block.notes && (
                                     <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body line-clamp-2">{block.notes}</p>
                                   )}
+                                  {/* Quick-add expense */}
+                                  {onAddExpense && tripId && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleQuickAddExpense(block, day.date); }}
+                                      className="absolute bottom-2 right-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-sage/10 text-muted-foreground hover:text-sage"
+                                      title="Log expense"
+                                    >
+                                      <CircleDollarSign className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
                                   {/* Remix button */}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
