@@ -503,7 +503,7 @@ export default function Dashboard({
 
           {/* Right: Actions & Budget — glass cards */}
           {!hideActionsSidebar && (
-            <div className="lg:w-[380px] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5">
+            <div className={`lg:w-[380px] overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-5 ${mobileTab !== "details" ? "hidden lg:block" : ""}`}>
               {/* Personal budget panel for group trips */}
               {tripId && isOptedIn && onSetBudgetCap && (
                 <MyBudgetPanel
