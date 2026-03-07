@@ -144,6 +144,7 @@ interface DashboardProps {
   travelers?: Traveler[];
   onAddExpense?: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
   onDeleteExpense?: (id: string) => Promise<void>;
+  onOpenTravelers?: () => void;
 }
 
 export default function Dashboard({
