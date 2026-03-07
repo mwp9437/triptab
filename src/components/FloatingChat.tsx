@@ -130,14 +130,14 @@ export default function FloatingChat({
   const prompts = collaborative ? PROMPTS_COLLABORATIVE : PROMPTS_AUTO;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
       <AnimatePresence>
         {state === "open" && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="absolute bottom-16 right-0 w-[380px] h-[500px] glass-card rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+            className="fixed inset-x-3 bottom-20 sm:absolute sm:inset-x-auto sm:bottom-16 sm:right-0 sm:w-[380px] h-[70vh] sm:h-[500px] glass-card rounded-3xl shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/15">
@@ -256,7 +256,7 @@ export default function FloatingChat({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => state === "closed" ? openChat() : state === "open" ? closeChat() : openChat()}
-        className="w-14 h-14 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center hover:shadow-xl transition-all border border-primary/30 relative"
+        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center hover:shadow-xl transition-all border border-primary/30 relative"
       >
         {state === "open" ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
         {unread > 0 && state !== "open" && (
