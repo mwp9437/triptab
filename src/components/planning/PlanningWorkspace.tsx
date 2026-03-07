@@ -12,6 +12,7 @@ import OptionsPanel from "./OptionsPanel";
 import ActionItemsModal from "./ActionItemsModal";
 import FloatingChat from "@/components/FloatingChat";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMemberOptIns } from "@/hooks/use-member-optins";
 import luxuryBedroom from "@/assets/luxury-bedroom.png";
 
 function createEmptyPlan(intake: TripIntake): TripPlan {
@@ -54,6 +55,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const [actionItems, setActionItems] = useState<ActionItem[]>(loadedPlan?.actionItems || []);
   const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
+  const { isOptedIn, toggleOptIn, budgetCap, setBudgetCap } = useMemberOptIns(tripId);
 
   const intakeContext = intakeToContext(intake);
   const conversationHistory = [{ role: "system", content: intakeContext }];
@@ -202,6 +204,10 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onSave={handleSave}
           saving={saving}
           tripId={tripId}
+          isOptedIn={isOptedIn}
+          onToggleOptIn={toggleOptIn}
+          budgetCap={budgetCap}
+          onSetBudgetCap={setBudgetCap}
         />
       </div>
 
