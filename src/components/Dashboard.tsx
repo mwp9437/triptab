@@ -196,7 +196,7 @@ export default function Dashboard({
               </Button>
             )}
             {tripId && <InviteModal tripId={tripId} />}
-            {onSave && user && (
+            {onSave && (
               <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={onSave} disabled={saving}>
                 <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}
               </Button>
