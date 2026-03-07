@@ -331,10 +331,6 @@ export default function Dashboard({
               </button>
             </div>
           )}
-                )}
-              </button>
-            </div>
-          )}
 
           {/* Left: Itinerary */}
           <div className={`flex-1 flex flex-col overflow-hidden ${!hideActionsSidebar ? "lg:border-r border-white/10" : ""} ${mobileTab !== "schedule" ? "hidden lg:flex" : ""}`}>
