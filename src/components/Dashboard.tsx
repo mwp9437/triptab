@@ -231,7 +231,18 @@ export default function Dashboard({
   }, {});
 
   const handlePrint = () => {
-    window.print();
+    // Inject expense summary for print if expenses exist
+    if (expenses.length > 0 && travelers.length > 0) {
+      const html = generateExpensePrintHTML(expenses, travelers, plan);
+      const div = document.createElement("div");
+      div.className = "print-expense-summary";
+      div.innerHTML = html;
+      document.body.appendChild(div);
+      window.print();
+      document.body.removeChild(div);
+    } else {
+      window.print();
+    }
   };
 
   const { bgUrl } = useDestinationBackground(plan.destination, luxuryResort);
