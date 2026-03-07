@@ -21,7 +21,8 @@ Return ONLY valid JSON matching this schema:
   "details": {
     "description": "2-3 sentence description of the selected place",
     "highlights": ["highlight 1", "highlight 2", "highlight 3"],
-    "tip": "One insider tip (optional)"
+    "tip": "One insider tip (optional)",
+    "imageQuery": "very specific search query for a photo of this exact place (e.g. 'Park Hyatt Tokyo lobby interior' or 'Senso-ji Temple Asakusa Tokyo cherry blossoms'). For hotels, describe a gallery-worthy interior or exterior shot. For restaurants, describe the signature dish or dining room. For activities, describe the iconic view or experience."
   },
   "alternatives": [
     {

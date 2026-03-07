@@ -135,8 +135,31 @@ export interface BlockDetails {
     description: string;
     highlights: string[];
     tip?: string;
+    imageQuery?: string;
   };
   alternatives: BlockAlternative[];
+}
+
+export async function fetchBlockImage(
+  imageQuery: string,
+  category: string
+): Promise<string | null> {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/block-image`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: SUPABASE_KEY,
+      },
+      body: JSON.stringify({ imageQuery, category }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.imageUrl || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchBlockAlternatives(
