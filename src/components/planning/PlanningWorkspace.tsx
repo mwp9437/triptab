@@ -237,6 +237,15 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
         collaborative={intake.planningMode === "collaborative"}
         intakeContext={intakeContext}
       />
+
+      <AuthPromptDialog
+        open={showAuthPrompt}
+        onOpenChange={setShowAuthPrompt}
+        onAuthenticated={() => {
+          // After auth, trigger save on next render when user is available
+          setTimeout(() => performSave(), 500);
+        }}
+      />
     </div>
   );
 }
