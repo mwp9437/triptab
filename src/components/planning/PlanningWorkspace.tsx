@@ -199,6 +199,15 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onToggleOptIn={toggleOptIn}
           budgetCap={budgetCap}
           onSetBudgetCap={setBudgetCap}
+          travelerSlot={tripId ? (
+            <TravelerManager
+              travelers={travelers}
+              expenses={expenses}
+              travelerCount={intake.travelerCount}
+              onAddTraveler={addTraveler}
+              onRemoveTraveler={removeTraveler}
+            />
+          ) : undefined}
         />
       </div>
 
