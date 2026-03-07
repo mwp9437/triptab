@@ -198,10 +198,19 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
 
 /* ─── Step 1: Destination & Dates ─── */
 function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Partial<TripIntake>) => void }) {
+  const [homeQuery, setHomeQuery] = useState(intake.homeCity);
+  const [showHomeSuggestions, setShowHomeSuggestions] = useState(false);
   const [destQuery, setDestQuery] = useState(intake.destination);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const homeWrapperRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const filteredHomeCities = useMemo(() => {
+    if (!homeQuery.trim()) return POPULAR_DESTINATIONS.slice(0, 8);
+    const q = homeQuery.toLowerCase();
+    return POPULAR_DESTINATIONS.filter(d => d.toLowerCase().includes(q)).slice(0, 8);
+  }, [homeQuery]);
 
   const filteredDestinations = useMemo(() => {
     if (!destQuery.trim()) return POPULAR_DESTINATIONS.slice(0, 8);
@@ -214,10 +223,19 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
       }
+      if (homeWrapperRef.current && !homeWrapperRef.current.contains(e.target as Node)) {
+        setShowHomeSuggestions(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const selectHomeCity = (city: string) => {
+    setHomeQuery(city);
+    onUpdate({ homeCity: city });
+    setShowHomeSuggestions(false);
+  };
 
   const selectDestination = (dest: string) => {
     setDestQuery(dest);
