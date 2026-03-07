@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { UserPlus, X, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link2, Copy, Check, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,93 +11,118 @@ interface InviteModalProps {
   tripId: string;
 }
 
+interface Collaborator {
+  id: string;
+  invited_email: string;
+  role: string;
+  accepted: boolean;
+}
+
 export default function InviteModal({ tripId }: InviteModalProps) {
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<string>("viewer");
-  const [sending, setSending] = useState(false);
-  const [invites, setInvites] = useState<{ email: string; role: string }[]>([]);
+  const [copied, setCopied] = useState(false);
+  const [linkRole, setLinkRole] = useState<string>("viewer");
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
 
-  const handleInvite = async () => {
-    if (!email.trim()) return;
-    setSending(true);
+  const shareUrl = `${window.location.origin}/trip/${tripId}`;
 
-    // Look up user by email to set user_id if they exist
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("user_id")
-      .eq("display_name", email.trim());
+  useEffect(() => {
+    if (!open) return;
+    supabase
+      .from("trip_collaborators")
+      .select("id, invited_email, role, accepted")
+      .eq("trip_id", tripId)
+      .then(({ data }) => {
+        if (data) setCollaborators(data as Collaborator[]);
+      });
+  }, [open, tripId]);
 
-    const { error } = await supabase.from("trip_collaborators").insert({
-      trip_id: tripId,
-      invited_email: email.trim(),
-      role: role as any,
-      user_id: profiles?.[0]?.user_id || null,
-      accepted: false,
-    } as any);
-
-    setSending(false);
-
-    if (error) {
-      if (error.code === "23505") {
-        toast({ title: "Already invited", description: "This person has already been invited." });
-      } else {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      }
-    } else {
-      setInvites([...invites, { email: email.trim(), role }]);
-      setEmail("");
-      toast({ title: "Invited!", description: `${email.trim()} has been invited as ${role}.` });
-    }
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    toast({ title: "Link copied!", description: "Share it with your travel companions." });
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30">
-          <UserPlus className="w-4 h-4" /> Invite
+          <Link2 className="w-4 h-4" /> Share
         </Button>
       </DialogTrigger>
       <DialogContent className="glass-card rounded-3xl border-white/20 max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display italic">Invite Collaborators</DialogTitle>
+          <DialogTitle className="font-display italic">Share Trip</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Email address"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="rounded-xl glass border-white/20 flex-1"
-              onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-            />
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger className="w-[100px] rounded-xl glass border-white/20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="viewer">Viewer</SelectItem>
-                <SelectItem value="editor">Editor</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button size="icon" onClick={handleInvite} disabled={sending || !email.trim()} className="rounded-xl shrink-0">
-              <Send className="w-4 h-4" />
-            </Button>
+        <div className="space-y-5">
+          {/* Share Link Section */}
+          <div className="space-y-3">
+            <p className="text-sm font-body text-muted-foreground">
+              Anyone with this link can access the trip:
+            </p>
+            <div className="flex gap-2">
+              <Input
+                readOnly
+                value={shareUrl}
+                className="rounded-xl glass border-white/20 flex-1 text-xs font-mono"
+                onFocus={(e) => e.target.select()}
+              />
+              <Button
+                size="icon"
+                onClick={handleCopy}
+                className="rounded-xl shrink-0"
+                variant={copied ? "default" : "outline"}
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-body whitespace-nowrap">
+                Anyone with this link can:
+              </span>
+              <Select value={linkRole} onValueChange={setLinkRole}>
+                <SelectTrigger className="w-[100px] rounded-xl glass border-white/20 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">View</SelectItem>
+                  <SelectItem value="editor">Edit</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {invites.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground font-body">Invited this session:</p>
-              {invites.map((inv, i) => (
-                <div key={i} className="flex items-center justify-between glass rounded-xl px-3 py-2 text-sm font-body">
-                  <span className="text-foreground">{inv.email}</span>
-                  <span className="text-xs text-muted-foreground capitalize">{inv.role}</span>
-                </div>
-              ))}
+          {/* Current Collaborators Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-body text-muted-foreground">
+              <Users className="w-3.5 h-3.5" />
+              <span>Collaborators</span>
             </div>
-          )}
+            {collaborators.length === 0 ? (
+              <p className="text-xs text-muted-foreground/60 font-body italic py-2">
+                Share the link above to invite collaborators
+              </p>
+            ) : (
+              <div className="space-y-1.5">
+                {collaborators.map((c) => (
+                  <div
+                    key={c.id}
+                    className="flex items-center justify-between glass rounded-xl px-3 py-2 text-sm font-body"
+                  >
+                    <span className="text-foreground truncate">{c.invited_email}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground capitalize">{c.role}</span>
+                      {c.accepted && (
+                        <Check className="w-3 h-3 text-primary" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

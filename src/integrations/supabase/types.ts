@@ -280,7 +280,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_trip_collaborator: { Args: { trip_row_id: string }; Returns: boolean }
+      is_trip_owner: { Args: { trip_row_id: string }; Returns: boolean }
     }
     Enums: {
       collaborator_role: "owner" | "editor" | "viewer"

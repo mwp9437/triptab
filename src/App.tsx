@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import MyTrips from "./pages/MyTrips";
 import NotFound from "./pages/NotFound";
+import SharedTrip from "./pages/SharedTrip";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/my-trips" element={<MyTrips />} />
+            <Route path="/trip/:tripId" element={<SharedTrip />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
