@@ -10,6 +10,8 @@ import luxuryTerrace from "@/assets/luxury-terrace.png";
 
 export default function Auth() {
   const { user, loading, signIn, signUp } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +19,7 @@ export default function Auth() {
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to={redirect || "/"} replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
