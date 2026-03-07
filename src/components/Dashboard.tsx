@@ -296,7 +296,7 @@ export default function Dashboard({
               variant="outline"
               size="sm"
               className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex"
-              onClick={() => downloadICS(plan)}
+              onClick={() => downloadICS(plan, expenses, travelers)}
             >
               <CalendarDays className="w-4 h-4" /> <span className="hidden md:inline">Sync</span>
             </Button>
