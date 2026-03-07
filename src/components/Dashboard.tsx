@@ -668,7 +668,10 @@ export default function Dashboard({
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex justify-between text-sm font-body">
-                        <span className="text-muted-foreground">Estimated total</span>
+                        <div>
+                          <span className="text-muted-foreground">Estimated total</span>
+                          <p className="text-[10px] text-muted-foreground/70 font-body">(AI estimates — actual costs may vary)</p>
+                        </div>
                         <span className="font-semibold text-foreground">${plan.budget.total.toLocaleString()}</span>
                       </div>
                       <Progress value={budgetPercent} className="h-2" />
