@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Send, Plane, Brain } from "lucide-react";
+import { Send, Plane, Brain, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
 import luxuryTerrace from "@/assets/luxury-terrace.png";
 
 const SUGGESTIONS = [
@@ -18,6 +20,8 @@ interface LandingHeroProps {
 
 export default function LandingHero({ onSubmitIdea }: LandingHeroProps) {
   const [input, setInput] = useState("");
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = (text: string) => {
     if (!text.trim()) return;
@@ -44,7 +48,7 @@ export default function LandingHero({ onSubmitIdea }: LandingHeroProps) {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 px-6 py-5 flex items-center gap-3">
+      <header className="relative z-10 px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-2xl glass flex items-center justify-center">
             <Plane className="w-5 h-5 text-foreground" />
@@ -54,6 +58,17 @@ export default function LandingHero({ onSubmitIdea }: LandingHeroProps) {
             <p className="text-xs text-white/70 font-body tracking-luxury uppercase">AI Trip Manager</p>
           </div>
         </div>
+        {!user && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full glass border-white/20 text-white hover:bg-white/30 hover:text-white"
+            onClick={() => navigate("/auth")}
+          >
+            <LogIn className="w-4 h-4 mr-1.5" />
+            Sign In
+          </Button>
+        )}
       </header>
 
       {/* Center content */}
