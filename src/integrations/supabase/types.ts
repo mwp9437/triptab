@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      member_activity_optins: {
+        Row: {
+          block_id: string
+          created_at: string | null
+          id: string
+          opted_in: boolean
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          block_id: string
+          created_at?: string | null
+          id?: string
+          opted_in?: boolean
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          block_id?: string
+          created_at?: string | null
+          id?: string
+          opted_in?: boolean
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_activity_optins_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -41,6 +76,7 @@ export type Database = {
       trip_collaborators: {
         Row: {
           accepted: boolean | null
+          budget_cap: number | null
           created_at: string | null
           id: string
           invited_email: string
@@ -50,6 +86,7 @@ export type Database = {
         }
         Insert: {
           accepted?: boolean | null
+          budget_cap?: number | null
           created_at?: string | null
           id?: string
           invited_email: string
@@ -59,6 +96,7 @@ export type Database = {
         }
         Update: {
           accepted?: boolean | null
+          budget_cap?: number | null
           created_at?: string | null
           id?: string
           invited_email?: string
