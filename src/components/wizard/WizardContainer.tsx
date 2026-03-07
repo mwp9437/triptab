@@ -165,7 +165,6 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
               >
                 {step === 0 && <StepDestination intake={intake} onUpdate={update} />}
                 {step === 1 && <StepPreferences intake={intake} onUpdate={update} />}
-                {step === 2 && <StepPlanningMode intake={intake} onUpdate={update} />}
               </motion.div>
             </AnimatePresence>
           </motion.div>
