@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   MapPin, Clock, DollarSign, Star, Loader2,
-  Bus, Palmtree, Coffee, Bed, Sparkles,
+  Bus, Palmtree, Coffee, Bed, Sparkles, ImageIcon,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TimeBlock, BlockCategory } from "@/types/itinerary";
-import { fetchBlockAlternatives, BlockDetails, BlockAlternative } from "@/lib/chat";
+import { fetchBlockAlternatives, fetchBlockImage, BlockDetails, BlockAlternative } from "@/lib/chat";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CATEGORY_LABELS: Record<BlockCategory, string> = {
   transport: "Transport",
@@ -35,15 +36,33 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
   const [data, setData] = useState<BlockDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
 
   useEffect(() => {
-    if (!block) { setData(null); return; }
+    if (!block) { setData(null); setImageUrl(null); return; }
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setImageUrl(null);
+    setImageLoading(false);
+
     fetchBlockAlternatives(block, tripContext)
-      .then((result) => { if (!cancelled) { setData(result); setLoading(false); } })
-      .catch(() => { if (!cancelled) { setError("Couldn't load details. Try again."); setLoading(false); } });
+      .then((result) => {
+        if (cancelled) return;
+        setData(result);
+        setLoading(false);
+
+        // Fetch image if we have a query
+        const query = result.details.imageQuery || `${block.title} ${block.location || ""}`;
+        setImageLoading(true);
+        fetchBlockImage(query, block.category)
+          .then((url) => { if (!cancelled) setImageUrl(url); })
+          .finally(() => { if (!cancelled) setImageLoading(false); });
+      })
+      .catch(() => {
+        if (!cancelled) { setError("Couldn't load details. Try again."); setLoading(false); }
+      });
     return () => { cancelled = true; };
   }, [block?.id]);
 
@@ -55,20 +74,45 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
   return (
     <Dialog open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden rounded-3xl border-white/20 bg-white/90 backdrop-blur-2xl shadow-2xl max-h-[85vh] flex flex-col [&>button]:z-10">
-        <div className="px-6 pt-6 pb-4">
-          <DialogHeader>
+        {/* Hero Image */}
+        <div className="relative w-full h-48 sm:h-56 overflow-hidden bg-muted shrink-0">
+          {imageLoading || loading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground/50" />
+                <span className="text-xs text-muted-foreground/50 font-body">Loading photo...</span>
+              </div>
+            </div>
+          ) : imageUrl ? (
+            <motion.img
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+              src={imageUrl}
+              alt={block.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <ImageIcon className="w-10 h-10 text-muted-foreground/30" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          <div className="absolute bottom-3 left-4 right-4">
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-luxury text-primary font-body">
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-luxury text-white/80 font-body drop-shadow">
                 <Icon className="w-3.5 h-3.5" />
                 {categoryLabel}
               </span>
             </div>
-            <DialogTitle className="font-display font-bold text-xl text-foreground leading-tight">
+            <h2 className="font-display font-bold text-xl text-white leading-tight drop-shadow-lg">
               {block.title}
-            </DialogTitle>
-          </DialogHeader>
+            </h2>
+          </div>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted-foreground font-body">
+        <div className="px-6 pt-3 pb-1">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground font-body">
             <span className="flex items-center gap-1.5">
               <Clock className="w-4 h-4" />
               {block.startTime} – {block.endTime}
