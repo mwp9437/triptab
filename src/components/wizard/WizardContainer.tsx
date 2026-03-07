@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, Sparkles, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,28 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TripIntake, BudgetTier, TravelerType, VIBE_OPTIONS, DIETARY_OPTIONS, BUDGET_LABELS, PlanningMode } from "@/types/intake";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import type { DateRange } from "react-day-picker";
+
+const POPULAR_DESTINATIONS = [
+  "Tokyo, Japan", "Kyoto, Japan", "Osaka, Japan", "Hokkaido, Japan",
+  "Paris, France", "Nice, France", "Lyon, France",
+  "Rome, Italy", "Florence, Italy", "Venice, Italy", "Amalfi Coast, Italy",
+  "Barcelona, Spain", "Madrid, Spain", "Seville, Spain",
+  "London, England", "Edinburgh, Scotland",
+  "New York, USA", "Los Angeles, USA", "San Francisco, USA", "Miami, USA", "Hawaii, USA",
+  "Bali, Indonesia", "Bangkok, Thailand", "Phuket, Thailand",
+  "Cancún, Mexico", "Mexico City, Mexico",
+  "Sydney, Australia", "Melbourne, Australia",
+  "Dubai, UAE", "Istanbul, Turkey", "Santorini, Greece", "Athens, Greece",
+  "Lisbon, Portugal", "Amsterdam, Netherlands", "Berlin, Germany", "Munich, Germany",
+  "Marrakech, Morocco", "Cape Town, South Africa",
+  "Rio de Janeiro, Brazil", "Buenos Aires, Argentina",
+  "Reykjavik, Iceland", "Zurich, Switzerland",
+  "Seoul, South Korea", "Singapore", "Hong Kong",
+  "Maldives", "Fiji", "Tulum, Mexico",
+  "Prague, Czech Republic", "Vienna, Austria", "Budapest, Hungary",
+  "Copenhagen, Denmark", "Stockholm, Sweden",
+];
 
 import luxuryBedroom from "@/assets/luxury-bedroom.png";
 import luxuryTerrace from "@/assets/luxury-terrace.png";
@@ -73,8 +95,8 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             <Plane className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-display font-bold text-white">TripCraft</h1>
-            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">Luxury Travel Planner</p>
+            <h1 className="text-xl font-display font-bold text-white">TripTab</h1>
+            <p className="text-xs text-white/70 font-body tracking-luxury uppercase">AI Trip Manager</p>
           </div>
         </div>
       </header>
