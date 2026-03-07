@@ -11,6 +11,7 @@ import Dashboard from "@/components/Dashboard";
 import OptionsPanel from "./OptionsPanel";
 import ActionItemsModal from "./ActionItemsModal";
 import FloatingChat from "@/components/FloatingChat";
+import AuthPromptDialog from "@/components/AuthPromptDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberOptIns } from "@/hooks/use-member-optins";
 import luxuryBedroom from "@/assets/luxury-bedroom.png";
@@ -56,6 +57,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
   const { isOptedIn, toggleOptIn, budgetCap, setBudgetCap } = useMemberOptIns(tripId);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   const intakeContext = intakeToContext(intake);
   const conversationHistory = [{ role: "system", content: intakeContext }];
@@ -135,10 +137,16 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const handleSuggestionsReady = (opts: ActivityOption[]) => { setOptions(opts); };
 
   const handleSave = async () => {
-    if (!plan || !user) {
-      toast({ title: "Sign in required", description: "Please sign in to save your trip.", variant: "destructive" });
+    if (!plan) return;
+    if (!user) {
+      setShowAuthPrompt(true);
       return;
     }
+    await performSave();
+  };
+
+  const performSave = async () => {
+    if (!plan || !user) return;
     setSaving(true);
     const planWithActions = { ...plan, actionItems };
 

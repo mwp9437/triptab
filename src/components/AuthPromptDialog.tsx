@@ -1,0 +1,105 @@
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
+
+interface AuthPromptDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAuthenticated: () => void;
+}
+
+export default function AuthPromptDialog({ open, onOpenChange, onAuthenticated }: AuthPromptDialogProps) {
+  const { signIn, signUp } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    const { error } = isLogin
+      ? await signIn(email, password)
+      : await signUp(email, password, displayName);
+
+    setSubmitting(false);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      onOpenChange(false);
+      onAuthenticated();
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm rounded-3xl">
+        <DialogHeader>
+          <DialogTitle className="font-display text-xl italic">
+            {isLogin ? "Sign in to save" : "Create account to save"}
+          </DialogTitle>
+          <DialogDescription className="font-body text-sm">
+            Your itinerary is ready! Sign in to save it to your trips.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+          {!isLogin && (
+            <div className="space-y-1.5">
+              <Label className="font-body text-xs">Display Name</Label>
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Your name"
+                className="rounded-xl"
+              />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label className="font-body text-xs">Email</Label>
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="rounded-xl"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="font-body text-xs">Password</Label>
+            <Input
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="rounded-xl"
+            />
+          </div>
+          <Button type="submit" disabled={submitting} className="w-full rounded-xl">
+            {submitting ? "Loading..." : isLogin ? "Sign In & Save" : "Create Account & Save"}
+          </Button>
+        </form>
+
+        <p className="text-center text-sm text-muted-foreground font-body">
+          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-primary hover:underline font-medium"
+          >
+            {isLogin ? "Sign up" : "Sign in"}
+          </button>
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
