@@ -201,6 +201,7 @@ export default function Dashboard({
 
             {/* Scrollable itinerary */}
             <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <Accordion type="multiple" defaultValue={plan.itinerary.map((_, i) => `day-${i}`)}>
               {plan.itinerary.map((day, idx) => {
                 const dedupedBlocks = deduplicateBlocks(day.blocks);
                 const regularBlocks = dedupedBlocks
