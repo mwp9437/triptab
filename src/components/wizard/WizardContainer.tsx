@@ -21,6 +21,8 @@ const POPULAR_DESTINATIONS = [
   "Barcelona, Spain", "Madrid, Spain", "Seville, Spain",
   "London, England", "Edinburgh, Scotland",
   "New York, USA", "Los Angeles, USA", "San Francisco, USA", "Miami, USA", "Hawaii, USA",
+  "Chicago, USA", "Boston, USA", "Washington DC, USA", "Dallas, USA", "Seattle, USA",
+  "Denver, USA", "Atlanta, USA", "Philadelphia, USA", "Houston, USA",
   "Bali, Indonesia", "Bangkok, Thailand", "Phuket, Thailand",
   "Cancún, Mexico", "Mexico City, Mexico",
   "Sydney, Australia", "Melbourne, Australia",
