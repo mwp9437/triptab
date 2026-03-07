@@ -119,7 +119,7 @@ interface DashboardProps {
   plan: TripPlan;
   conversationHistory: { role: string; content: string }[];
   onBack: () => void;
-  collaborative?: never; // removed
+  
   onAddActivity?: (dayIndex: number) => void;
   onDeleteBlock?: (dayIndex: number, blockId: string) => void;
   onSwapBlock?: (original: TimeBlock, replacement: BlockAlternative) => void;
