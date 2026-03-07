@@ -207,6 +207,8 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
               travelerCount={intake.travelerCount}
               onAddTraveler={addTraveler}
               onRemoveTraveler={removeTraveler}
+              externalOpen={showTravelers}
+              onExternalOpenChange={setShowTravelers}
             />
           ) : undefined}
           expenses={expenses}
