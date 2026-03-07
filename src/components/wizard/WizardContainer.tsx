@@ -88,7 +88,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/50" />
+          <div className="absolute inset-0 bg-gradient-to-b from-sand/60 via-sand/40 to-sand/70" />
         </motion.div>
       </AnimatePresence>
 
@@ -107,7 +107,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
           <Button
             variant="outline"
             size="sm"
-            className="rounded-full glass border-white/20 text-white hover:bg-white/30 hover:text-white"
+            className="rounded-full bg-foreground text-background hover:bg-foreground/80 border-0"
             onClick={() => navigate("/auth")}
           >
             <LogIn className="w-4 h-4 mr-1.5" />
