@@ -6,6 +6,7 @@ export type MobilityLevel = "none" | "limited" | "wheelchair";
 
 export interface TripIntake {
   initialIdea: string;
+  homeCity: string;
   destination: string;
   startDate: string;
   endDate: string;
@@ -43,6 +44,7 @@ export interface ActivityOption {
 
 export const DEFAULT_INTAKE: TripIntake = {
   initialIdea: "",
+  homeCity: "",
   destination: "",
   startDate: "",
   endDate: "",

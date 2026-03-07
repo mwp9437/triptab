@@ -21,6 +21,8 @@ const POPULAR_DESTINATIONS = [
   "Barcelona, Spain", "Madrid, Spain", "Seville, Spain",
   "London, England", "Edinburgh, Scotland",
   "New York, USA", "Los Angeles, USA", "San Francisco, USA", "Miami, USA", "Hawaii, USA",
+  "Chicago, USA", "Boston, USA", "Washington DC, USA", "Dallas, USA", "Seattle, USA",
+  "Denver, USA", "Atlanta, USA", "Philadelphia, USA", "Houston, USA",
   "Bali, Indonesia", "Bangkok, Thailand", "Phuket, Thailand",
   "Cancún, Mexico", "Mexico City, Mexico",
   "Sydney, Australia", "Melbourne, Australia",
@@ -196,10 +198,19 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
 
 /* ─── Step 1: Destination & Dates ─── */
 function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Partial<TripIntake>) => void }) {
+  const [homeQuery, setHomeQuery] = useState(intake.homeCity);
+  const [showHomeSuggestions, setShowHomeSuggestions] = useState(false);
   const [destQuery, setDestQuery] = useState(intake.destination);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const homeWrapperRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const filteredHomeCities = useMemo(() => {
+    if (!homeQuery.trim()) return POPULAR_DESTINATIONS.slice(0, 8);
+    const q = homeQuery.toLowerCase();
+    return POPULAR_DESTINATIONS.filter(d => d.toLowerCase().includes(q)).slice(0, 8);
+  }, [homeQuery]);
 
   const filteredDestinations = useMemo(() => {
     if (!destQuery.trim()) return POPULAR_DESTINATIONS.slice(0, 8);
@@ -212,10 +223,19 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
       }
+      if (homeWrapperRef.current && !homeWrapperRef.current.contains(e.target as Node)) {
+        setShowHomeSuggestions(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const selectHomeCity = (city: string) => {
+    setHomeQuery(city);
+    onUpdate({ homeCity: city });
+    setShowHomeSuggestions(false);
+  };
 
   const selectDestination = (dest: string) => {
     setDestQuery(dest);
@@ -257,6 +277,40 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
       </div>
 
       <div className="space-y-4">
+        {/* Home city autocomplete */}
+        <div ref={homeWrapperRef} className="relative">
+          <label className="text-sm font-body font-medium text-foreground mb-1.5 block">
+            <Plane className="w-4 h-4 inline mr-1.5" />Departing from
+          </label>
+          <Input
+            value={homeQuery}
+            onChange={(e) => {
+              setHomeQuery(e.target.value);
+              onUpdate({ homeCity: e.target.value });
+              setShowHomeSuggestions(true);
+            }}
+            onFocus={() => setShowHomeSuggestions(true)}
+            placeholder="Your home city"
+            className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm focus:bg-white/80 transition-all"
+            autoComplete="off"
+          />
+          {showHomeSuggestions && filteredHomeCities.length > 0 && (
+            <div className="absolute z-50 top-full mt-1 w-full rounded-xl border border-border bg-popover shadow-lg overflow-hidden">
+              {filteredHomeCities.map((city) => (
+                <button
+                  key={city}
+                  className="w-full text-left px-3 py-2.5 text-sm font-body text-popover-foreground hover:bg-accent/50 transition-colors flex items-center gap-2"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => selectHomeCity(city)}
+                >
+                  <Plane className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  {city}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Destination autocomplete */}
         <div ref={wrapperRef} className="relative">
           <label className="text-sm font-body font-medium text-foreground mb-1.5 block">

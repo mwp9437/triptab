@@ -17,7 +17,9 @@ function buildPromptFromIntake(intake: any): string {
   const b = intake.budget || {};
   const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip. Target ~85% of this cap ($${Math.round(b.totalBudget * 0.85)}) to leave a buffer for spontaneous spending.` : "";
   const dest = intake.destination?.trim() || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
+  const homeCity = intake.homeCity?.trim() || "not specified — use a major hub near the destination";
   return `Plan a trip to ${dest} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
+Departing from: ${homeCity}
 
 Budget preferences:
 - Accommodation: ${BUDGET_LABELS[b.accommodation]?.accommodation || "mid-range"}
@@ -122,13 +124,28 @@ Return ONLY valid JSON matching this schema:
   ]
 }
 
+FLIGHT & COST REALISM RULES:
+- The user's home city is provided. Use it for realistic flight routing and cost estimates.
+- Estimate flight costs based on the ACTUAL route (e.g., New York to Tokyo is ~$800-1200 economy, not $300). Consider:
+  - Distance and typical market rates for the route
+  - Economy vs business based on budget tier ($ and $$ = economy, $$$ = premium economy, $$$$ = business)
+  - Seasonal pricing (peak summer/holidays = higher)
+  - Whether direct flights exist on this route or if connections are needed
+- For ALL cost estimates throughout the itinerary, base them on realistic market rates for the destination:
+  - Hotels: use typical nightly rates for the destination and budget tier
+  - Meals: use typical restaurant prices for the destination city (Tokyo ≠ Bali ≠ Paris)
+  - Activities: use typical admission/tour prices for the specific destination
+  - Transport: use typical taxi/transit costs for the destination city
+- When uncertain about a specific price, estimate conservatively (slightly high) and round to nearest $5 or $10.
+- NEVER just make up a round number. A flight from NYC to Tokyo should not be "$150" or "$500" — it should reflect actual market rates (~$900-1200 economy round-trip).
+
 Rules:
 - block category: "transport" | "activity" | "meal" | "free" | "accommodation"
 - actionItem category: "flights" | "hotels" | "restaurants" | "tickets" | "packing"
 - packingList category: "clothing" | "gear" | "toiletries" | "electronics" | "documents" | "misc"
 - Unique IDs: "block-X-Y", "action-X", or "pack-X"
 - Include realistic travel time between locations
-- IMPORTANT: Day 1 MUST start with an arrival flight block (category "transport") and the last day MUST end with a departure flight block (category "transport"). Include realistic flight times and airline suggestions.
+- IMPORTANT: Day 1 MUST start with an arrival flight block (category "transport") and the last day MUST end with a departure flight block (category "transport"). Include realistic flight times and airline suggestions. Use the home city for departure/return flights.
 - Cost per person in USD
 - 6-10 blocks per day including meals and free time
 - IMPORTANT: Every day MUST include an accommodation block (category "accommodation") showing the hotel/lodging for that night
@@ -138,6 +155,17 @@ Rules:
 - Each packing item should have a brief "reason" explaining why it's needed
 - Generate 5-10 local tips covering: tipping customs, typical prices (beer, coffee, meal), greetings & how to say hello/thank you/goodbye with phonetic pronunciation, cultural etiquette (bowing, handshakes, cheek kisses), common scams to avoid, useful local phrases, transportation tips, and any unique local customs travelers should know
 - Each local tip should have an appropriate emoji, a short title, and a detailed explanation
+
+QUALITY ASSURANCE — FINAL REVIEW:
+Before returning the JSON, mentally review the COMPLETE itinerary for these logical issues:
+- FLIGHTS: Do departure/arrival flights reference the correct home city? Are connection times realistic (minimum 2 hours for international, 1 hour domestic)? Are flight durations plausible for the distance?
+- HOTELS: Is every hotel actually located in the city being visited that day? If the itinerary moves between cities, does the hotel change?
+- GEOGRAPHY: Are all activities on a given day in the same city/area? No breakfast in Tokyo and lunch in Osaka on the same day unless there's a transit block between them.
+- TIMING: Do activity times make sense? No museum visits at 6am. No dinner at 3pm. Enough transit time between locations.
+- CONTINUITY: Does the trip flow logically day-to-day? No teleporting between distant cities without transport blocks.
+- COST COHERENCE: Do the individual block costs sum to roughly match the budget category totals? Is the total in the right ballpark for the destination and duration?
+If any issue is found, fix it before returning the JSON.
+
 - Return ONLY JSON, no markdown`;
 
 Deno.serve(async (req) => {
