@@ -56,7 +56,7 @@ export default function SharedTrip() {
             trip_id: tripId,
             user_id: user!.id,
             invited_email: user!.email || "",
-            role: "viewer" as any,
+            role: role as any,
             accepted: true,
           } as any);
         }
