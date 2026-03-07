@@ -63,9 +63,11 @@ export default function EditablePrice({ cost, suffix, isUserPrice, onUpdate }: E
       }}
       title="Click to edit price"
     >
+      {!isUserPrice && <span className="text-muted-foreground">~</span>}
       <DollarSign className="w-3 h-3" />
       {cost}
       {suffix && <span className="text-muted-foreground">{suffix}</span>}
+      {!isUserPrice && !suffix && <span className="text-muted-foreground ml-0.5 text-[10px]">est.</span>}
     </span>
   );
 }

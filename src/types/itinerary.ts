@@ -9,6 +9,7 @@ export interface TimeBlock {
   cost?: number;
   category: BlockCategory;
   notes?: string;
+  isUserPrice?: boolean;
 }
 
 export interface ItineraryDay {

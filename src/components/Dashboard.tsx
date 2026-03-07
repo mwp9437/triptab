@@ -722,7 +722,7 @@ export default function Dashboard({
                                   }`}>
                                     {item.text}
                                     {item.cost != null && item.cost > 0 && (
-                                      <span className="text-xs text-muted-foreground ml-1">(~${item.cost})</span>
+                                      <span className="text-xs text-muted-foreground ml-1">(~${item.cost} est.)</span>
                                     )}
                                   </span>
                                 </label>
