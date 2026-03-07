@@ -60,7 +60,6 @@ export const DEFAULT_INTAKE: TripIntake = {
   mobility: "none",
   mustDos: "",
   avoids: "",
-  planningMode: "auto",
 };
 
 export const VIBE_OPTIONS = [
