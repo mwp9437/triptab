@@ -4,23 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- TODO: Set the document title to the name of your application -->
-    <title>TripTab — AI Trip Manager</title>
-    <meta name="description" content="AI-powered trip planning and management">
+    <title>TripTab — AI Group Trip Manager</title>
+    <meta name="description" content="AI-powered trip planning, finances, and management">
     <meta name="author" content="Lovable" />
 
     <!-- TODO: Update og:title to match your application name -->
     
     
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7d78d714-c979-4894-a0ea-f33c9669aaee?Expires=1772814745&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=csln7ZuyUlCmfz6YYnCuOc9mYAbLbtSHRmblcWjMTn4MAB5vz7d%2B%2BnrGf2J88n3Jfb71Gp5sUyEHdg5ghTTaAtF0kyQsWhNaFKBsKVGUuXUZFS2BBXS7RMHzNPiyUb3%2BGkhZrU%2FYppkSlw6smHjBvUy37WSRSAE4y5XJUskAzLbQ50NxKTF0YPGJXYmdCoOZt22BQVr1cBXuh6Pvyhg%2FB7cJ4977YrpBj6aUuVbIvHUjPS2Q8X%2F3WziDryko4Ho6j4sAG4G1UUwQPgT9iP5L5wXUf9%2BnMXBJWDxA9o3sB83K%2BSK%2BAtUaU0aEvE4WL4KGw2QD7b4rxR2ZidBP4twc6A%3D%3D">
+    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a4a39629-cb45-489c-8203-c062198d7637?Expires=1772866110&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=eAE3flSndz%2F7Ip3brzKCvDx3Z4X1kArWvnGG4q4bXJgp4wRP3%2FAhgJhU%2BrRaWgAzNt1O%2FSyhx8WBDWTpcuscM5a73E0PI3%2BPsaqpwSBQtz1bO8HcDwqUn3wZShbC0dyqZ6%2Brm0syZH655xOiOcOEIIxU%2F8hnzTDq4SaZ7fT0IJ5CZSb6m6Ix7c%2FUUF85oOJGMsjgt%2Fqbp9lzJauuPYYxlcLvjd9dYCgjVhYfsh2N1KySMvBcjt9q3E9r0G%2FLfEbX4lpzlMxJ9SHIghYbk9MGaLdH6a2Vx1eKX7Gl9JPzvSIqLHvMxrhl2GkekAU01RHcpbEkaQHsFoyxxS6K5nkcBQ%3D%3D">
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/7d78d714-c979-4894-a0ea-f33c9669aaee?Expires=1772814745&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=csln7ZuyUlCmfz6YYnCuOc9mYAbLbtSHRmblcWjMTn4MAB5vz7d%2B%2BnrGf2J88n3Jfb71Gp5sUyEHdg5ghTTaAtF0kyQsWhNaFKBsKVGUuXUZFS2BBXS7RMHzNPiyUb3%2BGkhZrU%2FYppkSlw6smHjBvUy37WSRSAE4y5XJUskAzLbQ50NxKTF0YPGJXYmdCoOZt22BQVr1cBXuh6Pvyhg%2FB7cJ4977YrpBj6aUuVbIvHUjPS2Q8X%2F3WziDryko4Ho6j4sAG4G1UUwQPgT9iP5L5wXUf9%2BnMXBJWDxA9o3sB83K%2BSK%2BAtUaU0aEvE4WL4KGw2QD7b4rxR2ZidBP4twc6A%3D%3D">
-    <meta property="og:title" content="TripTab — AI Trip Manager">
-  <meta name="twitter:title" content="TripTab — AI Trip Manager">
-  <meta property="og:description" content="AI-powered trip planning and management">
-  <meta name="twitter:description" content="AI-powered trip planning and management">
+    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/a4a39629-cb45-489c-8203-c062198d7637?Expires=1772866110&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=eAE3flSndz%2F7Ip3brzKCvDx3Z4X1kArWvnGG4q4bXJgp4wRP3%2FAhgJhU%2BrRaWgAzNt1O%2FSyhx8WBDWTpcuscM5a73E0PI3%2BPsaqpwSBQtz1bO8HcDwqUn3wZShbC0dyqZ6%2Brm0syZH655xOiOcOEIIxU%2F8hnzTDq4SaZ7fT0IJ5CZSb6m6Ix7c%2FUUF85oOJGMsjgt%2Fqbp9lzJauuPYYxlcLvjd9dYCgjVhYfsh2N1KySMvBcjt9q3E9r0G%2FLfEbX4lpzlMxJ9SHIghYbk9MGaLdH6a2Vx1eKX7Gl9JPzvSIqLHvMxrhl2GkekAU01RHcpbEkaQHsFoyxxS6K5nkcBQ%3D%3D">
+    
+  
+  
+  
+  <meta property="og:title" content="TripTab — AI Group Trip Manager">
+  <meta name="twitter:title" content="TripTab — AI Group Trip Manager">
+  <meta property="og:description" content="AI-powered trip planning, finances, and management">
+  <meta name="twitter:description" content="AI-powered trip planning, finances, and management">
 </head>
 
   <body>
