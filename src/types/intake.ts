@@ -6,6 +6,7 @@ export type MobilityLevel = "none" | "limited" | "wheelchair";
 
 export interface TripIntake {
   initialIdea: string;
+  homeCity: string;
   destination: string;
   startDate: string;
   endDate: string;
