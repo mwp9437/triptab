@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are TripCraft, a travel itinerary editor. The user has an existing trip plan and wants to modify it.
+const SYSTEM_PROMPT = `You are TripTab, a travel itinerary editor. The user has an existing trip plan and wants to modify it.
 
 You will receive the current itinerary as JSON and a user request to change it.
 

@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are TripCraft, a travel concierge. Given a selected activity/hotel/restaurant/transport from an itinerary, return alternatives of the SAME type in the same area.
+const SYSTEM_PROMPT = `You are TripTab, a travel concierge. Given a selected activity/hotel/restaurant/transport from an itinerary, return alternatives of the SAME type in the same area.
 
 CRITICAL ACCURACY RULES:
 - ONLY suggest places you are CERTAIN exist at the correct location. NEVER invent or fabricate place names.
