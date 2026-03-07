@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/accordion";
 import { TripPlan, TimeBlock, ActionItem, BlockCategory, ActionCategory, PackingItem, PackingCategory, LocalTip } from "@/types/itinerary";
 import { BlockAlternative } from "@/lib/chat";
-import { downloadICS } from "@/lib/calendar-export";
+import { downloadICS, generateExpensePrintHTML } from "@/lib/calendar-export";
 import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
