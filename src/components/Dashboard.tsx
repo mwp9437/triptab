@@ -181,6 +181,17 @@ export default function Dashboard({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {user && (
+              <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={() => navigate("/my-trips")}>
+                <FolderOpen className="w-4 h-4" /> My Trips
+              </Button>
+            )}
+            {tripId && <InviteModal tripId={tripId} />}
+            {onSave && user && (
+              <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={onSave} disabled={saving}>
+                <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}
+              </Button>
+            )}
             <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/20 glass hover:bg-white/30" onClick={handlePrint}>
               <Download className="w-4 h-4" /> PDF
             </Button>
@@ -192,6 +203,11 @@ export default function Dashboard({
             >
               <CalendarDays className="w-4 h-4" /> Sync
             </Button>
+            {user && (
+              <Button variant="ghost" size="sm" className="gap-2 rounded-xl" onClick={signOut}>
+                <LogOut className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         </header>
 
