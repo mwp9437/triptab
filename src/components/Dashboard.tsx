@@ -26,10 +26,20 @@ import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 
-/** Build an Unsplash URL for a destination-themed background */
+/** Build an Unsplash URL for a destination-themed luxury travel background */
 function getDestinationBackground(destination: string): string {
-  const query = encodeURIComponent(destination + " travel landscape");
-  return `https://source.unsplash.com/1920x1080/?${query}`;
+  const query = encodeURIComponent(destination + " luxury travel resort");
+  return `https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80&fit=crop`; // fallback
+}
+
+/** Use multiple curated Unsplash search URLs for destination backgrounds */
+function getDestinationBackgrounds(destination: string): string[] {
+  const q = encodeURIComponent(destination.trim());
+  return [
+    `https://source.unsplash.com/1920x1080/?${q}+luxury+resort`,
+    `https://source.unsplash.com/1920x1080/?${q}+travel+landscape`,
+    `https://source.unsplash.com/1920x1080/?${q}+hotel+pool`,
+  ];
 }
 
 const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
