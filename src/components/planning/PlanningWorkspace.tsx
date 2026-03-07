@@ -11,8 +11,10 @@ import Dashboard from "@/components/Dashboard";
 import ActionItemsModal from "./ActionItemsModal";
 import FloatingChat from "@/components/FloatingChat";
 import AuthPromptDialog from "@/components/AuthPromptDialog";
+import TravelerManager from "@/components/TravelerManager";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberOptIns } from "@/hooks/use-member-optins";
+import { useExpenses } from "@/hooks/use-expenses";
 import luxuryBedroom from "@/assets/luxury-bedroom.png";
 
 function createEmptyPlan(intake: TripIntake): TripPlan {
