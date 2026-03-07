@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { TripIntake, BudgetTier, TravelerType, VIBE_OPTIONS, DIETARY_OPTIONS, BUDGET_LABELS, PlanningMode } from "@/types/intake";
+import { TripIntake, BudgetTier, TravelerType, VIBE_OPTIONS, DIETARY_OPTIONS, BUDGET_LABELS } from "@/types/intake";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
