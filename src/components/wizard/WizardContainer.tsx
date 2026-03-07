@@ -277,6 +277,40 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
       </div>
 
       <div className="space-y-4">
+        {/* Home city autocomplete */}
+        <div ref={homeWrapperRef} className="relative">
+          <label className="text-sm font-body font-medium text-foreground mb-1.5 block">
+            <Plane className="w-4 h-4 inline mr-1.5" />Departing from
+          </label>
+          <Input
+            value={homeQuery}
+            onChange={(e) => {
+              setHomeQuery(e.target.value);
+              onUpdate({ homeCity: e.target.value });
+              setShowHomeSuggestions(true);
+            }}
+            onFocus={() => setShowHomeSuggestions(true)}
+            placeholder="Your home city"
+            className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm focus:bg-white/80 transition-all"
+            autoComplete="off"
+          />
+          {showHomeSuggestions && filteredHomeCities.length > 0 && (
+            <div className="absolute z-50 top-full mt-1 w-full rounded-xl border border-border bg-popover shadow-lg overflow-hidden">
+              {filteredHomeCities.map((city) => (
+                <button
+                  key={city}
+                  className="w-full text-left px-3 py-2.5 text-sm font-body text-popover-foreground hover:bg-accent/50 transition-colors flex items-center gap-2"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => selectHomeCity(city)}
+                >
+                  <Plane className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  {city}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Destination autocomplete */}
         <div ref={wrapperRef} className="relative">
           <label className="text-sm font-body font-medium text-foreground mb-1.5 block">

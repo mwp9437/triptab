@@ -44,6 +44,7 @@ export interface ActivityOption {
 
 export const DEFAULT_INTAKE: TripIntake = {
   initialIdea: "",
+  homeCity: "",
   destination: "",
   startDate: "",
   endDate: "",
