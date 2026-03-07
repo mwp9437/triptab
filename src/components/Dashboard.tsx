@@ -315,6 +315,24 @@ export default function Dashboard({
                   <span className="ml-1.5 text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{completedCount}/{actionItems.length}</span>
                 )}
               </button>
+              <button
+                onClick={() => setMobileTab("expenses")}
+                className={`flex-1 py-2 rounded-xl text-sm font-display font-semibold transition-all ${
+                  mobileTab === "expenses"
+                    ? "glass-card text-foreground shadow-md"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Wallet className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                Expenses
+                {expenses.length > 0 && (
+                  <span className="ml-1.5 text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">{expenses.length}</span>
+                )}
+              </button>
+            </div>
+          )}
+                )}
+              </button>
             </div>
           )}
 
