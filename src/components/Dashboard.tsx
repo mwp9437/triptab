@@ -138,6 +138,11 @@ interface DashboardProps {
   budgetCap?: number | null;
   onSetBudgetCap?: (cap: number | null) => void;
   travelerSlot?: React.ReactNode;
+  // Expense props
+  expenses?: Expense[];
+  travelers?: Traveler[];
+  onAddExpense?: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
+  onDeleteExpense?: (id: string) => Promise<void>;
 }
 
 export default function Dashboard({
@@ -159,6 +164,10 @@ export default function Dashboard({
   budgetCap,
   onSetBudgetCap,
   travelerSlot,
+  expenses = [],
+  travelers = [],
+  onAddExpense,
+  onDeleteExpense,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -166,7 +175,14 @@ export default function Dashboard({
   const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
   const [remixBlock, setRemixBlock] = useState<TimeBlock | null>(null);
-  const [mobileTab, setMobileTab] = useState<"schedule" | "details">("schedule");
+  const [mobileTab, setMobileTab] = useState<"schedule" | "details" | "expenses">("schedule");
+  const [sidebarView, setSidebarView] = useState<"details" | "expenses">("details");
+
+  // Build a set of blockIds that have expenses linked
+  const expenseBlockIds = useMemo(
+    () => new Set(expenses.filter((e) => e.blockId).map((e) => e.blockId!)),
+    [expenses]
+  );
 
   const togglePackingItem = (id: string) => {
     setPackingList((items) =>
