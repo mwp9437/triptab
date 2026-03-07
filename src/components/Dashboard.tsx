@@ -104,6 +104,10 @@ interface DashboardProps {
   onSave?: () => void;
   saving?: boolean;
   tripId?: string | null;
+  isOptedIn?: (blockId: string) => boolean;
+  onToggleOptIn?: (blockId: string) => void;
+  budgetCap?: number | null;
+  onSetBudgetCap?: (cap: number | null) => void;
 }
 
 export default function Dashboard({
@@ -121,6 +125,10 @@ export default function Dashboard({
   onSave,
   saving,
   tripId,
+  isOptedIn,
+  onToggleOptIn,
+  budgetCap,
+  onSetBudgetCap,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
