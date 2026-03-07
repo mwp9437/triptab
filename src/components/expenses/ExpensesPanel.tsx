@@ -440,10 +440,11 @@ export default function ExpensesPanel({
 
       <AddExpenseModal
         open={addModalOpen}
-        onOpenChange={setAddModalOpen}
+        onOpenChange={handleAddModalChange}
         travelers={travelers}
         plan={plan}
         onAddExpense={onAddExpense}
+        initialValues={initialValues}
       />
     </div>
   );
