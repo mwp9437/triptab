@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { TripIntake, ActivityOption } from "@/types/intake";
+import { TripIntake } from "@/types/intake";
 import { TripPlan, TimeBlock, ActionItem } from "@/types/itinerary";
 import { BlockAlternative } from "@/lib/chat";
 import { generateFromIntake } from "@/lib/chat";
@@ -8,7 +8,6 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import Dashboard from "@/components/Dashboard";
-import OptionsPanel from "./OptionsPanel";
 import ActionItemsModal from "./ActionItemsModal";
 import FloatingChat from "@/components/FloatingChat";
 import AuthPromptDialog from "@/components/AuthPromptDialog";
@@ -48,11 +47,8 @@ interface PlanningWorkspaceProps {
 export default function PlanningWorkspace({ intake, onBack, loadedTripId, loadedPlan }: PlanningWorkspaceProps) {
   const { user } = useAuth();
   const [tripId, setTripId] = useState<string | null>(loadedTripId || null);
-  const [plan, setPlan] = useState<TripPlan | null>(
-    loadedPlan ? loadedPlan : intake.planningMode === "collaborative" ? createEmptyPlan(intake) : null
-  );
-  const [isGenerating, setIsGenerating] = useState(!loadedPlan && intake.planningMode === "auto");
-  const [options, setOptions] = useState<ActivityOption[]>([]);
+  const [plan, setPlan] = useState<TripPlan | null>(loadedPlan || null);
+  const [isGenerating, setIsGenerating] = useState(!loadedPlan);
   const [actionItems, setActionItems] = useState<ActionItem[]>(loadedPlan?.actionItems || []);
   const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
@@ -63,7 +59,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const conversationHistory = [{ role: "system", content: intakeContext }];
 
   useEffect(() => {
-    if (loadedPlan || intake.planningMode !== "auto") return;
+    if (loadedPlan) return;
     let cancelled = false;
     (async () => {
       try {
@@ -120,21 +116,6 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     setPlan({ ...plan, itinerary: updatedDays });
     toast({ title: "Swapped", description: `Replaced "${original.title}" with "${replacement.title}".` });
   };
-
-  const handleSelectOption = (opt: ActivityOption) => {
-    if (!plan) return;
-    const block: TimeBlock = {
-      id: `block-${Date.now()}`, startTime: opt.startTime, endTime: opt.endTime,
-      title: opt.title, location: opt.location, cost: opt.estimatedCost, category: opt.category, notes: opt.description,
-    };
-    const updatedDays = [...plan.itinerary];
-    const targetDay = updatedDays.reduce((a, b) => a.blocks.length <= b.blocks.length ? a : b);
-    targetDay.blocks = [...targetDay.blocks, block].sort((a, b) => a.startTime.localeCompare(b.startTime));
-    setPlan({ ...plan, itinerary: updatedDays });
-    setOptions([]);
-  };
-
-  const handleSuggestionsReady = (opts: ActivityOption[]) => { setOptions(opts); };
 
   const handleSave = async () => {
     if (!plan) return;
@@ -203,7 +184,6 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           plan={planWithActions}
           conversationHistory={[]}
           onBack={onBack}
-          collaborative={intake.planningMode === "collaborative"}
           onDeleteBlock={handleDeleteBlock}
           onSwapBlock={handleSwapBlock}
           onUpdateBlockCost={handleUpdateBlockCost}
@@ -219,22 +199,12 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
         />
       </div>
 
-      <AnimatePresence>
-        {options.length > 0 && (
-          <div className="w-[350px]">
-            <OptionsPanel options={options} onSelect={handleSelectOption} onClose={() => setOptions([])} />
-          </div>
-        )}
-      </AnimatePresence>
-
       <ActionItemsModal items={actionItems} onToggle={toggleActionItem} />
 
       <FloatingChat
         conversationHistory={conversationHistory}
         currentPlan={plan}
         onPlanUpdate={handlePlanUpdate}
-        onSuggestionsReady={handleSuggestionsReady}
-        collaborative={intake.planningMode === "collaborative"}
         intakeContext={intakeContext}
       />
 
@@ -242,7 +212,6 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
         open={showAuthPrompt}
         onOpenChange={setShowAuthPrompt}
         onAuthenticated={() => {
-          // After auth, trigger save on next render when user is available
           setTimeout(() => performSave(), 500);
         }}
       />

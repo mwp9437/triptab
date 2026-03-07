@@ -119,7 +119,7 @@ interface DashboardProps {
   plan: TripPlan;
   conversationHistory: { role: string; content: string }[];
   onBack: () => void;
-  collaborative?: boolean;
+  
   onAddActivity?: (dayIndex: number) => void;
   onDeleteBlock?: (dayIndex: number, blockId: string) => void;
   onSwapBlock?: (original: TimeBlock, replacement: BlockAlternative) => void;
@@ -140,7 +140,6 @@ export default function Dashboard({
   plan,
   conversationHistory,
   onBack,
-  collaborative,
   onAddActivity,
   onDeleteBlock,
   onSwapBlock,

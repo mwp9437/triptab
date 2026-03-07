@@ -2,7 +2,6 @@ import { BlockCategory } from "./itinerary";
 
 export type BudgetTier = 1 | 2 | 3 | 4;
 export type TravelerType = "solo" | "couple" | "family" | "friends";
-export type PlanningMode = "auto" | "collaborative";
 export type MobilityLevel = "none" | "limited" | "wheelchair";
 
 export interface TripIntake {
@@ -25,7 +24,6 @@ export interface TripIntake {
   mobility: MobilityLevel;
   mustDos: string;
   avoids: string;
-  planningMode: PlanningMode;
 }
 
 export interface ActivityOption {
@@ -62,7 +60,6 @@ export const DEFAULT_INTAKE: TripIntake = {
   mobility: "none",
   mustDos: "",
   avoids: "",
-  planningMode: "auto",
 };
 
 export const VIBE_OPTIONS = [

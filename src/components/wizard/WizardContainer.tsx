@@ -1,14 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, Sparkles, Compass, LogIn } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { TripIntake, BudgetTier, TravelerType, VIBE_OPTIONS, DIETARY_OPTIONS, BUDGET_LABELS, PlanningMode } from "@/types/intake";
+import { TripIntake, BudgetTier, TravelerType, VIBE_OPTIONS, DIETARY_OPTIONS, BUDGET_LABELS } from "@/types/intake";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { DateRange } from "react-day-picker";
@@ -39,7 +39,7 @@ import luxuryBedroom from "@/assets/luxury-bedroom.png";
 import luxuryTerrace from "@/assets/luxury-terrace.png";
 import luxuryResort from "@/assets/luxury-resort.png";
 
-const STEP_BACKGROUNDS = [luxuryTerrace, luxuryResort, luxuryBedroom];
+const STEP_BACKGROUNDS = [luxuryTerrace, luxuryResort];
 
 interface WizardContainerProps {
   intake: TripIntake;
@@ -48,7 +48,7 @@ interface WizardContainerProps {
   onBack: () => void;
 }
 
-const STEPS = ["Destination & Dates", "Preferences", "Planning Mode"];
+const STEPS = ["Destination & Dates", "Preferences"];
 
 export default function WizardContainer({ intake, onUpdate, onComplete, onBack }: WizardContainerProps) {
   const [step, setStep] = useState(0);
@@ -62,7 +62,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
   const canProceed = () => true;
 
   const next = () => {
-    if (step < 2) setStep(step + 1);
+    if (step < 1) setStep(step + 1);
     else onComplete(intake);
   };
 
@@ -165,7 +165,6 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
               >
                 {step === 0 && <StepDestination intake={intake} onUpdate={update} />}
                 {step === 1 && <StepPreferences intake={intake} onUpdate={update} />}
-                {step === 2 && <StepPlanningMode intake={intake} onUpdate={update} />}
               </motion.div>
             </AnimatePresence>
           </motion.div>
@@ -187,7 +186,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             disabled={!canProceed()}
             className="gap-1.5 sm:gap-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 sm:px-6 shadow-lg shadow-primary/20 text-sm"
           >
-            {step === 2 ? "Build My Trip" : "Next"} <ArrowRight className="w-4 h-4" />
+            {step === 1 ? "Build My Trip" : "Next"} <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
       </div>
@@ -613,64 +612,6 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
             </div>
           ))}
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Step 3: Planning Mode ─── */
-function StepPlanningMode({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Partial<TripIntake>) => void }) {
-  const modes: { id: PlanningMode; icon: typeof Sparkles; title: string; desc: string; sub: string }[] = [
-    {
-      id: "auto",
-      icon: Sparkles,
-      title: "Plan It For Me",
-      desc: "AI generates a complete itinerary based on your inputs. You can edit, swap, and refine afterward.",
-      sub: "Best if you want a starting point fast.",
-    },
-    {
-      id: "collaborative",
-      icon: Compass,
-      title: "Plan Together",
-      desc: "Start with an empty itinerary and build it step by step with AI assistance.",
-      sub: "Best if you want full control.",
-    },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-display font-bold text-foreground mb-1">How do you want to plan?</h2>
-        <p className="text-sm text-muted-foreground font-body">You can switch modes anytime during planning.</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {modes.map((mode) => {
-          const Icon = mode.icon;
-          const selected = intake.planningMode === mode.id;
-          return (
-            <button
-              key={mode.id}
-              onClick={() => onUpdate({ planningMode: mode.id })}
-              className={cn(
-                "text-left rounded-2xl border-2 p-6 transition-all backdrop-blur-sm",
-                selected
-                  ? "border-primary bg-primary/10 shadow-lg shadow-primary/10"
-                  : "border-white/30 bg-white/40 hover:border-primary/30 hover:bg-white/60"
-              )}
-            >
-              <div className={cn(
-                "w-12 h-12 rounded-2xl flex items-center justify-center mb-4",
-                selected ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "bg-white/60 text-muted-foreground"
-              )}>
-                <Icon className="w-6 h-6" />
-              </div>
-              <h3 className="font-display font-bold text-lg text-foreground mb-2">{mode.title}</h3>
-              <p className="text-sm font-body text-muted-foreground mb-2">{mode.desc}</p>
-              <p className="text-xs font-body text-primary font-medium">{mode.sub}</p>
-            </button>
-          );
-        })}
       </div>
     </div>
   );
