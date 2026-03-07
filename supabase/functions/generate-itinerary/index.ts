@@ -17,7 +17,9 @@ function buildPromptFromIntake(intake: any): string {
   const b = intake.budget || {};
   const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip. Target ~85% of this cap ($${Math.round(b.totalBudget * 0.85)}) to leave a buffer for spontaneous spending.` : "";
   const dest = intake.destination?.trim() || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
+  const homeCity = intake.homeCity?.trim() || "not specified — use a major hub near the destination";
   return `Plan a trip to ${dest} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
+Departing from: ${homeCity}
 
 Budget preferences:
 - Accommodation: ${BUDGET_LABELS[b.accommodation]?.accommodation || "mid-range"}
