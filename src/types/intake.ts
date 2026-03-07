@@ -2,7 +2,6 @@ import { BlockCategory } from "./itinerary";
 
 export type BudgetTier = 1 | 2 | 3 | 4;
 export type TravelerType = "solo" | "couple" | "family" | "friends";
-export type PlanningMode = "auto" | "collaborative";
 export type MobilityLevel = "none" | "limited" | "wheelchair";
 
 export interface TripIntake {
