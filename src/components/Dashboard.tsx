@@ -810,6 +810,9 @@ export default function Dashboard({
                   onAddExpense={onAddExpense}
                   onDeleteExpense={onDeleteExpense}
                   onSave={onSave}
+                  onOpenTravelers={onOpenTravelers}
+                  initialValues={quickAddValues}
+                  onClearInitialValues={() => setQuickAddValues(undefined)}
                 />
               )}
             </div>
