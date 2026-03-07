@@ -125,11 +125,19 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const handleSave = async () => {
     if (!plan) return;
     if (!user) {
+      pendingSaveRef.current = true;
       setShowAuthPrompt(true);
       return;
     }
     await performSave();
   };
+
+  useEffect(() => {
+    if (user && pendingSaveRef.current) {
+      pendingSaveRef.current = false;
+      performSave();
+    }
+  }, [user]);
 
   const performSave = async () => {
     if (!plan || !user) return;
