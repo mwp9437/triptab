@@ -14,6 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
+      expense_participants: {
+        Row: {
+          expense_id: string
+          id: string
+          share: number
+          traveler_id: string
+        }
+        Insert: {
+          expense_id: string
+          id?: string
+          share: number
+          traveler_id: string
+        }
+        Update: {
+          expense_id?: string
+          id?: string
+          share?: number
+          traveler_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_participants_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_participants_traveler_id_fkey"
+            columns: ["traveler_id"]
+            isOneToOne: false
+            referencedRelation: "trip_travelers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          amount: number
+          block_id: string | null
+          category: string
+          created_at: string | null
+          currency: string
+          date: string
+          description: string
+          id: string
+          paid_by: string
+          split_method: string
+          trip_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          block_id?: string | null
+          category: string
+          created_at?: string | null
+          currency?: string
+          date: string
+          description: string
+          id?: string
+          paid_by: string
+          split_method?: string
+          trip_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          block_id?: string | null
+          category?: string
+          created_at?: string | null
+          currency?: string
+          date?: string
+          description?: string
+          id?: string
+          paid_by?: string
+          split_method?: string
+          trip_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "trip_travelers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       member_activity_optins: {
         Row: {
           block_id: string
@@ -107,6 +203,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trip_collaborators_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_travelers: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          trip_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          trip_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          trip_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_travelers_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
