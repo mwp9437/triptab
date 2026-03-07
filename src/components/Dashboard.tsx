@@ -141,9 +141,14 @@ export default function Dashboard({
 
   return (
     <div className="relative min-h-screen">
-      {/* Luxury background */}
+      {/* Destination-themed background */}
       <div className="fixed inset-0 z-0">
-        <img src={luxuryResort} alt="" className="w-full h-full object-cover" />
+        <img
+          src={getDestinationBackground(plan.destination)}
+          alt=""
+          className="w-full h-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).src = luxuryResort; }}
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/90 to-background/95 backdrop-blur-sm" />
       </div>
 

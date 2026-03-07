@@ -157,7 +157,7 @@ export default function PlanningWorkspace({ intake, onBack }: { intake: TripInta
     setOptions(opts);
   };
 
-  // Luxury loading screen
+  // Loading screen
   if (isGenerating) {
     return (
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
