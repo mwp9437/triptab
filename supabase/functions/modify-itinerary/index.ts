@@ -48,8 +48,8 @@ Deno.serve(async (req) => {
 
   try {
     const { plan, request, chatHistory } = await req.json();
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+    const apiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
 
     const messages = [
       { role: "system", content: SYSTEM_PROMPT },
