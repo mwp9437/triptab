@@ -84,6 +84,14 @@ export default function AddExpenseModal({
     setLinkedBlockId(null);
   };
 
+  // Set paidBy when travelers load and it's still empty
+  useEffect(() => {
+    if (!paidBy && travelers.length > 0) {
+      const cu = travelers.find((t) => t.isCurrentUser);
+      setPaidBy(cu?.id || travelers[0].id);
+    }
+  }, [travelers, paidBy]);
+
   // Apply initial values when modal opens with them
   useEffect(() => {
     if (open && initialValues) {
@@ -114,8 +122,12 @@ export default function AddExpenseModal({
   // Compute shares
   const computedShares = useMemo(() => {
     if (splitMethod === "equal" && participantArray.length > 0) {
-      const share = Math.round((numericAmount / participantArray.length) * 100) / 100;
-      return Object.fromEntries(participantArray.map((t) => [t.id, share]));
+      const cents = Math.round(numericAmount * 100);
+      const baseShare = Math.floor(cents / participantArray.length);
+      const remainder = cents - baseShare * participantArray.length;
+      return Object.fromEntries(
+        participantArray.map((t, i) => [t.id, (baseShare + (i < remainder ? 1 : 0)) / 100])
+      );
     }
     if (splitMethod === "custom_amount") {
       return Object.fromEntries(

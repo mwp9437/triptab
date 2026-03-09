@@ -12,6 +12,7 @@ interface TravelerManagerProps {
   travelers: Traveler[];
   expenses: Expense[];
   travelerCount?: number;
+  tripId?: string | null;
   onAddTraveler: (name: string, email?: string) => Promise<void>;
   onRemoveTraveler: (id: string) => Promise<void>;
   externalOpen?: boolean;
@@ -22,6 +23,7 @@ export default function TravelerManager({
   travelers,
   expenses,
   travelerCount = 1,
+  tripId,
   onAddTraveler,
   onRemoveTraveler,
   externalOpen,
@@ -40,9 +42,19 @@ export default function TravelerManager({
 
   // Auto-add current user on first open if no travelers exist
   useEffect(() => {
-    if (!open || !user || travelers.length > 0) return;
+    if (!open || !user || !tripId || travelers.length > 0) return;
 
     (async () => {
+      // Check DB to avoid duplicate "you" entries
+      const { data: existing } = await supabase
+        .from("trip_travelers")
+        .select("id")
+        .eq("trip_id", tripId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existing) return;
+
       const { data } = await supabase
         .from("profiles")
         .select("display_name")
@@ -52,7 +64,7 @@ export default function TravelerManager({
       const displayName = (data as any)?.display_name || user.email || "Me";
       await onAddTraveler(displayName, user.email);
     })();
-  }, [open, user, travelers.length]);
+  }, [open, user, tripId, travelers.length]);
 
   const referencedTravelerIds = new Set(
     expenses.flatMap((e) => [e.paidBy, ...e.participants.map((p) => p.travelerId)])

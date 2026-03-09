@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DollarSign, Plane, Hotel, UtensilsCrossed, Ticket, Bus, Package,
@@ -73,9 +73,11 @@ export default function ExpensesPanel({
   };
 
   // Open modal if initialValues arrive
-  if (initialValues && !addModalOpen) {
-    setAddModalOpen(true);
-  }
+  useEffect(() => {
+    if (initialValues && !addModalOpen) {
+      setAddModalOpen(true);
+    }
+  }, [initialValues]);
 
   const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
   const categoryTotals = useMemo(() => getCategoryTotals(expenses), [expenses]);

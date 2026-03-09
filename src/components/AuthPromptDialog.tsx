@@ -19,22 +19,32 @@ export default function AuthPromptDialog({ open, onOpenChange, onAuthenticated }
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
-    const { error } = isLogin
-      ? await signIn(email, password)
-      : await signUp(email, password, displayName);
-
-    setSubmitting(false);
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+    if (isLogin) {
+      const { error } = await signIn(email, password);
+      setSubmitting(false);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        onOpenChange(false);
+        onAuthenticated();
+      }
     } else {
-      onOpenChange(false);
-      onAuthenticated();
+      const { error, needsConfirmation } = await signUp(email, password, displayName);
+      setSubmitting(false);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else if (needsConfirmation) {
+        setConfirmationMessage("Check your email to confirm your account, or sign in if you already have one.");
+      } else {
+        onOpenChange(false);
+        onAuthenticated();
+      }
     }
   };
 
@@ -49,6 +59,12 @@ export default function AuthPromptDialog({ open, onOpenChange, onAuthenticated }
             Your itinerary is ready! Sign in to save it to your trips.
           </DialogDescription>
         </DialogHeader>
+
+        {confirmationMessage && (
+          <p className="text-sm font-body bg-primary/10 rounded-xl px-3 py-2 text-foreground">
+            {confirmationMessage}
+          </p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           {!isLogin && (

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Expense, ExpenseParticipant, Traveler } from "@/types/expenses";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 export function useExpenses(tripId: string | null | undefined) {
   const { user } = useAuth();
@@ -166,20 +167,28 @@ export function useExpenses(tripId: string | null | undefined) {
   const addTraveler = useCallback(
     async (name: string, email?: string) => {
       if (!tripId) return;
-      await supabase.from("trip_travelers").insert({
+      const { error } = await supabase.from("trip_travelers").insert({
         trip_id: tripId,
         name,
         email: email ?? null,
-        user_id: null,
+        user_id: email === user?.email ? user.id : null,
       });
+      if (error) {
+        toast({ title: "Failed to add traveler", description: error.message, variant: "destructive" });
+        throw error;
+      }
       await fetchTravelers();
     },
-    [tripId, fetchTravelers]
+    [tripId, user, fetchTravelers]
   );
 
   const removeTraveler = useCallback(
     async (id: string) => {
-      await supabase.from("trip_travelers").delete().eq("id", id);
+      const { error } = await supabase.from("trip_travelers").delete().eq("id", id);
+      if (error) {
+        toast({ title: "Failed to remove traveler", description: error.message, variant: "destructive" });
+        throw error;
+      }
       await fetchTravelers();
     },
     [fetchTravelers]

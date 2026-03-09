@@ -25,16 +25,22 @@ export default function Auth() {
     e.preventDefault();
     setSubmitting(true);
 
-    const { error } = isLogin
-      ? await signIn(email, password)
-      : await signUp(email, password, displayName);
-
-    setSubmitting(false);
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else if (!isLogin) {
-      toast({ title: "Account created!", description: "You're now signed in." });
+    if (isLogin) {
+      const { error } = await signIn(email, password);
+      setSubmitting(false);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+    } else {
+      const { error, needsConfirmation } = await signUp(email, password, displayName);
+      setSubmitting(false);
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else if (needsConfirmation) {
+        toast({ title: "Check your email", description: "Check your email to confirm your account, or sign in if you already have one." });
+      } else {
+        toast({ title: "Account created!", description: "You're now signed in." });
+      }
     }
   };
 
