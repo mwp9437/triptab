@@ -42,6 +42,15 @@ export async function expectToast(page: Page, text: string | RegExp, timeout = 1
   await expect(locator).toBeVisible({ timeout });
 }
 
+/** Sign up, generate a trip, and save it. Returns email used. */
+export async function signUpGenerateAndSave(page: Page): Promise<string> {
+  const email = await signUp(page);
+  await fillWizardAndGenerate(page);
+  await page.getByRole("button", { name: /Save/ }).first().click();
+  await expect(page.getByText("Saved!", { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+  return email;
+}
+
 /** Fill out the wizard and generate a trip plan */
 export async function fillWizardAndGenerate(page: Page): Promise<void> {
   // Step 0 — Destination & Dates
