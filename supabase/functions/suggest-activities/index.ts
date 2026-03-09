@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
 
   try {
     const { messages, request } = await req.json();
-    const apiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
 
     const fullMessages = [
       { role: "system", content: SYSTEM_PROMPT },
@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
       },
     ];
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
