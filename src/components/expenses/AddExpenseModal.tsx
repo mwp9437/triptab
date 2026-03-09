@@ -162,7 +162,7 @@ export default function AddExpenseModal({
     setSubmitting(true);
     try {
       await onAddExpense({
-        tripId: plan.destination,
+        tripId: "",
         blockId: linkedBlockId,
         description: description.trim(),
         amount: numericAmount,

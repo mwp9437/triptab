@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, MapPin, Calendar, Users, LogOut, ArrowLeft } from "lucide-react";
+import { Plus, MapPin, Calendar, Users, LogOut, ArrowLeft, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,13 @@ export default function MyTrips() {
 
   const handleOpen = (trip: TripRow) => {
     navigate("/", { state: { tripId: trip.id, intake: trip.intake_data, plan: trip.plan_data } });
+  };
+
+  const handleDelete = async (e: React.MouseEvent, trip: TripRow) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this trip? This cannot be undone.")) return;
+    await supabase.from("trips").delete().eq("id", trip.id);
+    setTrips((prev) => prev.filter((t) => t.id !== trip.id));
   };
 
   return (
@@ -92,7 +99,17 @@ export default function MyTrips() {
                       onClick={() => handleOpen(trip)}
                     >
                       <CardContent className="p-5">
-                        <h3 className="font-display font-bold text-lg text-foreground">{trip.title}</h3>
+                        <div className="flex items-start justify-between">
+                          <h3 className="font-display font-bold text-lg text-foreground">{trip.title}</h3>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={(e) => handleDelete(e, trip)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                         <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground font-body">
                           {plan?.startDate && (
                             <span className="flex items-center gap-1">

@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, LogIn } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, LogIn, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -105,7 +105,17 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             <p className="text-[10px] sm:text-xs text-muted-foreground font-body tracking-luxury uppercase">AI Trip Manager</p>
           </div>
         </div>
-        {!user && (
+        {user ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full bg-foreground text-background hover:bg-foreground/80 border-0 text-xs sm:text-sm"
+            onClick={() => navigate("/my-trips")}
+          >
+            <FolderOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+            My Trips
+          </Button>
+        ) : (
           <Button
             variant="outline"
             size="sm"
