@@ -1,27 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { TripPlan } from "@/types/itinerary";
+import { TripPlan, TimeBlock } from "@/types/itinerary";
+import { BlockAlternative } from "@/lib/chat";
 import Dashboard from "@/components/Dashboard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+
+type CollabRole = "owner" | "editor" | "viewer";
 
 export default function SharedTrip() {
   const { tripId } = useParams<{ tripId: string }>();
   const [searchParams] = useSearchParams();
-  const role = searchParams.get("role") || "viewer";
+  const urlRole = searchParams.get("role") || "viewer";
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<TripPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [effectiveRole, setEffectiveRole] = useState<CollabRole>("viewer");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
 
     if (!user) {
-      // Redirect to auth with return URL
       navigate(`/auth?redirect=/trip/${tripId}`);
       return;
     }
@@ -30,7 +35,6 @@ export default function SharedTrip() {
       if (!tripId) return;
       setLoading(true);
 
-      // Try to fetch the trip
       const { data: trip, error: fetchError } = await supabase
         .from("trips")
         .select("*")
@@ -43,22 +47,28 @@ export default function SharedTrip() {
         return;
       }
 
-      // Auto-add as collaborator if not owner and not already a collaborator
-      if (trip.user_id !== user!.id) {
-        const { data: existing } = await supabase
+      // Determine role
+      if (trip.user_id === user!.id) {
+        setEffectiveRole("owner");
+      } else {
+        const { data: collab } = await supabase
           .from("trip_collaborators")
-          .select("id")
+          .select("id, role")
           .eq("trip_id", tripId)
           .eq("user_id", user!.id);
 
-        if (!existing || existing.length === 0) {
+        if (collab && collab.length > 0) {
+          setEffectiveRole((collab[0] as any).role === "editor" ? "editor" : "viewer");
+        } else {
+          // Auto-add as collaborator
           await supabase.from("trip_collaborators").insert({
             trip_id: tripId,
             user_id: user!.id,
             invited_email: user!.email || "",
-            role: role as any,
+            role: urlRole as any,
             accepted: true,
           } as any);
+          setEffectiveRole(urlRole === "editor" ? "editor" : "viewer");
         }
       }
 
@@ -67,7 +77,61 @@ export default function SharedTrip() {
     }
 
     fetchTrip();
-  }, [tripId, user, authLoading, navigate]);
+  }, [tripId, user, authLoading, navigate, urlRole]);
+
+  const canEdit = effectiveRole === "owner" || effectiveRole === "editor";
+
+  const handleDeleteBlock = useCallback((dayIndex: number, blockId: string) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const itinerary = [...prev.itinerary];
+      const day = { ...itinerary[dayIndex] };
+      day.blocks = day.blocks.filter((b) => b.id !== blockId);
+      itinerary[dayIndex] = day;
+      return { ...prev, itinerary };
+    });
+  }, []);
+
+  const handleSwapBlock = useCallback((original: TimeBlock, replacement: BlockAlternative) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const itinerary = prev.itinerary.map((day) => ({
+        ...day,
+        blocks: day.blocks.map((b) =>
+          b.id === original.id
+            ? { ...b, title: replacement.title, description: replacement.description, estimatedCost: replacement.estimatedCost }
+            : b
+        ),
+      }));
+      return { ...prev, itinerary };
+    });
+  }, []);
+
+  const handleUpdateBlockCost = useCallback((dayIndex: number, blockId: string, cost: number) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const itinerary = [...prev.itinerary];
+      const day = { ...itinerary[dayIndex] };
+      day.blocks = day.blocks.map((b) => (b.id === blockId ? { ...b, estimatedCost: cost } : b));
+      itinerary[dayIndex] = day;
+      return { ...prev, itinerary };
+    });
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (!tripId || !plan) return;
+    setSaving(true);
+    try {
+      await supabase
+        .from("trips")
+        .update({ plan_data: plan as any, updated_at: new Date().toISOString() })
+        .eq("id", tripId);
+      toast({ title: "Trip saved" });
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    }
+    setSaving(false);
+  }, [tripId, plan]);
 
   if (authLoading || loading) {
     return (
@@ -96,9 +160,18 @@ export default function SharedTrip() {
       plan={plan}
       conversationHistory={[]}
       onBack={() => navigate(user ? "/my-trips" : "/")}
-      hideActionsSidebar
-      hideFloatingChat
+      hideActionsSidebar={!canEdit}
+      hideFloatingChat={!canEdit}
       tripId={tripId}
+      {...(canEdit
+        ? {
+            onDeleteBlock: handleDeleteBlock,
+            onSwapBlock: handleSwapBlock,
+            onUpdateBlockCost: handleUpdateBlockCost,
+            onSave: handleSave,
+            saving,
+          }
+        : {})}
     />
   );
 }
