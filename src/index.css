@@ -188,4 +188,12 @@
   .tracking-luxury {
     letter-spacing: 0.15em;
   }
+  .animate-ken-burns {
+    animation: ken-burns 20s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes ken-burns {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.03); }
 }

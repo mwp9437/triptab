@@ -173,6 +173,7 @@ interface DashboardProps {
   onAddExpense?: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
   onDeleteExpense?: (id: string) => Promise<void>;
   onOpenTravelers?: () => void;
+  defaultTab?: "schedule" | "details" | "expenses";
 }
 
 export default function Dashboard({
@@ -199,6 +200,7 @@ export default function Dashboard({
   onAddExpense,
   onDeleteExpense,
   onOpenTravelers,
+  defaultTab,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -206,7 +208,7 @@ export default function Dashboard({
   const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
   const [remixBlock, setRemixBlock] = useState<TimeBlock | null>(null);
-  const [mobileTab, setMobileTab] = useState<"schedule" | "details" | "expenses">("schedule");
+  const [mobileTab, setMobileTab] = useState<"schedule" | "details" | "expenses">(defaultTab || "schedule");
   const [sidebarView, setSidebarView] = useState<"details" | "expenses">("details");
   const [quickAddValues, setQuickAddValues] = useState<ExpenseInitialValues | undefined>(undefined);
 

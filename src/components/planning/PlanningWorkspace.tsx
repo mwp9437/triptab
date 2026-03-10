@@ -50,7 +50,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const { user } = useAuth();
   const [tripId, setTripId] = useState<string | null>(loadedTripId || null);
   const [plan, setPlan] = useState<TripPlan | null>(loadedPlan || null);
-  const [isGenerating, setIsGenerating] = useState(!loadedPlan);
+  const [isGenerating, setIsGenerating] = useState(!loadedPlan && !intake.skipAiGeneration);
   const [actionItems, setActionItems] = useState<ActionItem[]>(loadedPlan?.actionItems || []);
   const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
@@ -65,6 +65,11 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
 
   useEffect(() => {
     if (loadedPlan) return;
+    if (intake.skipAiGeneration) {
+      setPlan(createEmptyPlan(intake));
+      setIsGenerating(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -229,6 +234,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onAddExpense={addExpense}
           onDeleteExpense={deleteExpense}
           onOpenTravelers={() => setShowTravelers(true)}
+          defaultTab={intake.expensesOnly ? "expenses" : undefined}
         />
       </div>
 

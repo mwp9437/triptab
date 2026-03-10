@@ -25,6 +25,8 @@ export interface TripIntake {
   mobility: MobilityLevel;
   mustDos: string;
   avoids: string;
+  skipAiGeneration?: boolean;
+  expensesOnly?: boolean;
 }
 
 export interface ActivityOption {
