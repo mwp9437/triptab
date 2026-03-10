@@ -90,7 +90,7 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
             alt=""
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-sand/70 via-sand/50 to-sand/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-sand/30 via-sand/15 to-sand/40" />
         </motion.div>
       </AnimatePresence>
 

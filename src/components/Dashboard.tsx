@@ -287,7 +287,7 @@ export default function Dashboard({
           className="w-full h-full object-cover transition-opacity duration-700"
           onError={(e) => { (e.target as HTMLImageElement).src = luxuryResort; }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/75 to-background/85 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/45 to-background/55 backdrop-blur-sm" />
       </div>
 
       <div className="relative z-10">
@@ -689,7 +689,7 @@ export default function Dashboard({
                       tripId={tripId}
                     />
                   )}
-                  <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+                  <Card className="rounded-2xl border-white/15 glass-card-solid shadow-lg">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base font-display flex items-center gap-2">
                         <DollarSign className="w-4 h-4 text-primary" />
@@ -716,7 +716,7 @@ export default function Dashboard({
                     </CardContent>
                   </Card>
 
-                  <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+                  <Card className="rounded-2xl border-white/15 glass-card-solid shadow-lg">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base font-display flex items-center justify-between">
                         <span className="flex items-center gap-2">
@@ -766,7 +766,7 @@ export default function Dashboard({
 
                   {/* Packing List */}
                   {packingList.length > 0 && (
-                    <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+                    <Card className="rounded-2xl border-white/15 glass-card-solid shadow-lg">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-base font-display flex items-center justify-between">
                           <span className="flex items-center gap-2">
@@ -824,7 +824,7 @@ export default function Dashboard({
 
                   {/* Local Tips */}
                   {plan.localTips && plan.localTips.length > 0 && (
-                    <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+                    <Card className="rounded-2xl border-white/15 glass-card-solid shadow-lg">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-base font-display flex items-center gap-2">
                           <Globe className="w-4 h-4 text-primary" />

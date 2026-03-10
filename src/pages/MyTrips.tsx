@@ -50,7 +50,7 @@ export default function MyTrips() {
     <div className="relative min-h-screen">
       <div className="fixed inset-0 z-0">
         <img src={luxuryResort} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/85 via-background/90 to-background/95 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/55 to-background/65 backdrop-blur-sm" />
       </div>
 
       <div className="relative z-10">

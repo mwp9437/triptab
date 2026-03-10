@@ -102,7 +102,7 @@ export default function QuickCreateWizard({ onComplete, onBack }: QuickCreateWiz
     <div className="relative min-h-screen flex flex-col overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img src={luxuryResort} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/50 to-background/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/15 to-background/40" />
       </div>
 
       <header className="relative z-10 px-4 sm:px-6 py-4 sm:py-5 flex items-center gap-2">

@@ -48,7 +48,7 @@ export default function Auth() {
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <img src={luxuryTerrace} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-b from-sand/70 via-sand/50 to-sand/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-sand/30 via-sand/15 to-sand/40" />
       </div>
 
       <motion.div

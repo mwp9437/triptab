@@ -185,15 +185,28 @@
       inset 0 -1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  .glass-card-solid {
+    position: relative;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(16px) saturate(1.4) brightness(1.05);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4) brightness(1.05);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
   .tracking-luxury {
     letter-spacing: 0.15em;
   }
-  .animate-ken-burns {
-    animation: ken-burns 20s ease-in-out infinite alternate;
+  .bg-kenburns {
+    animation: kenburns 25s ease-in-out infinite;
   }
 }
 
-@keyframes ken-burns {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.03); }
+@keyframes kenburns {
+  0% { transform: scale(1.0); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1.0); }
 }
