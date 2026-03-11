@@ -12,6 +12,8 @@ import ActionItemsModal from "./ActionItemsModal";
 import FloatingChat from "@/components/FloatingChat";
 import AuthPromptDialog from "@/components/AuthPromptDialog";
 import TravelerManager from "@/components/TravelerManager";
+import { AccommodationDetails, BedroomAssignment } from "@/components/AccommodationHub";
+import { DatePollData } from "@/components/DatePoll";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMemberOptIns } from "@/hooks/use-member-optins";
 import { useExpenses } from "@/hooks/use-expenses";
@@ -58,6 +60,9 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const { travelers, expenses, addExpense, deleteExpense, addTraveler, removeTraveler } = useExpenses(tripId);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showTravelers, setShowTravelers] = useState(false);
+  const [accommodationDetails, setAccommodationDetails] = useState<AccommodationDetails>((loadedPlan as any)?.accommodationDetails || {});
+  const [bedroomAssignments, setBedroomAssignments] = useState<BedroomAssignment[]>((loadedPlan as any)?.bedroomAssignments || []);
+  const [datePoll, setDatePoll] = useState<DatePollData>((loadedPlan as any)?.datePoll || { options: [], votes: {} });
   const pendingSaveRef = useRef(false);
 
   const intakeContext = intakeToContext(intake);
@@ -127,6 +132,20 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     toast({ title: "Swapped", description: `Replaced "${original.title}" with "${replacement.title}".` });
   };
 
+  const handleUpdateAccommodation = (details: AccommodationDetails, bedrooms: BedroomAssignment[]) => {
+    setAccommodationDetails(details);
+    setBedroomAssignments(bedrooms);
+  };
+
+  const handleUpdateDatePoll = (poll: DatePollData) => {
+    setDatePoll(poll);
+  };
+
+  const handleLockDates = (startDate: string, endDate: string) => {
+    if (!plan) return;
+    setPlan({ ...plan, startDate, endDate });
+  };
+
   const handleSave = async () => {
     if (!plan) return;
     if (!user) {
@@ -148,7 +167,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     console.log("performSave called", { hasPlan: !!plan, hasUser: !!user, tripId });
     if (!plan || !user) return;
     setSaving(true);
-    const planWithActions = { ...plan, actionItems };
+    const planWithActions = { ...plan, actionItems, accommodationDetails, bedroomAssignments, datePoll };
 
     try {
       if (tripId) {
@@ -235,6 +254,14 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onDeleteExpense={deleteExpense}
           onOpenTravelers={() => setShowTravelers(true)}
           defaultTab={intake.expensesOnly ? "expenses" : undefined}
+          accommodationDetails={accommodationDetails}
+          bedroomAssignments={bedroomAssignments}
+          onUpdateAccommodation={handleUpdateAccommodation}
+          isOwner={true}
+          datePoll={datePoll}
+          onUpdateDatePoll={handleUpdateDatePoll}
+          onLockDates={handleLockDates}
+          currentTravelerId={travelers.find((t) => t.isCurrentUser)?.id}
         />
       </div>
 

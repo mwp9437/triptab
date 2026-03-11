@@ -5,9 +5,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TripPlan, TimeBlock } from "@/types/itinerary";
 import { BlockAlternative } from "@/lib/chat";
 import Dashboard from "@/components/Dashboard";
+import { AccommodationDetails, BedroomAssignment } from "@/components/AccommodationHub";
+import { DatePollData } from "@/components/DatePoll";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useExpenses } from "@/hooks/use-expenses";
 
 type CollabRole = "owner" | "editor" | "viewer";
 
@@ -22,6 +25,10 @@ export default function SharedTrip() {
   const [error, setError] = useState<string | null>(null);
   const [effectiveRole, setEffectiveRole] = useState<CollabRole>("viewer");
   const [saving, setSaving] = useState(false);
+  const [accommodationDetails, setAccommodationDetails] = useState<AccommodationDetails>({});
+  const [bedroomAssignments, setBedroomAssignments] = useState<BedroomAssignment[]>([]);
+  const [datePoll, setDatePoll] = useState<DatePollData>({ options: [], votes: {} });
+  const { travelers } = useExpenses(tripId);
 
   useEffect(() => {
     if (authLoading) return;
@@ -72,7 +79,11 @@ export default function SharedTrip() {
         }
       }
 
-      setPlan(trip.plan_data as unknown as TripPlan);
+      const planData = trip.plan_data as any;
+      setPlan(planData as unknown as TripPlan);
+      setAccommodationDetails(planData?.accommodationDetails || {});
+      setBedroomAssignments(planData?.bedroomAssignments || []);
+      setDatePoll(planData?.datePoll || { options: [], votes: {} });
       setLoading(false);
     }
 
@@ -118,20 +129,34 @@ export default function SharedTrip() {
     });
   }, []);
 
+  const handleUpdateAccommodation = useCallback((details: AccommodationDetails, bedrooms: BedroomAssignment[]) => {
+    setAccommodationDetails(details);
+    setBedroomAssignments(bedrooms);
+  }, []);
+
+  const handleUpdateDatePoll = useCallback((poll: DatePollData) => {
+    setDatePoll(poll);
+  }, []);
+
+  const handleLockDates = useCallback((startDate: string, endDate: string) => {
+    setPlan((prev) => prev ? { ...prev, startDate, endDate } : prev);
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!tripId || !plan) return;
     setSaving(true);
     try {
+      const planWithExtras = { ...plan, accommodationDetails, bedroomAssignments, datePoll };
       await supabase
         .from("trips")
-        .update({ plan_data: plan as any, updated_at: new Date().toISOString() })
+        .update({ plan_data: planWithExtras as any, updated_at: new Date().toISOString() })
         .eq("id", tripId);
       toast({ title: "Trip saved" });
     } catch (err: any) {
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     }
     setSaving(false);
-  }, [tripId, plan]);
+  }, [tripId, plan, accommodationDetails, bedroomAssignments, datePoll]);
 
   if (authLoading || loading) {
     return (
@@ -163,6 +188,15 @@ export default function SharedTrip() {
       hideActionsSidebar={!canEdit}
       hideFloatingChat={!canEdit}
       tripId={tripId}
+      accommodationDetails={accommodationDetails}
+      bedroomAssignments={bedroomAssignments}
+      onUpdateAccommodation={handleUpdateAccommodation}
+      isOwner={effectiveRole === "owner"}
+      datePoll={datePoll}
+      onUpdateDatePoll={handleUpdateDatePoll}
+      onLockDates={handleLockDates}
+      currentTravelerId={travelers.find((t) => t.isCurrentUser)?.id}
+      travelers={travelers}
       {...(canEdit
         ? {
             onDeleteBlock: handleDeleteBlock,

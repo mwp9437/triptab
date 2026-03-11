@@ -7,7 +7,9 @@
       "Bash(PATH=\"/c/Users/mpezza/nvm/v20.20.1:$PATH\" npx vite:*)",
       "Bash(export:*)",
       "Bash(npx vitest:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)"
     ]
   }
 }

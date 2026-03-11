@@ -25,6 +25,8 @@ import FloatingChat from "./FloatingChat";
 import BlockDetailModal from "./BlockDetailModal";
 import RemixModal from "./RemixModal";
 import ExpensesPanel from "./expenses/ExpensesPanel";
+import AccommodationHub, { AccommodationDetails, BedroomAssignment } from "./AccommodationHub";
+import DatePoll, { DatePollData } from "./DatePoll";
 import { Expense, Traveler } from "@/types/expenses";
 import type { ExpenseInitialValues } from "./expenses/AddExpenseModal";
 import luxuryResort from "@/assets/luxury-resort.png";
@@ -174,6 +176,16 @@ interface DashboardProps {
   onDeleteExpense?: (id: string) => Promise<void>;
   onOpenTravelers?: () => void;
   defaultTab?: "schedule" | "details" | "expenses";
+  // Accommodation props
+  accommodationDetails?: AccommodationDetails;
+  bedroomAssignments?: BedroomAssignment[];
+  onUpdateAccommodation?: (details: AccommodationDetails, bedrooms: BedroomAssignment[]) => void;
+  isOwner?: boolean;
+  // Date poll props
+  datePoll?: DatePollData;
+  onUpdateDatePoll?: (poll: DatePollData) => void;
+  onLockDates?: (startDate: string, endDate: string) => void;
+  currentTravelerId?: string;
 }
 
 export default function Dashboard({
@@ -201,6 +213,14 @@ export default function Dashboard({
   onDeleteExpense,
   onOpenTravelers,
   defaultTab,
+  accommodationDetails,
+  bedroomAssignments,
+  onUpdateAccommodation,
+  isOwner,
+  datePoll,
+  onUpdateDatePoll,
+  onLockDates,
+  currentTravelerId,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -317,6 +337,25 @@ export default function Dashboard({
             )}
             {tripId && <InviteModal tripId={tripId} />}
             {travelerSlot}
+            {onUpdateAccommodation && (
+              <AccommodationHub
+                accommodationDetails={accommodationDetails}
+                bedroomAssignments={bedroomAssignments}
+                onUpdate={onUpdateAccommodation}
+                canEdit={!!isOwner}
+                travelers={travelers}
+              />
+            )}
+            {onUpdateDatePoll && onLockDates && (
+              <DatePoll
+                datePoll={datePoll}
+                onUpdate={onUpdateDatePoll}
+                onLock={onLockDates}
+                isOwner={!!isOwner}
+                currentTravelerId={currentTravelerId}
+                travelers={travelers}
+              />
+            )}
             {onSave && (
               <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={onSave} disabled={saving}>
                 <Save className="w-4 h-4" />
