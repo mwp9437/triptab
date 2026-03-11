@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TripIntake } from "@/types/intake";
 import { TripPlan, TimeBlock, ActionItem } from "@/types/itinerary";
-import { BlockAlternative } from "@/lib/chat";
+import { BlockAlternative, suggestActivities } from "@/lib/chat";
 import { generateFromIntake } from "@/lib/chat";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,6 +63,9 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const [accommodationDetails, setAccommodationDetails] = useState<AccommodationDetails>((loadedPlan as any)?.accommodationDetails || {});
   const [bedroomAssignments, setBedroomAssignments] = useState<BedroomAssignment[]>((loadedPlan as any)?.bedroomAssignments || []);
   const [datePoll, setDatePoll] = useState<DatePollData>((loadedPlan as any)?.datePoll || { options: [], votes: {} });
+  const [slotSuggestions, setSlotSuggestions] = useState<Record<string, any[]>>({});
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const suggestionsRequestedRef = useRef(false);
   const pendingSaveRef = useRef(false);
 
   const intakeContext = intakeToContext(intake);
@@ -90,6 +93,59 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Pre-fetch AI suggestions for days with empty slots (only for skipAiGeneration trips)
+  useEffect(() => {
+    if (!plan || !intake.skipAiGeneration || suggestionsRequestedRef.current) return;
+    const SLOTS = [
+      { label: "Morning Activity", startTime: "09:00", endTime: "12:00", category: "activity" },
+      { label: "Lunch", startTime: "12:00", endTime: "13:30", category: "meal" },
+      { label: "Afternoon Activity", startTime: "14:00", endTime: "17:00", category: "activity" },
+      { label: "Dinner", startTime: "19:00", endTime: "21:00", category: "meal" },
+    ];
+    // Check if any day has empty slots
+    const hasSparse = plan.itinerary.some(day => {
+      const blocks = day.blocks.filter(b => b.category !== "accommodation");
+      return SLOTS.some(slot => !blocks.some(b => b.startTime < slot.endTime && b.endTime > slot.startTime));
+    });
+    if (!hasSparse) return;
+    suggestionsRequestedRef.current = true;
+    setSuggestionsLoading(true);
+
+    (async () => {
+      const results: Record<string, any[]> = {};
+      // Fetch for each day (batch all days in parallel)
+      await Promise.all(plan.itinerary.map(async (day, dayIdx) => {
+        const blocks = day.blocks.filter(b => b.category !== "accommodation");
+        const missing = SLOTS.filter(slot => !blocks.some(b => b.startTime < slot.endTime && b.endTime > slot.startTime));
+        if (missing.length === 0) return;
+
+        try {
+          const slotDescriptions = missing.map(s => s.label).join(", ");
+          const request = `Suggest activities for Day ${day.dayNumber} (${day.date}). Need: ${slotDescriptions}. For each slot, suggest 1 specific activity with title, description, estimated cost, and category. Keep it concise.`;
+          const result = await suggestActivities(
+            [{ role: "system", content: intakeContext }],
+            request
+          );
+          const suggestions = result.suggestions || [];
+          // Distribute suggestions across slots
+          missing.forEach((slot, i) => {
+            const key = `${dayIdx}-${slot.label}`;
+            // Try to match by category or just assign by index
+            const matched = suggestions.filter((s: any) => {
+              if (slot.category === "meal") return /meal|lunch|dinner|food|eat|restaurant/i.test(s.category || s.title || "");
+              return !/meal|lunch|dinner|food/i.test(s.category || "");
+            });
+            results[key] = matched.length > 0 ? matched.slice(0, 4) : suggestions.slice(i, i + 1);
+          });
+        } catch {
+          // Silently fail — placeholders will show generic text
+        }
+      }));
+      setSlotSuggestions(results);
+      setSuggestionsLoading(false);
+    })();
+  }, [plan, intake.skipAiGeneration, intakeContext]);
 
   const toggleActionItem = (id: string) => {
     setActionItems((items) => items.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item)));
@@ -274,6 +330,8 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onUpdateDatePoll={handleUpdateDatePoll}
           onLockDates={handleLockDates}
           currentTravelerId={travelers.find((t) => t.isCurrentUser)?.id}
+          slotSuggestions={slotSuggestions}
+          slotSuggestionsLoading={suggestionsLoading}
         />
       </div>
 

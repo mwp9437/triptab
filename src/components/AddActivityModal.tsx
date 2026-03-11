@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { BlockCategory, TimeBlock } from "@/types/itinerary";
 import { suggestActivities } from "@/lib/chat";
 import { toast } from "@/hooks/use-toast";
 
-interface Suggestion {
+export interface Suggestion {
   title: string;
   description: string;
   cost?: number;
@@ -30,6 +30,8 @@ interface AddActivityModalProps {
   slotStartTime?: string;
   slotEndTime?: string;
   slotCategory?: BlockCategory;
+  /** Pre-loaded suggestions from parent (avoids re-fetch) */
+  preloadedSuggestions?: Suggestion[];
 }
 
 const CATEGORY_OPTIONS: { value: BlockCategory; label: string }[] = [
@@ -51,6 +53,7 @@ export default function AddActivityModal({
   slotStartTime,
   slotEndTime,
   slotCategory,
+  preloadedSuggestions,
 }: AddActivityModalProps) {
   const [title, setTitle] = useState("");
   const [startTime, setStartTime] = useState(slotStartTime || "09:00");
@@ -65,7 +68,26 @@ export default function AddActivityModal({
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [suggestionsLoaded, setSuggestionsLoaded] = useState(false);
 
-  // Reset when opened with new slot
+  // Sync preloaded suggestions and form when modal opens with new slot
+  useEffect(() => {
+    if (open) {
+      setStartTime(slotStartTime || "09:00");
+      setEndTime(slotEndTime || "12:00");
+      setCategory(slotCategory || "activity");
+      setTitle("");
+      setLocation("");
+      setCost("");
+      setNotes("");
+      if (preloadedSuggestions && preloadedSuggestions.length > 0) {
+        setSuggestions(preloadedSuggestions);
+        setSuggestionsLoaded(true);
+      } else {
+        setSuggestions([]);
+        setSuggestionsLoaded(false);
+      }
+    }
+  }, [open, slotLabel, slotStartTime, slotEndTime, slotCategory]);
+
   const resetForm = () => {
     setTitle("");
     setStartTime(slotStartTime || "09:00");

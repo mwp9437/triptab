@@ -27,35 +27,93 @@ import RemixModal from "./RemixModal";
 import ExpensesPanel from "./expenses/ExpensesPanel";
 import AccommodationHub, { AccommodationDetails, BedroomAssignment } from "./AccommodationHub";
 import DatePoll, { DatePollData } from "./DatePoll";
-import AddActivityModal from "./AddActivityModal";
+import AddActivityModal, { Suggestion } from "./AddActivityModal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Expense, Traveler } from "@/types/expenses";
 import type { ExpenseInitialValues } from "./expenses/AddExpenseModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 import { cn } from "@/lib/utils";
 
-/** Build Unsplash embed URLs for destination-themed luxury backgrounds */
+/** Curated Unsplash photo IDs — permanent URLs, no API key needed */
+const DESTINATION_PHOTOS: Record<string, string> = {
+  "cancun": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=1920&h=1080&fit=crop",
+  "hawaii": "https://images.unsplash.com/photo-1507876466758-bc54f384809c?w=1920&h=1080&fit=crop",
+  "bali": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1920&h=1080&fit=crop",
+  "maldives": "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=1920&h=1080&fit=crop",
+  "phuket": "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?w=1920&h=1080&fit=crop",
+  "banff": "https://images.unsplash.com/photo-1503614472-8c93d56e92ce?w=1920&h=1080&fit=crop",
+  "switzerland": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&h=1080&fit=crop",
+  "colorado": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&h=1080&fit=crop",
+  "denver": "https://images.unsplash.com/photo-1546156929-a4c0ac411f47?w=1920&h=1080&fit=crop",
+  "paris": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1920&h=1080&fit=crop",
+  "rome": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1920&h=1080&fit=crop",
+  "florence": "https://images.unsplash.com/photo-1543429258-0f2b960ebaca?w=1920&h=1080&fit=crop",
+  "venice": "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=1920&h=1080&fit=crop",
+  "amalfi": "https://images.unsplash.com/photo-1534113414509-0eec2bfb493f?w=1920&h=1080&fit=crop",
+  "barcelona": "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1920&h=1080&fit=crop",
+  "madrid": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=1920&h=1080&fit=crop",
+  "london": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1920&h=1080&fit=crop",
+  "edinburgh": "https://images.unsplash.com/photo-1506377585622-bedcbb027afc?w=1920&h=1080&fit=crop",
+  "amsterdam": "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=1920&h=1080&fit=crop",
+  "santorini": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1920&h=1080&fit=crop",
+  "athens": "https://images.unsplash.com/photo-1555993539-1732b0258235?w=1920&h=1080&fit=crop",
+  "lisbon": "https://images.unsplash.com/photo-1585208798174-6cedd86e019a?w=1920&h=1080&fit=crop",
+  "berlin": "https://images.unsplash.com/photo-1560969184-10fe8719e047?w=1920&h=1080&fit=crop",
+  "munich": "https://images.unsplash.com/photo-1595867818082-083862f3d630?w=1920&h=1080&fit=crop",
+  "dubai": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1920&h=1080&fit=crop",
+  "istanbul": "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=1920&h=1080&fit=crop",
+  "tokyo": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1920&h=1080&fit=crop",
+  "kyoto": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1920&h=1080&fit=crop",
+  "osaka": "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=1920&h=1080&fit=crop",
+  "bangkok": "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=1920&h=1080&fit=crop",
+  "singapore": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=1920&h=1080&fit=crop",
+  "hong kong": "https://images.unsplash.com/photo-1536599018102-9f803c140fc1?w=1920&h=1080&fit=crop",
+  "seoul": "https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=1920&h=1080&fit=crop",
+  "new york": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1920&h=1080&fit=crop",
+  "los angeles": "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?w=1920&h=1080&fit=crop",
+  "san francisco": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=1920&h=1080&fit=crop",
+  "miami": "https://images.unsplash.com/photo-1514214246283-d427a95c5d2f?w=1920&h=1080&fit=crop",
+  "chicago": "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?w=1920&h=1080&fit=crop",
+  "seattle": "https://images.unsplash.com/photo-1502175353174-a7a70e73b4c3?w=1920&h=1080&fit=crop",
+  "mexico": "https://images.unsplash.com/photo-1518638150340-f706e86654de?w=1920&h=1080&fit=crop",
+  "rio": "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=1920&h=1080&fit=crop",
+  "sydney": "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=1920&h=1080&fit=crop",
+  "melbourne": "https://images.unsplash.com/photo-1514395462725-fb4566210144?w=1920&h=1080&fit=crop",
+  "japan": "https://images.unsplash.com/photo-1528164344705-47542687000d?w=1920&h=1080&fit=crop",
+  "italy": "https://images.unsplash.com/photo-1534113414509-0eec2bfb493f?w=1920&h=1080&fit=crop",
+  "spain": "https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=1920&h=1080&fit=crop",
+  "france": "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=1920&h=1080&fit=crop",
+  "greece": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1920&h=1080&fit=crop",
+};
+
+const FALLBACK_PHOTOS = [
+  "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=1920&h=1080&fit=crop",
+  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&h=1080&fit=crop",
+  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&h=1080&fit=crop",
+];
+
 function getDestinationImageUrl(destination: string): string {
-  const q = encodeURIComponent(destination.trim() + " luxury travel");
-  return `https://source.unsplash.com/1920x1080/?${q}`;
+  const lower = destination.toLowerCase();
+  for (const [key, url] of Object.entries(DESTINATION_PHOTOS)) {
+    if (lower.includes(key)) return url;
+  }
+  const hash = lower.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return FALLBACK_PHOTOS[hash % FALLBACK_PHOTOS.length];
 }
 
-/** Hook: resolve a high-quality destination background with fallback */
+/** Hook: resolve a destination background with fallback */
 function useDestinationBackground(destination: string, fallback: string) {
-  const [bgUrl, setBgUrl] = useState<string>("");
-  const [loaded, setLoaded] = useState(false);
+  const [bgUrl, setBgUrl] = useState<string>(fallback);
 
   useEffect(() => {
-    const primary = getDestinationImageUrl(destination);
-    const img = new Image();
-    img.onload = () => { setBgUrl(primary); setLoaded(true); };
-    img.onerror = () => { setBgUrl(fallback); setLoaded(true); };
-    img.src = primary;
-    // Start showing fallback immediately while loading
-    setBgUrl(fallback);
+    const url = getDestinationImageUrl(destination);
+    const img = new window.Image();
+    img.onload = () => setBgUrl(url);
+    img.onerror = () => setBgUrl(fallback);
+    img.src = url;
   }, [destination, fallback]);
 
-  return { bgUrl, loaded };
+  return { bgUrl };
 }
 
 const PACKING_ICONS: Record<PackingCategory, typeof Plane> = {
@@ -203,6 +261,9 @@ interface DashboardProps {
   onUpdateDatePoll?: (poll: DatePollData) => void;
   onLockDates?: (startDate: string, endDate: string) => void;
   currentTravelerId?: string;
+  // Pre-fetched AI suggestions for empty slots
+  slotSuggestions?: Record<string, Suggestion[]>;
+  slotSuggestionsLoading?: boolean;
 }
 
 export default function Dashboard({
@@ -238,6 +299,8 @@ export default function Dashboard({
   onUpdateDatePoll,
   onLockDates,
   currentTravelerId,
+  slotSuggestions,
+  slotSuggestionsLoading,
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -647,6 +710,12 @@ export default function Dashboard({
                           const missing = getMissingSlots(regularBlocks);
                           return missing.map((slot) => {
                             const SlotIcon = BLOCK_STYLES[slot.category]?.icon || Palmtree;
+                            const slotKey = `${idx}-${slot.label}`;
+                            const sug = slotSuggestions?.[slotKey]?.[0];
+                            const isLoading = slotSuggestionsLoading;
+                            const displayTitle = sug?.title || slot.label;
+                            const displaySub = sug ? (sug.cost != null ? `~$${sug.cost} est.` : sug.description?.slice(0, 50)) : undefined;
+
                             return (
                               <button
                                 key={slot.label}
@@ -654,11 +723,23 @@ export default function Dashboard({
                                 className="w-full rounded-2xl border-2 border-dashed border-white/20 hover:border-primary/30 bg-white/5 hover:bg-white/10 p-3.5 flex items-start gap-2.5 text-left transition-all mb-2 group/ph"
                               >
                                 <SlotIcon className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground/50" />
-                                <div className="flex-1">
-                                  <p className="font-body text-sm italic text-muted-foreground/70 group-hover/ph:text-muted-foreground transition-colors">{slot.label}</p>
-                                  <p className="text-xs text-muted-foreground/40 flex items-center gap-1 mt-0.5">
-                                    <Clock className="w-3 h-3" />{slot.startTime}–{slot.endTime}
-                                  </p>
+                                <div className="flex-1 min-w-0">
+                                  {isLoading ? (
+                                    <div className="space-y-1.5">
+                                      <div className="h-4 w-3/4 rounded bg-white/10 animate-pulse" />
+                                      <div className="h-3 w-1/2 rounded bg-white/5 animate-pulse" />
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <p className="font-body text-sm italic text-muted-foreground/70 group-hover/ph:text-muted-foreground transition-colors truncate">
+                                        {displayTitle}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground/40 flex items-center gap-1 mt-0.5">
+                                        <Clock className="w-3 h-3" />{slot.startTime}–{slot.endTime}
+                                        {displaySub && <span className="ml-1 truncate">{displaySub}</span>}
+                                      </p>
+                                    </>
+                                  )}
                                 </div>
                                 <Sparkles className="w-3.5 h-3.5 text-primary/30 group-hover/ph:text-primary/60 transition-colors mt-0.5 shrink-0" />
                               </button>
@@ -1037,6 +1118,7 @@ export default function Dashboard({
             slotStartTime={addActivitySlot?.startTime}
             slotEndTime={addActivitySlot?.endTime}
             slotCategory={addActivitySlot?.category}
+            preloadedSuggestions={addActivitySlot ? slotSuggestions?.[`${addActivityDayIndex}-${addActivitySlot.label}`] : undefined}
           />
         )}
       </div>
