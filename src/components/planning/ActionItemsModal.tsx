@@ -29,7 +29,7 @@ export default function ActionItemsModal({ items, onToggle }: ActionItemsModalPr
   }, {});
 
   return (
-    <div className="fixed bottom-24 right-6 z-50">
+    <div className="fixed bottom-24 right-6 z-50 flex flex-col items-center gap-1">
       <Sheet>
         <SheetTrigger asChild>
           <motion.button
@@ -45,6 +45,7 @@ export default function ActionItemsModal({ items, onToggle }: ActionItemsModalPr
             )}
           </motion.button>
         </SheetTrigger>
+        <span className="hidden sm:block text-[10px] font-body font-medium text-muted-foreground">Tasks</span>
         <SheetContent className="w-[400px] sm:w-[440px] bg-white/90 backdrop-blur-2xl border-l-white/20">
           <SheetHeader>
             <SheetTitle className="font-display flex items-center gap-2">

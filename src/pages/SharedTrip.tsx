@@ -129,6 +129,18 @@ export default function SharedTrip() {
     });
   }, []);
 
+  const handleAddActivity = useCallback((dayIndex: number, block?: any) => {
+    if (!block) return;
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const itinerary = [...prev.itinerary];
+      const day = { ...itinerary[dayIndex] };
+      day.blocks = [...day.blocks, block].sort((a: any, b: any) => a.startTime.localeCompare(b.startTime));
+      itinerary[dayIndex] = day;
+      return { ...prev, itinerary };
+    });
+  }, []);
+
   const handleUpdateAccommodation = useCallback((details: AccommodationDetails, bedrooms: BedroomAssignment[]) => {
     setAccommodationDetails(details);
     setBedroomAssignments(bedrooms);
@@ -202,6 +214,7 @@ export default function SharedTrip() {
             onDeleteBlock: handleDeleteBlock,
             onSwapBlock: handleSwapBlock,
             onUpdateBlockCost: handleUpdateBlockCost,
+            onAddActivity: handleAddActivity,
             onSave: handleSave,
             saving,
           }

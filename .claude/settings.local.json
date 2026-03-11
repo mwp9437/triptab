@@ -9,7 +9,8 @@
       "Bash(npx vitest:*)",
       "Bash(npx tsc:*)",
       "Bash(git push:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

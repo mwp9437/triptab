@@ -4,7 +4,7 @@ import {
   CalendarDays, MapPin, Clock, DollarSign, Check, Plane, Hotel,
   UtensilsCrossed, Ticket, Backpack, ArrowLeft, Bus, Palmtree,
   Coffee, Bed, Plus, Download, Trash2, Luggage, Shirt, Plug, FileText, ShowerHead, Package, Globe,
-  Shuffle, Save, LogOut, FolderOpen, UserCheck, UserX, Wallet, CircleDollarSign,
+  Shuffle, Save, LogOut, FolderOpen, UserCheck, UserX, Wallet, CircleDollarSign, Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ import RemixModal from "./RemixModal";
 import ExpensesPanel from "./expenses/ExpensesPanel";
 import AccommodationHub, { AccommodationDetails, BedroomAssignment } from "./AccommodationHub";
 import DatePoll, { DatePollData } from "./DatePoll";
+import AddActivityModal from "./AddActivityModal";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Expense, Traveler } from "@/types/expenses";
 import type { ExpenseInitialValues } from "./expenses/AddExpenseModal";
 import luxuryResort from "@/assets/luxury-resort.png";
@@ -149,12 +151,27 @@ function deduplicateBlocks(blocks: TimeBlock[]): TimeBlock[] {
   return [...otherBlocks, ...keptTransport, ...Array.from(seenAccommodations.values())];
 }
 
+/** Suggested time slots for empty/sparse days */
+type TimeSlot = { label: string; startTime: string; endTime: string; category: BlockCategory };
+const SUGGESTED_SLOTS: TimeSlot[] = [
+  { label: "Morning Activity", startTime: "09:00", endTime: "12:00", category: "activity" },
+  { label: "Lunch", startTime: "12:00", endTime: "13:30", category: "meal" },
+  { label: "Afternoon Activity", startTime: "14:00", endTime: "17:00", category: "activity" },
+  { label: "Dinner", startTime: "19:00", endTime: "21:00", category: "meal" },
+];
+
+function getMissingSlots(blocks: TimeBlock[]): TimeSlot[] {
+  return SUGGESTED_SLOTS.filter(slot => {
+    return !blocks.some(b => b.startTime < slot.endTime && b.endTime > slot.startTime);
+  });
+}
+
 interface DashboardProps {
   plan: TripPlan;
   conversationHistory: { role: string; content: string }[];
   onBack: () => void;
   
-  onAddActivity?: (dayIndex: number) => void;
+  onAddActivity?: (dayIndex: number, block?: TimeBlock) => void;
   onDeleteBlock?: (dayIndex: number, blockId: string) => void;
   onSwapBlock?: (original: TimeBlock, replacement: BlockAlternative) => void;
   onUpdateBlockCost?: (dayIndex: number, blockId: string, cost: number) => void;
@@ -232,6 +249,11 @@ export default function Dashboard({
   const [sidebarView, setSidebarView] = useState<"details" | "expenses">("details");
   const [quickAddValues, setQuickAddValues] = useState<ExpenseInitialValues | undefined>(undefined);
 
+  // Add activity modal state
+  const [addActivityOpen, setAddActivityOpen] = useState(false);
+  const [addActivityDayIndex, setAddActivityDayIndex] = useState(0);
+  const [addActivitySlot, setAddActivitySlot] = useState<TimeSlot | undefined>(undefined);
+
   // Build a set of blockIds that have expenses linked
   const expenseBlockIds = useMemo(
     () => new Set(expenses.filter((e) => e.blockId).map((e) => e.blockId!)),
@@ -258,6 +280,12 @@ export default function Dashboard({
     setSidebarView("expenses");
     // On mobile, switch tab
     setMobileTab("expenses");
+  };
+
+  const openAddActivity = (dayIndex: number, slot?: TimeSlot) => {
+    setAddActivityDayIndex(dayIndex);
+    setAddActivitySlot(slot);
+    setAddActivityOpen(true);
   };
 
   const togglePackingItem = (id: string) => {
@@ -478,14 +506,23 @@ export default function Dashboard({
                 return (
                   <AccordionItem key={idx} value={`day-${idx}`} className="border-white/10" id={`day-section-${idx}`}>
                     <AccordionTrigger className="hover:no-underline">
-                      <div className="flex items-center gap-3 text-left">
+                      <div className="flex items-center gap-3 text-left flex-1">
                         <div className="w-10 h-10 rounded-2xl glass flex items-center justify-center">
                           <span className="font-display font-bold text-primary text-sm">{day.dayNumber}</span>
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <span className="font-display font-semibold text-foreground">{day.title}</span>
                           <p className="text-[10px] text-muted-foreground font-body tracking-luxury uppercase">{day.date}</p>
                         </div>
+                        {onAddActivity && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openAddActivity(idx); }}
+                            className="w-7 h-7 rounded-full glass border border-white/20 flex items-center justify-center hover:bg-primary/15 hover:text-primary transition-all text-muted-foreground shrink-0 mr-2"
+                            title="Add activity"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -550,13 +587,19 @@ export default function Dashboard({
                                         </button>
                                       )}
                                       {onDeleteBlock && (
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
-                                          className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                                          title="Remove activity"
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
+                                        <TooltipProvider delayDuration={300}>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
+                                                className="opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity ml-1 p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                                              >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                              </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top"><p>Remove</p></TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
                                       )}
                                     </div>
                                   </div>
@@ -565,31 +608,67 @@ export default function Dashboard({
                                   )}
                                   {/* Quick-add expense */}
                                   {onAddExpense && tripId && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); handleQuickAddExpense(block, day.date); }}
-                                      className="absolute bottom-2 right-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-sage/10 text-muted-foreground hover:text-sage"
-                                      title="Log expense"
-                                    >
-                                      <CircleDollarSign className="w-3.5 h-3.5" />
-                                    </button>
+                                    <TooltipProvider delayDuration={300}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); handleQuickAddExpense(block, day.date); }}
+                                            className="absolute bottom-2 right-10 opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-sage/10 text-muted-foreground hover:text-sage"
+                                          >
+                                            <CircleDollarSign className="w-3.5 h-3.5" />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top"><p>Log expense</p></TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   )}
                                   {/* Remix button */}
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
-                                    className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary"
-                                    title="Find alternatives"
-                                  >
-                                    <Shuffle className="w-3.5 h-3.5" />
-                                  </button>
+                                  <TooltipProvider delayDuration={300}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                          className="absolute bottom-2 right-2 opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                        >
+                                          <Shuffle className="w-3.5 h-3.5" />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top"><p>Find alternatives</p></TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               </motion.div>
                             );
                           })}
                         </div>
 
+                        {/* Placeholder suggestion bubbles for missing time slots */}
+                        {onAddActivity && (() => {
+                          const missing = getMissingSlots(regularBlocks);
+                          return missing.map((slot) => {
+                            const SlotIcon = BLOCK_STYLES[slot.category]?.icon || Palmtree;
+                            return (
+                              <button
+                                key={slot.label}
+                                onClick={() => openAddActivity(idx, slot)}
+                                className="w-full rounded-2xl border-2 border-dashed border-white/20 hover:border-primary/30 bg-white/5 hover:bg-white/10 p-3.5 flex items-start gap-2.5 text-left transition-all mb-2 group/ph"
+                              >
+                                <SlotIcon className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground/50" />
+                                <div className="flex-1">
+                                  <p className="font-body text-sm italic text-muted-foreground/70 group-hover/ph:text-muted-foreground transition-colors">{slot.label}</p>
+                                  <p className="text-xs text-muted-foreground/40 flex items-center gap-1 mt-0.5">
+                                    <Clock className="w-3 h-3" />{slot.startTime}–{slot.endTime}
+                                  </p>
+                                </div>
+                                <Sparkles className="w-3.5 h-3.5 text-primary/30 group-hover/ph:text-primary/60 transition-colors mt-0.5 shrink-0" />
+                              </button>
+                            );
+                          });
+                        })()}
+
                         {onAddActivity && (
                           <button
-                            onClick={() => onAddActivity(idx)}
+                            onClick={() => openAddActivity(idx)}
                             className="w-full rounded-2xl border-2 border-dashed border-white/20 hover:border-primary/40 p-3 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-body my-2"
                           >
                             <Plus className="w-4 h-4" /> Add Activity
@@ -658,14 +737,14 @@ export default function Dashboard({
                                 {onDeleteBlock && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                                    className="opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 )}
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                  className="opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-primary"
                                   title="Find alternatives"
                                 >
                                   <Shuffle className="w-3.5 h-3.5" />
@@ -945,6 +1024,21 @@ export default function Dashboard({
             setRemixBlock(null);
           }}
         />
+
+        {onAddActivity && (
+          <AddActivityModal
+            open={addActivityOpen}
+            onClose={() => { setAddActivityOpen(false); setAddActivitySlot(undefined); }}
+            onAdd={(block) => onAddActivity(addActivityDayIndex, block)}
+            dayDate={plan.itinerary[addActivityDayIndex]?.date || ""}
+            dayNumber={plan.itinerary[addActivityDayIndex]?.dayNumber || 1}
+            tripContext={tripContext}
+            slotLabel={addActivitySlot?.label}
+            slotStartTime={addActivitySlot?.startTime}
+            slotEndTime={addActivitySlot?.endTime}
+            slotCategory={addActivitySlot?.category}
+          />
+        )}
       </div>
     </div>
   );

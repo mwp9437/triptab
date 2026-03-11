@@ -132,6 +132,17 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     toast({ title: "Swapped", description: `Replaced "${original.title}" with "${replacement.title}".` });
   };
 
+  const handleAddActivity = (dayIndex: number, block?: any) => {
+    if (!plan || !block) return;
+    const updatedDays = [...plan.itinerary];
+    updatedDays[dayIndex] = {
+      ...updatedDays[dayIndex],
+      blocks: [...updatedDays[dayIndex].blocks, block].sort((a, b) => a.startTime.localeCompare(b.startTime)),
+    };
+    setPlan({ ...plan, itinerary: updatedDays });
+    toast({ title: "Activity added", description: `"${block.title}" added to Day ${dayIndex + 1}.` });
+  };
+
   const handleUpdateAccommodation = (details: AccommodationDetails, bedrooms: BedroomAssignment[]) => {
     setAccommodationDetails(details);
     setBedroomAssignments(bedrooms);
@@ -227,6 +238,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onDeleteBlock={handleDeleteBlock}
           onSwapBlock={handleSwapBlock}
           onUpdateBlockCost={handleUpdateBlockCost}
+          onAddActivity={handleAddActivity}
           tripContext={intakeContext}
           hideFloatingChat
           onSave={handleSave}

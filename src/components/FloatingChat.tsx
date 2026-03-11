@@ -9,10 +9,10 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 
 const PROMPTS = [
-  "Add ski après on Wednesday afternoon",
-  "Move the onsen back two hours",
-  "Find a cheaper hotel option",
-  "Swap Day 2 lunch for ramen",
+  "Add a beach day on Tuesday",
+  "Find a great dinner spot near our hotel",
+  "What should we do on our free afternoon?",
+  "Swap Day 2 lunch for something local",
 ];
 
 interface FloatingChatProps {
@@ -102,7 +102,7 @@ export default function FloatingChat({
   const closeChat = () => setState("closed");
 
   return (
-    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-center gap-1">
       <AnimatePresence>
         {state === "open" && (
           <motion.div
@@ -130,16 +130,19 @@ export default function FloatingChat({
             {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
               {messages.length === 0 && (
-                <div className="space-y-2 mt-4">
-                  <p className="text-xs text-muted-foreground text-center font-body px-2">
-                    Ask me to adjust your itinerary — add activities, move things around, or swap options.
-                  </p>
-                  <div className="space-y-1 px-2">
+                <div className="space-y-4 mt-6 px-3">
+                  <div className="text-center">
+                    <p className="font-display font-semibold text-base text-foreground mb-1">I can help you plan!</p>
+                    <p className="text-xs text-muted-foreground font-body">
+                      Add activities, rearrange your schedule, or ask for suggestions.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-center">
                     {PROMPTS.map((p) => (
                       <button
                         key={p}
                         onClick={() => sendMessage(p)}
-                        className="text-xs text-primary/70 hover:text-primary font-body block w-full text-left rounded-lg px-2 py-1.5 hover:bg-primary/5 transition-colors"
+                        className="glass rounded-xl px-3 py-2 text-xs font-body text-foreground/80 hover:text-foreground hover:bg-white/20 border border-white/15 transition-all text-left"
                       >
                         {p}
                       </button>
@@ -233,6 +236,9 @@ export default function FloatingChat({
           </span>
         )}
       </motion.button>
+      {state !== "open" && (
+        <span className="hidden sm:block text-[10px] font-body font-medium text-muted-foreground">Chat</span>
+      )}
     </div>
   );
 }
