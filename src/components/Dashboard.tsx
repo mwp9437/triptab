@@ -215,7 +215,6 @@ const SUGGESTED_SLOTS: TimeSlot[] = [
   { label: "Morning Activity", startTime: "09:00", endTime: "12:00", category: "activity" },
   { label: "Lunch", startTime: "12:00", endTime: "13:30", category: "meal" },
   { label: "Afternoon Activity", startTime: "14:00", endTime: "17:00", category: "activity" },
-  { label: "Dinner", startTime: "19:00", endTime: "21:00", category: "meal" },
 ];
 
 function getMissingSlots(blocks: TimeBlock[]): TimeSlot[] {
@@ -758,6 +757,22 @@ export default function Dashboard({
 
                         {!onAddActivity && regularBlocks.length === 0 && (
                           <p className="text-sm text-muted-foreground font-body py-3 text-center">No activities planned yet.</p>
+                        )}
+
+                        {/* Lodging placeholder if no accommodation block */}
+                        {accommodationBlocks.length === 0 && onAddActivity && (
+                          <button
+                            onClick={() => openAddActivity(idx, { label: "Lodging", startTime: "21:00", endTime: "23:59", category: "accommodation" as BlockCategory })}
+                            className="w-full mt-2 pt-2 border-t border-border/30 rounded-2xl border-2 border-dashed border-white/20 hover:border-primary/30 bg-white/5 hover:bg-white/10 p-3 flex items-center gap-2.5 text-left transition-all group/ph"
+                          >
+                            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                              <Bed className="w-4 h-4 text-muted-foreground/50" />
+                            </div>
+                            <p className="font-body text-sm italic text-muted-foreground/70 group-hover/ph:text-muted-foreground transition-colors">
+                              Add lodging
+                            </p>
+                            <Sparkles className="w-3.5 h-3.5 text-primary/30 group-hover/ph:text-primary/60 transition-colors ml-auto shrink-0" />
+                          </button>
                         )}
 
                         {/* Accommodation footer */}

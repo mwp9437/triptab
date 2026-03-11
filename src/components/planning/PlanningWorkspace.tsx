@@ -33,7 +33,7 @@ function createEmptyPlan(intake: TripIntake): TripPlan {
   if (days.length === 0) {
     days.push({ date: intake.startDate || new Date().toISOString().split("T")[0], dayNumber: 1, title: "Day 1", blocks: [] });
   }
-  return { destination: intake.destination, startDate: intake.startDate, endDate: intake.endDate, travelers: intake.travelerCount, itinerary: days, actionItems: [], budget: { total: 0, spent: 0, categories: {} } };
+  return { destination: intake.destination, startDate: intake.startDate, endDate: intake.endDate, travelers: intake.travelerCount, itinerary: days, actionItems: [], budget: { total: 0, spent: 0, categories: {} }, packingList: [], localTips: [] };
 }
 
 function intakeToContext(intake: TripIntake): string {
@@ -101,7 +101,6 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
       { label: "Morning Activity", startTime: "09:00", endTime: "12:00", category: "activity" },
       { label: "Lunch", startTime: "12:00", endTime: "13:30", category: "meal" },
       { label: "Afternoon Activity", startTime: "14:00", endTime: "17:00", category: "activity" },
-      { label: "Dinner", startTime: "19:00", endTime: "21:00", category: "meal" },
     ];
     // Check if any day has empty slots
     const hasSparse = plan.itinerary.some(day => {
@@ -142,6 +141,16 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           // Silently fail — placeholders will show generic text
         }
       }));
+      // Deduplicate: remove suggestions with duplicate titles across all slots
+      const seenTitles = new Set<string>();
+      for (const key of Object.keys(results)) {
+        results[key] = results[key].filter((s: any) => {
+          const norm = (s.title || "").toLowerCase().trim();
+          if (seenTitles.has(norm)) return false;
+          seenTitles.add(norm);
+          return true;
+        });
+      }
       setSlotSuggestions(results);
       setSuggestionsLoading(false);
     })();

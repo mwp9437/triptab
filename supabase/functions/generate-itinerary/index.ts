@@ -16,9 +16,21 @@ const BUDGET_LABELS: Record<number, Record<string, string>> = {
 function buildPromptFromIntake(intake: any): string {
   const b = intake.budget || {};
   const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip. Target ~85% of this cap ($${Math.round(b.totalBudget * 0.85)}) to leave a buffer for spontaneous spending.` : "";
-  const dest = intake.destination?.trim() || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
+
+  // Multi-city support
+  const destinations = intake.destinations?.length ? intake.destinations : [intake.destination?.trim()].filter(Boolean);
+  const dest = destinations.length > 1
+    ? destinations.join(" → ")
+    : destinations[0] || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
+
   const homeCity = intake.homeCity?.trim() || "not specified — use a major hub near the destination";
-  return `Plan a trip to ${dest} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType} travelers.
+
+  // Pre-existing details (from "already planned" flow)
+  const preExisting = intake.preExistingDetails
+    ? `\n\nIMPORTANT — The traveler already has these plans/bookings. INCORPORATE them into the itinerary and build around them:\n${intake.preExistingDetails}`
+    : "";
+
+  return `Plan a trip to ${dest} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType || "couple"} travelers.
 Departing from: ${homeCity}
 
 Budget preferences:
@@ -32,7 +44,7 @@ Dietary: ${(intake.dietary || []).join(", ") || "no restrictions"}
 Mobility: ${intake.mobility || "no limitations"}
 ${intake.mustDos ? `Must-do: ${intake.mustDos}` : ""}
 ${intake.avoids ? `Avoid: ${intake.avoids}` : ""}
-${intake.childAges?.length ? `Children ages: ${intake.childAges.join(", ")}` : ""}
+${intake.childAges?.length ? `Children ages: ${intake.childAges.join(", ")}` : ""}${preExisting}
 
 Generate the complete trip plan.`;
 }
@@ -156,6 +168,20 @@ Rules:
 - Each packing item should have a brief "reason" explaining why it's needed
 - Generate 5-10 local tips covering: tipping customs, typical prices (beer, coffee, meal), greetings & how to say hello/thank you/goodbye with phonetic pronunciation, cultural etiquette (bowing, handshakes, cheek kisses), common scams to avoid, useful local phrases, transportation tips, and any unique local customs travelers should know
 - Each local tip should have an appropriate emoji, a short title, and a detailed explanation
+
+MULTI-CITY TRIPS:
+- If the destination contains "→" (e.g., "Tokyo → Kyoto → Osaka"), it is a multi-city trip.
+- Split the trip duration logically across cities based on the number of cities and total days.
+- Include transport blocks between cities (bullet train, flight, bus, etc.) with realistic travel times and costs.
+- Change accommodation when the city changes — do NOT keep the same hotel across different cities.
+- Keep all activities on a given day in the same city — no visiting Tokyo attractions on a Kyoto day.
+- The "destination" field in the response should list the primary city or use "Multi-city: City1, City2, City3".
+
+PRE-EXISTING BOOKINGS:
+- When the user has pre-existing plans/bookings, integrate them into the itinerary as real blocks (not just notes).
+- Build the rest of the itinerary AROUND those bookings — fill in the gaps with complementary activities.
+- If accommodation is already booked, use that hotel name for the accommodation blocks instead of suggesting a new one.
+- If specific activities are booked at specific times, schedule other activities around them.
 
 QUALITY ASSURANCE — FINAL REVIEW:
 Before returning the JSON, mentally review the COMPLETE itinerary for these logical issues:

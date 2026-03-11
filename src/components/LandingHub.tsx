@@ -1,35 +1,28 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plane, Users, DollarSign, FolderOpen, LogIn } from "lucide-react";
+import { Plane, CheckCircle, FolderOpen, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import luxuryTerrace from "@/assets/luxury-terrace.png";
 
 interface LandingHubProps {
-  onSelectPath: (path: "plan" | "group" | "expenses") => void;
+  onSelectPath: (path: "plan" | "existing") => void;
 }
 
 const CARDS = [
   {
+    path: "existing" as const,
+    icon: CheckCircle,
+    title: "My Trip is Already Planned",
+    description: "Add your bookings and let AI fill in the gaps — restaurants, activities, and local tips",
+    button: "Set Up My Trip",
+  },
+  {
     path: "plan" as const,
     icon: Plane,
-    title: "Plan a Trip",
-    description: "AI builds your perfect itinerary from scratch",
+    title: "Help Me Plan My Trip",
+    description: "AI builds your perfect itinerary from scratch based on your preferences",
     button: "Start Planning",
-  },
-  {
-    path: "group" as const,
-    icon: Users,
-    title: "Manage a Group Trip",
-    description: "Already have a trip? Set up your group, assign rooms, share details",
-    button: "Set Up Group",
-  },
-  {
-    path: "expenses" as const,
-    icon: DollarSign,
-    title: "Split Expenses",
-    description: "Track who paid what and settle up at the end",
-    button: "Start Splitting",
   },
 ];
 
@@ -95,8 +88,8 @@ export default function LandingHub({ onSelectPath }: LandingHubProps) {
           </p>
         </motion.div>
 
-        {/* Three entry cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 w-full max-w-3xl">
+        {/* Two entry cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 w-full max-w-2xl">
           {CARDS.map((card, i) => {
             const Icon = card.icon;
             return (

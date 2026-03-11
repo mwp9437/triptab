@@ -3,14 +3,13 @@ import { useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import LandingHub from "@/components/LandingHub";
 import WizardContainer from "@/components/wizard/WizardContainer";
-import QuickCreateWizard from "@/components/wizard/QuickCreateWizard";
-import ExpenseOnlySetup from "@/components/expenses/ExpenseOnlySetup";
+import ExistingTripSetup from "@/components/wizard/ExistingTripSetup";
 import PlanningWorkspace from "@/components/planning/PlanningWorkspace";
 import { TripIntake } from "@/types/intake";
 import { createEmptyIntake } from "@/lib/parse-input";
 import { useAuth } from "@/contexts/AuthContext";
 
-type AppView = "hub" | "wizard" | "quickCreate" | "expensesOnly" | "planning";
+type AppView = "hub" | "wizard" | "existingTrip" | "planning";
 
 export default function Index() {
   const { user } = useAuth();
@@ -32,10 +31,9 @@ export default function Index() {
     }
   }, [location.state]);
 
-  const handleSelectPath = (path: "plan" | "group" | "expenses") => {
+  const handleSelectPath = (path: "plan" | "existing") => {
     if (path === "plan") setView("wizard");
-    else if (path === "group") setView("quickCreate");
-    else setView("expensesOnly");
+    else setView("existingTrip");
   };
 
   const handleWizardComplete = (finalIntake: TripIntake) => {
@@ -45,14 +43,7 @@ export default function Index() {
     setView("planning");
   };
 
-  const handleQuickCreateComplete = (finalIntake: TripIntake) => {
-    setIntake(finalIntake);
-    setLoadedTripId(null);
-    setLoadedPlan(null);
-    setView("planning");
-  };
-
-  const handleExpenseOnlyComplete = (finalIntake: TripIntake) => {
+  const handleExistingTripComplete = (finalIntake: TripIntake) => {
     setIntake(finalIntake);
     setLoadedTripId(null);
     setLoadedPlan(null);
@@ -82,14 +73,9 @@ export default function Index() {
           />
         </motion.div>
       )}
-      {view === "quickCreate" && (
-        <motion.div key="quickCreate" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <QuickCreateWizard onComplete={handleQuickCreateComplete} onBack={goToHub} />
-        </motion.div>
-      )}
-      {view === "expensesOnly" && (
-        <motion.div key="expensesOnly" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <ExpenseOnlySetup onComplete={handleExpenseOnlyComplete} onBack={goToHub} />
+      {view === "existingTrip" && (
+        <motion.div key="existingTrip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <ExistingTripSetup onComplete={handleExistingTripComplete} onBack={goToHub} />
         </motion.div>
       )}
       {view === "planning" && (

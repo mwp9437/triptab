@@ -27,6 +27,8 @@ export interface TripIntake {
   avoids: string;
   skipAiGeneration?: boolean;
   expensesOnly?: boolean;
+  preExistingDetails?: string;
+  destinations?: string[];
 }
 
 export interface ActivityOption {

@@ -13,7 +13,13 @@ CRITICAL ACCURACY RULES:
 - Verify each suggestion is in the CORRECT CITY. A restaurant or hotel that exists in Tokyo does NOT exist in Kyoto unless you're certain.
 - When unsure of a specific place name, describe by type + neighborhood (e.g., "traditional kaiseki restaurant near Gion") rather than inventing a name.
 - For hotels, prefer well-known chains or widely documented local properties.
-- It is always better to be vague and correct than specific and wrong.`;
+- It is always better to be vague and correct than specific and wrong.
+
+DEDUPLICATION RULES:
+- Every suggestion MUST be unique — no two suggestions should reference the same place, activity, or restaurant.
+- Vary the TYPE of suggestions: mix different categories (e.g., a temple, a food market, a park, a museum — not four temples).
+- If suggesting for multiple time slots across multiple days, ensure no activity appears more than once across ALL suggestions.
+- Each suggestion should offer a genuinely different experience.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -36,7 +42,7 @@ Deno.serve(async (req) => {
         type: "function",
         function: {
           name: "suggest_activities",
-          description: "Return 3-5 activity suggestions matching the user's request.",
+          description: "Return 3-5 UNIQUE activity suggestions matching the user's request. Each must be a different place/experience — no duplicates.",
           parameters: {
             type: "object",
             properties: {
