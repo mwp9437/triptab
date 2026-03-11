@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(npx playwright:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(PATH=\"/c/Users/mpezza/nvm/v20.20.1:$PATH\" npx vite:*)",
+      "Bash(export:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
