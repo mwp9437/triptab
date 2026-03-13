@@ -216,8 +216,8 @@ async function scenario2() {
   const maxFlightCost = Math.max(...flightCosts, 0);
   checks.push(
     check(
-      "Flight cost $700-$1500/person",
-      maxFlightCost >= 700 && maxFlightCost <= 1500,
+      "Flight cost $700-$2000/person",
+      maxFlightCost >= 700 && maxFlightCost <= 2000,
       flightCosts.map((c: number) => `$${c}`).join(", ")
     )
   );

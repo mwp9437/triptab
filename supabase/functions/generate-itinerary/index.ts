@@ -141,21 +141,24 @@ Return ONLY valid JSON matching this schema:
 }
 
 TRANSPORTATION RULES:
-- Include arrival/departure flights ONLY if the user provided a home city AND did not say flights are already booked or that they're driving.
-- If the user did NOT provide a home city, do NOT include any flight blocks. Start Day 1 with the first activity at the destination.
+- ONLY include flight blocks if the user prompt explicitly says "Departing from: [city]" with a real city name. If it says "do NOT include flights", then there must be ZERO flight blocks and ZERO flight costs in the entire response.
+- When flights are excluded: no flight blocks, no airport transfers, no flight action items, budget.categories.flights MUST be 0.
 - If the pre-existing details mention driving, a rental car, or no flights needed, exclude all flight blocks.
 - For inter-city transport on multi-city trips, always include transport blocks between cities regardless of flight preferences.
 
 ACCOMMODATION RULES:
-- Every day MUST include exactly one accommodation block (category "accommodation").
-- The accommodation block must reflect the user's ACTUAL lodging situation:
-  - If the user specified lodging (e.g., "staying at my friend's house in Alpine Meadows", "Airbnb on Broadway", "camping at Yosemite"), use EXACTLY what they said as the accommodation title. Do NOT substitute a hotel.
-  - If the user named a specific hotel (e.g., "Hilton Downtown"), use that exact hotel name.
-  - If the user did NOT mention lodging at all, suggest an appropriate hotel based on the destination and budget tier.
+- Every day MUST include exactly one accommodation block (category "accommodation"), including travel days.
+- CRITICAL — The accommodation title must reflect the user's ACTUAL lodging:
+  - If the user said "staying at my friend's house in Alpine Meadows" → title: "Friend's house in Alpine Meadows", cost: 0. Do NOT use any hotel.
+  - If the user said "Airbnb on Broadway" → title: "Airbnb on Broadway", cost: 0. Do NOT use any hotel.
+  - If the user said "camping at Yosemite" → title: "Camping at Yosemite", cost: 0. Do NOT use any hotel.
+  - If the user named a specific hotel (e.g., "Hilton Downtown") → title: "Hilton Downtown", cost: realistic rate.
+  - If the user did NOT mention lodging at all → suggest an appropriate hotel based on destination and budget tier.
+- NEVER replace user-specified lodging with a hotel. If the user said where they're staying, use EXACTLY that.
 - Use ONE accommodation per city stay. Show it on every day the user is in that city with the same title.
-- When the user moves to a new city in a multi-city trip, change the accommodation to match the new city.
-- Set the title to just the lodging name (e.g., "Friend's house in Alpine Meadows" or "Hilton Garden Inn Nashville"). The app adds "Check in:" / "Check out:" prefixes automatically — do NOT include those in the title.
-- For user-specified free lodging (friend's house, camping, etc.), set cost to 0. For AI-suggested hotels, set cost to a realistic nightly rate for the destination and budget tier.
+- When the user moves to a new city in a multi-city trip, change the accommodation to a DIFFERENT hotel/lodging in the new city. Each city MUST have a unique accommodation name.
+- Set the title to just the lodging name. The app adds "Check in:" / "Check out:" prefixes automatically — do NOT include those words in the title.
+- Do NOT include "Check-in" or "Check-out" in the accommodation block title.
 
 ACTIVITY THEMING:
 - If the user said they want to do a specific activity heavily (e.g., "I want to ski as much as possible"), treat that as the THEME. At least 70% of activity blocks should relate to that theme.
@@ -193,22 +196,25 @@ MULTI-CITY TRIPS:
 - If the destination contains "→" (e.g., "Tokyo → Kyoto → Osaka"), it is a multi-city trip.
 - Split the trip duration logically across cities based on the number of cities and total days.
 - Include transport blocks between cities (bullet train, flight, bus, etc.) with realistic travel times and costs.
-- Change accommodation when the city changes — do NOT keep the same hotel across different cities.
+- CRITICAL: Each city MUST have a DIFFERENT hotel. E.g., Paris → "Hotel Le Marais Paris", Barcelona → "Hotel Arts Barcelona", Rome → "Hotel de Russie Rome". Never reuse the same hotel name across cities.
 - Keep all activities on a given day in the same city — no visiting Tokyo attractions on a Kyoto day.
 - The "destination" field in the response should list the primary city or use "Multi-city: City1, City2, City3".
 
 PRE-EXISTING BOOKINGS:
-- When the user has pre-existing plans/bookings, integrate them into the itinerary as real blocks (not just notes).
+- When the user has pre-existing plans/bookings, integrate them into the itinerary as REAL BLOCKS on the CORRECT DAY.
+- If the user says "dinner at Hattie B's Friday at 7pm", there MUST be a block on Friday with title containing "Hattie B's" and startTime "19:00".
+- If the user says "bar crawl Saturday night", there MUST be a block on Saturday with "bar crawl" in the title.
+- If the user says "golf at Gaylord Springs Sunday morning", there MUST be a block on Sunday with "Gaylord Springs" or "golf" in the title.
 - Build the rest of the itinerary AROUND those bookings — fill in the gaps with complementary activities.
 - Treat named lodging as CONFIRMED — use their exact accommodation, don't substitute with a hotel.
-- Treat named activities as CONFIRMED — schedule them and build around them.
+- Treat named activities as CONFIRMED — schedule them at the specified time and build around them.
 - Fill remaining slots with suggestions that COMPLEMENT what they've planned.
 - If they said "I want to do X as much as possible", that's the THEME of the trip — most suggestions should align with X.
 
 QUALITY ASSURANCE — FINAL REVIEW:
 Before returning the JSON, mentally review the COMPLETE itinerary for these logical issues:
-- FLIGHTS: If flights were requested, do they reference the correct home city? Are connection times realistic? If flights were NOT requested, verify there are NO flight blocks.
-- ACCOMMODATION: If user specified their own lodging, verify no hotel was added. If hotels are included, is every hotel in the correct city?
+- FLIGHTS: If the prompt says "do NOT include flights", search the entire JSON for any block with "flight" or "airport" in the title — if found, DELETE IT. Also ensure budget.categories.flights is 0.
+- ACCOMMODATION: If user specified their own lodging (friend's house, Airbnb, camping), search every accommodation block title — if ANY contains "hotel", "inn", "resort", "motel", replace it with the user's stated lodging. For multi-city trips, verify each city has a DIFFERENT hotel name.
 - GEOGRAPHY: Are all activities on a given day in the same city/area? No breakfast in Tokyo and lunch in Osaka on the same day unless there's a transit block between them.
 - TIMING: Do activity times make sense? No museum visits at 6am. No dinner at 3pm. Enough transit time between locations.
 - CONTINUITY: Does the trip flow logically day-to-day? No teleporting between distant cities without transport blocks.
