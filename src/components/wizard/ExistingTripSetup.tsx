@@ -1,9 +1,11 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, MapPin, CalendarDays, Users, Plus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, CalendarDays, Users, Plus, X, Plane, Car, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TripIntake } from "@/types/intake";
@@ -45,6 +47,18 @@ export default function ExistingTripSetup({ onComplete, onBack }: ExistingTripSe
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [travelerCount, setTravelerCount] = useState(2);
 
+  // Transportation
+  const [needsFlights, setNeedsFlights] = useState(false);
+  const [homeCity, setHomeCity] = useState("");
+  const [homeCityQuery, setHomeCityQuery] = useState("");
+  const [showHomeSuggestions, setShowHomeSuggestions] = useState(false);
+  const [departureTime, setDepartureTime] = useState<"morning" | "afternoon" | "evening" | "no_preference">("no_preference");
+  const [returnTime, setReturnTime] = useState<"morning" | "afternoon" | "evening" | "no_preference">("no_preference");
+  const [maxConnections, setMaxConnections] = useState<0 | 1 | 2>(1);
+  const [preferredAirline, setPreferredAirline] = useState("");
+  const [needsCarRental, setNeedsCarRental] = useState(false);
+  const homeWrapperRef = useRef<HTMLDivElement>(null);
+
   // What's already booked
   const [accommodationName, setAccommodationName] = useState("");
   const [accommodationAddress, setAccommodationAddress] = useState("");
@@ -61,10 +75,13 @@ export default function ExistingTripSetup({ onComplete, onBack }: ExistingTripSe
           setShowSuggestions(null);
         }
       }
+      if (showHomeSuggestions && homeWrapperRef.current && !homeWrapperRef.current.contains(e.target as Node)) {
+        setShowHomeSuggestions(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [showSuggestions]);
+  }, [showSuggestions, showHomeSuggestions]);
 
   const getFiltered = (query: string) => {
     if (!query.trim()) return POPULAR_DESTINATIONS.slice(0, 8);
@@ -132,11 +149,14 @@ export default function ExistingTripSetup({ onComplete, onBack }: ExistingTripSe
       initialIdea: validDests.join(", "),
       destination: validDests[0] || "",
       destinations: validDests.length > 1 ? validDests : undefined,
+      homeCity: needsFlights ? homeCity : "",
       startDate,
       endDate,
       travelerCount,
       preExistingDetails: preExisting || undefined,
-      // Use AI generation WITH pre-existing context (not skipAiGeneration)
+      needsFlights,
+      flightPreferences: needsFlights ? { departureTime, returnTime, maxConnections, preferredAirline: preferredAirline || undefined } : undefined,
+      needsCarRental,
     };
     onComplete(intake);
   };
@@ -270,6 +290,107 @@ export default function ExistingTripSetup({ onComplete, onBack }: ExistingTripSe
                   onClick={() => setTravelerCount(travelerCount + 1)}
                 >+</Button>
               </div>
+            </div>
+
+            {/* Section: Transportation */}
+            <div className="pt-2 border-t border-border/30">
+              <h2 className="text-lg font-display font-bold text-foreground mb-1">Transportation</h2>
+              <p className="text-xs text-muted-foreground font-body mb-3">Skip if you've already booked or are driving</p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox checked={needsFlights} onCheckedChange={(v) => setNeedsFlights(!!v)} />
+                <span className="text-sm font-body font-medium text-foreground flex items-center gap-1.5">
+                  <Plane className="w-4 h-4" /> I need help with flights
+                </span>
+              </label>
+
+              {needsFlights && (
+                <div className="ml-7 space-y-3 pl-1 border-l-2 border-primary/20">
+                  <div ref={homeWrapperRef} className="relative">
+                    <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">Departing from</label>
+                    <Input
+                      value={homeCityQuery}
+                      onChange={(e) => { setHomeCityQuery(e.target.value); setHomeCity(e.target.value); setShowHomeSuggestions(true); }}
+                      onFocus={() => setShowHomeSuggestions(true)}
+                      placeholder="Your home city"
+                      className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm focus:bg-white/80 transition-all"
+                      autoComplete="off"
+                    />
+                    {showHomeSuggestions && getFiltered(homeCityQuery).length > 0 && (
+                      <div className="absolute z-50 top-full mt-1 w-full rounded-xl border border-border bg-popover shadow-lg overflow-hidden">
+                        {getFiltered(homeCityQuery).map((city) => (
+                          <button
+                            key={city}
+                            className="w-full text-left px-3 py-2.5 text-sm font-body text-popover-foreground hover:bg-accent/50 transition-colors flex items-center gap-2"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { setHomeCityQuery(city); setHomeCity(city); setShowHomeSuggestions(false); }}
+                          >
+                            <Plane className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            {city}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">Departure time</label>
+                      <Select value={departureTime} onValueChange={(v) => setDepartureTime(v as any)}>
+                        <SelectTrigger className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="no_preference">No preference</SelectItem>
+                          <SelectItem value="morning">Morning</SelectItem>
+                          <SelectItem value="afternoon">Afternoon</SelectItem>
+                          <SelectItem value="evening">Evening</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">Return time</label>
+                      <Select value={returnTime} onValueChange={(v) => setReturnTime(v as any)}>
+                        <SelectTrigger className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="no_preference">No preference</SelectItem>
+                          <SelectItem value="morning">Morning</SelectItem>
+                          <SelectItem value="afternoon">Afternoon</SelectItem>
+                          <SelectItem value="evening">Evening</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">Max connections</label>
+                      <Select value={String(maxConnections)} onValueChange={(v) => setMaxConnections(Number(v) as 0 | 1 | 2)}>
+                        <SelectTrigger className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">Nonstop only</SelectItem>
+                          <SelectItem value="1">1 stop</SelectItem>
+                          <SelectItem value="2">2+ stops OK</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">Preferred airline</label>
+                      <Input
+                        value={preferredAirline}
+                        onChange={(e) => setPreferredAirline(e.target.value)}
+                        placeholder="Optional"
+                        className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm h-9 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox checked={needsCarRental} onCheckedChange={(v) => setNeedsCarRental(!!v)} />
+                <span className="text-sm font-body font-medium text-foreground flex items-center gap-1.5">
+                  <Car className="w-4 h-4" /> I need a rental car
+                </span>
+              </label>
             </div>
 
             {/* Section: What's already booked */}

@@ -15,11 +15,15 @@ CRITICAL ACCURACY RULES:
 - For hotels, prefer well-known chains or widely documented local properties.
 - It is always better to be vague and correct than specific and wrong.
 
+CONTEXT AWARENESS:
+- Read the trip context carefully. If it's a ski trip, suggest ski-related activities (different mountains, ski lessons, backcountry tours, après-ski bars). Don't suggest a pottery class on a ski trip.
+- If the user has pre-planned activities, suggest things that complement them, not compete with them.
+- Match the user's stated preferences. "I want to ski as much as possible" means suggest SKIING, not "visit the local history museum."
+
 DEDUPLICATION RULES:
-- Every suggestion MUST be unique — no two suggestions should reference the same place, activity, or restaurant.
-- Vary the TYPE of suggestions: mix different categories (e.g., a temple, a food market, a park, a museum — not four temples).
-- If suggesting for multiple time slots across multiple days, ensure no activity appears more than once across ALL suggestions.
-- Each suggestion should offer a genuinely different experience.`;
+- NEVER suggest the same place or activity twice in one response.
+- Each suggestion must be a UNIQUE venue. 5 lunch options = 5 DIFFERENT restaurants.
+- Vary by type: mix cuisines, mix indoor/outdoor, mix price points.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -42,7 +46,7 @@ Deno.serve(async (req) => {
         type: "function",
         function: {
           name: "suggest_activities",
-          description: "Return 3-5 UNIQUE activity suggestions matching the user's request. Each must be a different place/experience — no duplicates.",
+          description: "Return 3-5 UNIQUE activity suggestions. Every suggestion must be a different venue — no duplicates.",
           parameters: {
             type: "object",
             properties: {

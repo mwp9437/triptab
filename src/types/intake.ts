@@ -29,6 +29,14 @@ export interface TripIntake {
   expensesOnly?: boolean;
   preExistingDetails?: string;
   destinations?: string[];
+  needsFlights?: boolean;
+  flightPreferences?: {
+    departureTime?: "morning" | "afternoon" | "evening" | "no_preference";
+    returnTime?: "morning" | "afternoon" | "evening" | "no_preference";
+    maxConnections?: 0 | 1 | 2;
+    preferredAirline?: string;
+  };
+  needsCarRental?: boolean;
 }
 
 export interface ActivityOption {

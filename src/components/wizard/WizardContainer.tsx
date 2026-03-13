@@ -1,11 +1,12 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, LogIn, FolderOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plane, MapPin, CalendarDays, Users, DollarSign, LogIn, FolderOpen, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TripIntake, BudgetTier, TravelerType, VIBE_OPTIONS, DIETARY_OPTIONS, BUDGET_LABELS } from "@/types/intake";
@@ -214,6 +215,8 @@ export default function WizardContainer({ intake, onUpdate, onComplete, onBack }
 
 /* ─── Step 1: Destination & Dates ─── */
 function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (p: Partial<TripIntake>) => void }) {
+  const [needsFlights, setNeedsFlights] = useState(intake.needsFlights || false);
+  const [needsCarRental, setNeedsCarRental] = useState(intake.needsCarRental || false);
   const [homeQuery, setHomeQuery] = useState(intake.homeCity);
   const [showHomeSuggestions, setShowHomeSuggestions] = useState(false);
   const [destQuery, setDestQuery] = useState(intake.destination);
@@ -293,38 +296,62 @@ function StepDestination({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
       </div>
 
       <div className="space-y-4">
-        {/* Home city autocomplete */}
-        <div ref={homeWrapperRef} className="relative">
-          <label className="text-sm font-body font-medium text-foreground mb-1.5 block">
-            <Plane className="w-4 h-4 inline mr-1.5" />Departing from
+        {/* Flight toggle + home city */}
+        <div className="space-y-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <Checkbox checked={needsFlights} onCheckedChange={(v) => {
+              const checked = !!v;
+              setNeedsFlights(checked);
+              onUpdate({ needsFlights: checked, homeCity: checked ? homeQuery : "" });
+            }} />
+            <span className="text-sm font-body font-medium text-foreground flex items-center gap-1.5">
+              <Plane className="w-4 h-4" /> I need help with flights
+            </span>
           </label>
-          <Input
-            value={homeQuery}
-            onChange={(e) => {
-              setHomeQuery(e.target.value);
-              onUpdate({ homeCity: e.target.value });
-              setShowHomeSuggestions(true);
-            }}
-            onFocus={() => setShowHomeSuggestions(true)}
-            placeholder="Your home city"
-            className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm focus:bg-white/80 transition-all"
-            autoComplete="off"
-          />
-          {showHomeSuggestions && filteredHomeCities.length > 0 && (
-            <div className="absolute z-50 top-full mt-1 w-full rounded-xl border border-border bg-popover shadow-lg overflow-hidden">
-              {filteredHomeCities.map((city) => (
-                <button
-                  key={city}
-                  className="w-full text-left px-3 py-2.5 text-sm font-body text-popover-foreground hover:bg-accent/50 transition-colors flex items-center gap-2"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => selectHomeCity(city)}
-                >
-                  <Plane className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                  {city}
-                </button>
-              ))}
+
+          {needsFlights && (
+            <div ref={homeWrapperRef} className="relative ml-7 pl-1 border-l-2 border-primary/20">
+              <label className="text-xs font-body font-medium text-muted-foreground mb-1 block">Departing from</label>
+              <Input
+                value={homeQuery}
+                onChange={(e) => {
+                  setHomeQuery(e.target.value);
+                  onUpdate({ homeCity: e.target.value });
+                  setShowHomeSuggestions(true);
+                }}
+                onFocus={() => setShowHomeSuggestions(true)}
+                placeholder="Your home city"
+                className="rounded-xl border-border/50 bg-white/50 backdrop-blur-sm focus:bg-white/80 transition-all"
+                autoComplete="off"
+              />
+              {showHomeSuggestions && filteredHomeCities.length > 0 && (
+                <div className="absolute z-50 top-full mt-1 w-full rounded-xl border border-border bg-popover shadow-lg overflow-hidden">
+                  {filteredHomeCities.map((city) => (
+                    <button
+                      key={city}
+                      className="w-full text-left px-3 py-2.5 text-sm font-body text-popover-foreground hover:bg-accent/50 transition-colors flex items-center gap-2"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => selectHomeCity(city)}
+                    >
+                      <Plane className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      {city}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
+
+          <label className="flex items-center gap-3 cursor-pointer">
+            <Checkbox checked={needsCarRental} onCheckedChange={(v) => {
+              const checked = !!v;
+              setNeedsCarRental(checked);
+              onUpdate({ needsCarRental: checked });
+            }} />
+            <span className="text-sm font-body font-medium text-foreground flex items-center gap-1.5">
+              <Car className="w-4 h-4" /> I need a rental car
+            </span>
+          </label>
         </div>
 
         {/* Destination autocomplete */}

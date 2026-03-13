@@ -20,6 +20,8 @@ interface FloatingChatProps {
   currentPlan?: TripPlan | null;
   onPlanUpdate?: (plan: TripPlan) => void;
   intakeContext?: string;
+  /** Pre-seeded messages (e.g., gap questions from plan generation) */
+  initialMessages?: ChatMessage[];
 }
 
 export default function FloatingChat({
@@ -27,6 +29,7 @@ export default function FloatingChat({
   currentPlan,
   onPlanUpdate,
   intakeContext,
+  initialMessages,
 }: FloatingChatProps) {
   const [state, setState] = useState<"closed" | "open" | "minimized">("closed");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -34,6 +37,16 @@ export default function FloatingChat({
   const [isStreaming, setIsStreaming] = useState(false);
   const [unread, setUnread] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initialMessagesLoadedRef = useRef(false);
+
+  // Load initial messages (gap questions) once
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0 && !initialMessagesLoadedRef.current) {
+      initialMessagesLoadedRef.current = true;
+      setMessages(initialMessages);
+      setUnread(initialMessages.length);
+    }
+  }, [initialMessages]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });

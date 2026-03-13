@@ -23,15 +23,19 @@ function buildPromptFromIntake(intake: any): string {
     ? destinations.join(" → ")
     : destinations[0] || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
 
-  const homeCity = intake.homeCity?.trim() || "not specified — use a major hub near the destination";
-
   // Pre-existing details (from "already planned" flow)
   const preExisting = intake.preExistingDetails
     ? `\n\nIMPORTANT — The traveler already has these plans/bookings. INCORPORATE them into the itinerary and build around them:\n${intake.preExistingDetails}`
     : "";
 
+  // Transportation info
+  const transportLine = intake.needsFlights && intake.homeCity?.trim()
+    ? `Departing from: ${intake.homeCity.trim()}. Flight preferences: departure ${intake.flightPreferences?.departureTime || "no preference"}, return ${intake.flightPreferences?.returnTime || "no preference"}, max connections: ${intake.flightPreferences?.maxConnections ?? "any"}, preferred airline: ${intake.flightPreferences?.preferredAirline || "none"}.`
+    : 'Transportation to destination: not specified by user — do NOT include flights.';
+  const carLine = intake.needsCarRental ? '\nUser needs a rental car — include a car rental action item.' : '';
+
   return `Plan a trip to ${dest} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType || "couple"} travelers.
-Departing from: ${homeCity}
+${transportLine}${carLine}
 
 Budget preferences:
 - Accommodation: ${BUDGET_LABELS[b.accommodation]?.accommodation || "mid-range"}
@@ -136,20 +140,40 @@ Return ONLY valid JSON matching this schema:
   ]
 }
 
-FLIGHT & COST REALISM RULES:
-- The user's home city is provided. Use it for realistic flight routing and cost estimates.
-- Estimate flight costs based on the ACTUAL route (e.g., New York to Tokyo is ~$800-1200 economy, not $300). Consider:
-  - Distance and typical market rates for the route
-  - Economy vs business based on budget tier ($ and $$ = economy, $$$ = premium economy, $$$$ = business)
-  - Seasonal pricing (peak summer/holidays = higher)
-  - Whether direct flights exist on this route or if connections are needed
-- For ALL cost estimates throughout the itinerary, base them on realistic market rates for the destination:
+TRANSPORTATION RULES:
+- Include arrival/departure flights ONLY if the user provided a home city AND did not say flights are already booked or that they're driving.
+- If the user did NOT provide a home city, do NOT include any flight blocks. Start Day 1 with the first activity at the destination.
+- If the pre-existing details mention driving, a rental car, or no flights needed, exclude all flight blocks.
+- For inter-city transport on multi-city trips, always include transport blocks between cities regardless of flight preferences.
+
+ACCOMMODATION RULES:
+- Every day MUST include exactly one accommodation block (category "accommodation").
+- The accommodation block must reflect the user's ACTUAL lodging situation:
+  - If the user specified lodging (e.g., "staying at my friend's house in Alpine Meadows", "Airbnb on Broadway", "camping at Yosemite"), use EXACTLY what they said as the accommodation title. Do NOT substitute a hotel.
+  - If the user named a specific hotel (e.g., "Hilton Downtown"), use that exact hotel name.
+  - If the user did NOT mention lodging at all, suggest an appropriate hotel based on the destination and budget tier.
+- Use ONE accommodation per city stay. Show it on every day the user is in that city with the same title.
+- When the user moves to a new city in a multi-city trip, change the accommodation to match the new city.
+- Set the title to just the lodging name (e.g., "Friend's house in Alpine Meadows" or "Hilton Garden Inn Nashville"). The app adds "Check in:" / "Check out:" prefixes automatically — do NOT include those in the title.
+- For user-specified free lodging (friend's house, camping, etc.), set cost to 0. For AI-suggested hotels, set cost to a realistic nightly rate for the destination and budget tier.
+
+ACTIVITY THEMING:
+- If the user said they want to do a specific activity heavily (e.g., "I want to ski as much as possible"), treat that as the THEME. At least 70% of activity blocks should relate to that theme.
+- "I want to ski" means it's a SKI TRIP — don't fill the day with museums and shopping. Suggest different mountains, terrain types, ski lessons, backcountry tours, après-ski bars.
+- Build other activities (meals, evening plans) around the theme, not in competition with it.
+
+PRE-EXISTING DETAILS:
+- If the user mentioned pre-planned activities, treat those as CONFIRMED and build around them. Do not replace or contradict them.
+- If critical information is missing (no dates, no destination), return: {"needsMoreInfo": true, "questions": ["What dates are you traveling?", "Where are you going?"]}
+
+COST REALISM RULES:
+- If the user provided a home city AND flights are being included, use it for realistic flight routing and cost estimates. If no home city was provided or flights were excluded, skip all flight cost estimates.
+- For ALL cost estimates, base them on realistic market rates for the destination:
   - Hotels: use typical nightly rates for the destination and budget tier
   - Meals: use typical restaurant prices for the destination city (Tokyo ≠ Bali ≠ Paris)
   - Activities: use typical admission/tour prices for the specific destination
   - Transport: use typical taxi/transit costs for the destination city
 - When uncertain about a specific price, estimate conservatively (slightly high) and round to nearest $5 or $10.
-- NEVER just make up a round number. A flight from NYC to Tokyo should not be "$150" or "$500" — it should reflect actual market rates (~$900-1200 economy round-trip).
 
 Rules:
 - block category: "transport" | "activity" | "meal" | "free" | "accommodation"
@@ -157,17 +181,13 @@ Rules:
 - packingList category: "clothing" | "gear" | "toiletries" | "electronics" | "documents" | "misc"
 - Unique IDs: "block-X-Y", "action-X", or "pack-X"
 - Include realistic travel time between locations
-- IMPORTANT: Day 1 MUST start with an arrival flight block (category "transport") and the last day MUST end with a departure flight block (category "transport"). Include realistic flight times and airline suggestions. Use the home city for departure/return flights.
 - Cost per person in USD
 - 6-10 blocks per day including meals and free time
-- IMPORTANT: Every day MUST include an accommodation block (category "accommodation") showing the hotel/lodging for that night
-- IMPORTANT: Each day should have exactly ONE accommodation block (category "accommodation"). Do NOT create separate blocks for check-in and the hotel stay. Use a single block with the hotel name as the title, check-in time as startTime, and check-out time (or 23:59 for non-checkout days) as endTime. For check-in days, set the title to just the hotel name (e.g., "Moose Hotel and Suites") — the app will add the "Check in:" / "Check out:" prefix automatically based on the day's position in the stay. Never create blocks with titles starting with "Check-in", "Check in", "Accommodation:", or similar prefixes — just use the hotel name.
-- Respect the budget tier preferences. If a per-person budget cap is given, target approximately 85% of that cap for your planned costs — this leaves a ~15% buffer for spontaneous spending, tips, price variations, and upgrades. For example, if the cap is $3,000, plan for roughly $2,500–$2,600 in total estimated costs. Do NOT plan right up to the limit. The budget summary 'total' field should reflect your planned amount, not the cap.
+- Each day should have exactly ONE accommodation block (see ACCOMMODATION RULES above for title and cost logic).
+- Respect the budget tier preferences. If a per-person budget cap is given, target approximately 85% of that cap for your planned costs.
 - Be opinionated about recommendations — pick the best options, don't hedge
-- Generate 15-30 packing items based on: destination climate/weather for the travel dates, planned activities (hiking gear, swimwear, formal wear etc.), location-specific needs (adapters, sunscreen, mosquito repellent etc.), and trip duration
-- Each packing item should have a brief "reason" explaining why it's needed
-- Generate 5-10 local tips covering: tipping customs, typical prices (beer, coffee, meal), greetings & how to say hello/thank you/goodbye with phonetic pronunciation, cultural etiquette (bowing, handshakes, cheek kisses), common scams to avoid, useful local phrases, transportation tips, and any unique local customs travelers should know
-- Each local tip should have an appropriate emoji, a short title, and a detailed explanation
+- Generate 15-30 packing items based on: destination climate/weather for the travel dates, planned activities, location-specific needs, and trip duration. Each packing item should have a brief "reason".
+- Generate 5-10 local tips covering: tipping customs, typical prices, greetings with phonetic pronunciation, cultural etiquette, common scams, useful local phrases, transportation tips. Each local tip should have an emoji, short title, and detailed explanation.
 
 MULTI-CITY TRIPS:
 - If the destination contains "→" (e.g., "Tokyo → Kyoto → Osaka"), it is a multi-city trip.
@@ -180,13 +200,15 @@ MULTI-CITY TRIPS:
 PRE-EXISTING BOOKINGS:
 - When the user has pre-existing plans/bookings, integrate them into the itinerary as real blocks (not just notes).
 - Build the rest of the itinerary AROUND those bookings — fill in the gaps with complementary activities.
-- If accommodation is already booked, use that hotel name for the accommodation blocks instead of suggesting a new one.
-- If specific activities are booked at specific times, schedule other activities around them.
+- Treat named lodging as CONFIRMED — use their exact accommodation, don't substitute with a hotel.
+- Treat named activities as CONFIRMED — schedule them and build around them.
+- Fill remaining slots with suggestions that COMPLEMENT what they've planned.
+- If they said "I want to do X as much as possible", that's the THEME of the trip — most suggestions should align with X.
 
 QUALITY ASSURANCE — FINAL REVIEW:
 Before returning the JSON, mentally review the COMPLETE itinerary for these logical issues:
-- FLIGHTS: Do departure/arrival flights reference the correct home city? Are connection times realistic (minimum 2 hours for international, 1 hour domestic)? Are flight durations plausible for the distance?
-- HOTELS: Is every hotel actually located in the city being visited that day? If the itinerary moves between cities, does the hotel change?
+- FLIGHTS: If flights were requested, do they reference the correct home city? Are connection times realistic? If flights were NOT requested, verify there are NO flight blocks.
+- ACCOMMODATION: If user specified their own lodging, verify no hotel was added. If hotels are included, is every hotel in the correct city?
 - GEOGRAPHY: Are all activities on a given day in the same city/area? No breakfast in Tokyo and lunch in Osaka on the same day unless there's a transit block between them.
 - TIMING: Do activity times make sense? No museum visits at 6am. No dinner at 3pm. Enough transit time between locations.
 - CONTINUITY: Does the trip flow logically day-to-day? No teleporting between distant cities without transport blocks.

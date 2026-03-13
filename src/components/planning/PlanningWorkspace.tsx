@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TripIntake } from "@/types/intake";
-import { TripPlan, TimeBlock, ActionItem } from "@/types/itinerary";
+import { TripPlan, TimeBlock, ActionItem, ChatMessage } from "@/types/itinerary";
 import { BlockAlternative, suggestActivities } from "@/lib/chat";
 import { generateFromIntake } from "@/lib/chat";
 import { toast } from "@/hooks/use-toast";
@@ -67,6 +67,9 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const suggestionsRequestedRef = useRef(false);
   const pendingSaveRef = useRef(false);
+  const [chatInitialMessages, setChatInitialMessages] = useState<ChatMessage[]>([]);
+  const [infoBanner, setInfoBanner] = useState<string | null>(null);
+  const gapCheckDoneRef = useRef(false);
 
   const intakeContext = intakeToContext(intake);
   const conversationHistory = [{ role: "system", content: intakeContext }];
@@ -82,7 +85,22 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     (async () => {
       try {
         const generated = await generateFromIntake(intake);
-        if (!cancelled) { setPlan(generated); setActionItems(generated.actionItems || []); setIsGenerating(false); }
+        if (cancelled) return;
+        if ((generated as any).needsMoreInfo) {
+          const questions = (generated as any).questions?.join("\n") || "I need a few more details to plan your trip.";
+          const emptyPlan = createEmptyPlan(intake);
+          setPlan(emptyPlan);
+          setIsGenerating(false);
+          setInfoBanner("I have a few questions to make your itinerary better — check the chat!");
+          setChatInitialMessages([{
+            id: `gap-${Date.now()}`,
+            role: "assistant",
+            content: questions,
+            timestamp: new Date(),
+          }]);
+        } else {
+          setPlan(generated); setActionItems(generated.actionItems || []); setIsGenerating(false);
+        }
       } catch {
         if (!cancelled) {
           toast({ title: "Generation failed", description: "Couldn't create your itinerary. Please try again.", variant: "destructive" });
@@ -93,6 +111,32 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Detect gaps in the plan and queue chat questions
+  useEffect(() => {
+    if (!plan || gapCheckDoneRef.current || loadedPlan || chatInitialMessages.length > 0) return;
+    gapCheckDoneRef.current = true;
+    const gaps: string[] = [];
+
+    const hasAccommodation = plan.itinerary.some(d => d.blocks.some(b => b.category === "accommodation"));
+    if (!hasAccommodation && !intake.preExistingDetails?.match(/stay|hotel|airbnb|hostel|friend|camp|lodge|cabin|resort|vrbo/i)) {
+      gaps.push("I notice we don't have lodging set up yet. Where are you staying? I can suggest hotels or just add your booking.");
+    }
+
+    const hasTransport = plan.itinerary.some(d => d.blocks.some(b => b.category === "transport"));
+    if (!hasTransport && !intake.needsFlights) {
+      gaps.push(`How are you getting to ${intake.destination}? I can help plan flights or skip transport if you've got it covered.`);
+    }
+
+    if (gaps.length > 0) {
+      setChatInitialMessages([{
+        id: `gap-${Date.now()}`,
+        role: "assistant",
+        content: gaps.join("\n\n"),
+        timestamp: new Date(),
+      }]);
+    }
+  }, [plan]);
 
   // Pre-fetch AI suggestions for days with empty slots (only for skipAiGeneration trips)
   useEffect(() => {
@@ -296,6 +340,12 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   return (
     <div className="h-screen flex bg-background">
       <div className="flex-1 overflow-y-auto">
+        {infoBanner && (
+          <div className="bg-primary/10 border-b border-primary/20 px-4 py-2.5 flex items-center justify-between">
+            <p className="text-sm font-body text-primary">{infoBanner}</p>
+            <button onClick={() => setInfoBanner(null)} className="text-primary/60 hover:text-primary text-xs font-body">Dismiss</button>
+          </div>
+        )}
         <Dashboard
           plan={planWithActions}
           conversationHistory={[]}
@@ -351,6 +401,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
         currentPlan={plan}
         onPlanUpdate={handlePlanUpdate}
         intakeContext={intakeContext}
+        initialMessages={chatInitialMessages}
       />
 
       <AuthPromptDialog
