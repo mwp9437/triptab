@@ -24,9 +24,19 @@ function buildPromptFromIntake(intake: any): string {
     : destinations[0] || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
 
   // Pre-existing details (from "already planned" flow)
-  const preExisting = intake.preExistingDetails
-    ? `\n\nIMPORTANT — The traveler already has these plans/bookings. INCORPORATE them into the itinerary and build around them:\n${intake.preExistingDetails}`
-    : "";
+  // Map day names to actual dates so the AI can place activities on the correct day
+  let preExisting = "";
+  if (intake.preExistingDetails) {
+    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const start = new Date(intake.startDate + "T00:00:00");
+    const end = new Date(intake.endDate + "T00:00:00");
+    const dateMap: string[] = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const iso = d.toISOString().split("T")[0];
+      dateMap.push(`${dayNames[d.getDay()]} = ${iso}`);
+    }
+    preExisting = `\n\nIMPORTANT — The traveler already has these plans/bookings. INCORPORATE them into the itinerary and build around them:\n${intake.preExistingDetails}\n\nDate reference: ${dateMap.join(", ")}.`;
+  }
 
   // Transportation info
   const transportLine = intake.needsFlights && intake.homeCity?.trim()
@@ -145,6 +155,12 @@ TRANSPORTATION RULES:
 - When flights are excluded: no flight blocks, no airport transfers, no flight action items, budget.categories.flights MUST be 0.
 - If the pre-existing details mention driving, a rental car, or no flights needed, exclude all flight blocks.
 - For inter-city transport on multi-city trips, always include transport blocks between cities regardless of flight preferences.
+
+FLIGHT BLOCK RULES (when flights ARE included):
+- These are illustrative/estimated flights — you do not have real flight data. Use realistic estimates.
+- Each flight block (category "transport") MUST have a realistic per-person cost: domestic US $150-$400, US-Europe $500-$1200, US-Asia $800-$1800, intra-Europe $50-$200.
+- Put the full per-person flight cost on the FLIGHT block itself (the one with "Flight" or "Depart" in the title), NOT on airport transfer or check-in blocks. Airport transfers should have their own small cost ($15-$60).
+- For overnight/red-eye flights, the accommodation block on that day should be title: "Overnight flight", category: "accommodation", cost: 0. Do NOT show a hotel on a day the traveler spends sleeping on a plane.
 
 ACCOMMODATION RULES:
 - Every day MUST include exactly one accommodation block (category "accommodation"), including travel days.

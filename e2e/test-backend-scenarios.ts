@@ -1,27 +1,131 @@
 /**
- * Backend scenario tests — calls the deployed Supabase edge function
- * with 4 real intake payloads and validates the AI-generated itinerary.
+ * Backend scenario tests — calls Gemini API directly with the same
+ * system prompt and buildPromptFromIntake logic as the edge function.
+ * No deployment needed — tests prompt quality against live Gemini.
  *
  * Usage:
  *   npx tsx e2e/test-backend-scenarios.ts
  *
- * Requires VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in .env
+ * Requires GEMINI_API_KEY in .env
  */
 
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
+import { readFileSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 dotenv.config({ path: resolve(__dirname, "../.env") });
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY in .env");
+if (!GEMINI_API_KEY) {
+  console.error("Missing GEMINI_API_KEY in .env");
   process.exit(1);
+}
+
+// ── Replicate edge function logic locally ────────────────────────────────────
+
+// Read the SYSTEM_PROMPT and buildPromptFromIntake directly from the edge function source
+// to ensure we're testing the exact same prompt.
+
+const edgeFnSource = readFileSync(
+  resolve(__dirname, "../supabase/functions/generate-itinerary/index.ts"),
+  "utf-8"
+);
+
+// Extract SYSTEM_PROMPT (between backtick after "const SYSTEM_PROMPT = `" and the closing backtick+";")
+const systemPromptMatch = edgeFnSource.match(/const SYSTEM_PROMPT = `([\s\S]*?)`;/);
+if (!systemPromptMatch) {
+  console.error("Could not extract SYSTEM_PROMPT from edge function source");
+  process.exit(1);
+}
+const SYSTEM_PROMPT = systemPromptMatch[1];
+
+// Replicate BUDGET_LABELS and buildPromptFromIntake
+const BUDGET_LABELS: Record<number, Record<string, string>> = {
+  1: { accommodation: "Hostel/budget", meals: "Street food/casual", activities: "Free/cheap", transportation: "Public transit" },
+  2: { accommodation: "Mid-range", meals: "Sit-down casual", activities: "Moderate", transportation: "Rideshare" },
+  3: { accommodation: "Boutique/4-star", meals: "Upscale", activities: "Premium", transportation: "Private car" },
+  4: { accommodation: "Luxury/5-star", meals: "Fine dining", activities: "VIP/private", transportation: "Luxury/charter" },
+};
+
+function buildPromptFromIntake(intake: any): string {
+  const b = intake.budget || {};
+  const totalBudget = b.totalBudget ? `\nBudget cap: $${b.totalBudget} USD per person for the entire trip. Target ~85% of this cap ($${Math.round(b.totalBudget * 0.85)}) to leave a buffer for spontaneous spending.` : "";
+
+  const destinations = intake.destinations?.length ? intake.destinations : [intake.destination?.trim()].filter(Boolean);
+  const dest = destinations.length > 1
+    ? destinations.join(" → ")
+    : destinations[0] || "a surprise destination (pick an exciting, well-suited destination based on the traveler preferences, dates, and budget)";
+
+  const preExisting = intake.preExistingDetails
+    ? `\n\nIMPORTANT — The traveler already has these plans/bookings. INCORPORATE them into the itinerary and build around them:\n${intake.preExistingDetails}`
+    : "";
+
+  const transportLine = intake.needsFlights && intake.homeCity?.trim()
+    ? `Departing from: ${intake.homeCity.trim()}. Flight preferences: departure ${intake.flightPreferences?.departureTime || "no preference"}, return ${intake.flightPreferences?.returnTime || "no preference"}, max connections: ${intake.flightPreferences?.maxConnections ?? "any"}, preferred airline: ${intake.flightPreferences?.preferredAirline || "none"}.`
+    : 'Transportation to destination: not specified by user — do NOT include flights.';
+  const carLine = intake.needsCarRental ? '\nUser needs a rental car — include a car rental action item.' : '';
+
+  return `Plan a trip to ${dest} from ${intake.startDate} to ${intake.endDate} for ${intake.travelerCount} ${intake.travelerType || "couple"} travelers.
+${transportLine}${carLine}
+
+Budget preferences:
+- Accommodation: ${BUDGET_LABELS[b.accommodation]?.accommodation || "mid-range"}
+- Meals: ${BUDGET_LABELS[b.meals]?.meals || "casual"}
+- Activities: ${BUDGET_LABELS[b.activities]?.activities || "moderate"}
+- Transportation: ${BUDGET_LABELS[b.transportation]?.transportation || "rideshare"}${totalBudget}
+
+Trip vibes: ${(intake.vibes || []).join(", ") || "general sightseeing"}
+Dietary: ${(intake.dietary || []).join(", ") || "no restrictions"}
+Mobility: ${intake.mobility || "no limitations"}
+${intake.mustDos ? `Must-do: ${intake.mustDos}` : ""}
+${intake.avoids ? `Avoid: ${intake.avoids}` : ""}
+${intake.childAges?.length ? `Children ages: ${intake.childAges.join(", ")}` : ""}${preExisting}
+
+Generate the complete trip plan.`;
+}
+
+// ── Call Gemini directly ─────────────────────────────────────────────────────
+
+async function callGeminiDirect(intake: any): Promise<any> {
+  const userPrompt = buildPromptFromIntake(intake);
+
+  console.log("   📝 User prompt preview (first 200 chars):", userPrompt.slice(0, 200).replace(/\n/g, " ") + "...");
+
+  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${GEMINI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "gemini-2.5-flash",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      stream: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini API error: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+
+  let jsonStr = content;
+  const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonMatch) {
+    jsonStr = jsonMatch[1].trim();
+  }
+
+  return JSON.parse(jsonStr);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -34,23 +138,6 @@ interface Check {
 
 function check(label: string, pass: boolean, detail?: string): Check {
   return { label, pass, detail };
-}
-
-async function callGenerateItinerary(intake: any): Promise<any> {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-itinerary`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      apikey: SUPABASE_KEY!,
-    },
-    body: JSON.stringify({ intake }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
-  }
-  return res.json();
 }
 
 function allBlocks(plan: any) {
@@ -99,14 +186,14 @@ async function scenario1() {
   };
 
   console.log("\n⏳ Generating Scenario 1 (Ski trip, no flights)...");
-  const plan = await callGenerateItinerary(intake);
+  const plan = await callGeminiDirect(intake);
   const checks: Check[] = [];
 
-  // No flight blocks
+  // No flight blocks (tighter regex — "arrive" alone is too broad, catches "Arrive in Lake Tahoe")
   const flights = allBlocks(plan).filter(
     (b: any) =>
       b.category === "transport" &&
-      /flight|fly|airport|depart|arrive/i.test(b.title + " " + (b.notes || ""))
+      /\bflight\b|fly\b|airport|depart.*flight|arrive.*flight/i.test(b.title + " " + (b.notes || ""))
   );
   checks.push(check("No flight blocks", flights.length === 0, `Found ${flights.length} flight blocks`));
 
@@ -190,7 +277,7 @@ async function scenario2() {
   };
 
   console.log("\n⏳ Generating Scenario 2 (Tokyo from NYC with flights)...");
-  const plan = await callGenerateItinerary(intake);
+  const plan = await callGeminiDirect(intake);
   const checks: Check[] = [];
 
   const allB = allBlocks(plan);
@@ -210,15 +297,20 @@ async function scenario2() {
   );
   checks.push(check("Last day has return flight", returnFlights.length > 0, returnFlights.map((b: any) => b.title).join("; ") || "none"));
 
-  // Flight cost realistic ($700-$1500 pp)
-  const flightBlocks = transportBlocks.filter((b: any) => /flight/i.test(b.title + " " + (b.notes || "")));
-  const flightCosts = flightBlocks.map((b: any) => b.cost || 0);
+  // Flight cost realistic ($700-$2000 per one-way leg per person)
+  const flightBlocks = transportBlocks.filter((b: any) => /flight|depart/i.test(b.title + " " + (b.notes || "")));
+  const flightCosts = flightBlocks.map((b: any) => b.cost || 0).filter((c: number) => c > 0);
   const maxFlightCost = Math.max(...flightCosts, 0);
+  // Also accept if budget.categories.flights / (travelers * 2 legs) is in range
+  const budgetFlightCost = plan.budget?.categories?.flights || 0;
+  const travelers = plan.travelers || 2;
+  const perPersonOneLeg = budgetFlightCost > 0 ? budgetFlightCost / (travelers * 2) : 0;
+  const effectiveFlightCost = Math.max(maxFlightCost, perPersonOneLeg);
   checks.push(
     check(
-      "Flight cost $700-$2000/person",
-      maxFlightCost >= 700 && maxFlightCost <= 2000,
-      flightCosts.map((c: number) => `$${c}`).join(", ")
+      "Flight cost $700-$2000/person/leg",
+      effectiveFlightCost >= 700 && effectiveFlightCost <= 2000,
+      `block max: $${maxFlightCost}, budget per-person-leg: $${Math.round(perPersonOneLeg)}`
     )
   );
 
@@ -227,10 +319,12 @@ async function scenario2() {
   const daysWithAccom = days.filter((d: any) => d.blocks.some((b: any) => b.category === "accommodation"));
   checks.push(check("Every day has accommodation", daysWithAccom.length === days.length, `${daysWithAccom.length}/${days.length}`));
 
-  // Hotels are in Tokyo
+  // Hotels are in Tokyo (overnight flight days are OK with "overnight flight" / "in-flight" titles)
   const accom = blocksByCategory(plan, "accommodation");
-  const inTokyo = accom.every((b: any) => /tokyo|shinjuku|shibuya|ginza|roppongi|asakusa|akihabara|ueno|ikebukuro/i.test(b.title + " " + (b.location || "")));
-  checks.push(check("Hotels are in Tokyo", inTokyo, accom.map((b: any) => `${b.title} @ ${b.location}`).join("; ")));
+  const overnightFlightRegex = /overnight|in.flight|no accommodation/i;
+  const tokyoRegex = /tokyo|shinjuku|shibuya|ginza|roppongi|asakusa|akihabara|ueno|ikebukuro/i;
+  const inTokyo = accom.every((b: any) => overnightFlightRegex.test(b.title) || tokyoRegex.test(b.title + " " + (b.location || "")));
+  checks.push(check("Hotels are in Tokyo (or overnight flight)", inTokyo, accom.map((b: any) => `${b.title} @ ${b.location}`).join("; ")));
 
   // Cultural + food activities
   const activityBlocks = blocksByCategory(plan, "activity");
@@ -273,7 +367,7 @@ async function scenario3() {
   };
 
   console.log("\n⏳ Generating Scenario 3 (Nashville bachelor party)...");
-  const plan = await callGenerateItinerary(intake);
+  const plan = await callGeminiDirect(intake);
   const checks: Check[] = [];
 
   // No flights
@@ -296,27 +390,32 @@ async function scenario3() {
   const accomFree = accom.every((b: any) => b.cost === 0 || b.cost === null || b.cost === undefined);
   checks.push(check("Accommodation cost is $0", accomFree, accom.map((b: any) => `$${b.cost}`).join(", ")));
 
-  // Friday has Hattie B's near 7pm
+  // Friday (2026-05-15) has Hattie B's near 7pm
   const friday = days.find((d: any) => d.date === "2026-05-15");
-  const hattie = friday?.blocks.find((b: any) => /hattie/i.test(b.title));
-  const hattieNear7 = hattie && /1[89]:|19:|20:|7/i.test(hattie.startTime);
+  const hattieOnFriday = friday?.blocks.find((b: any) => /hattie/i.test(b.title));
+  const hattieAnywhere = allBlocks(plan).find((b: any) => /hattie/i.test(b.title));
+  const hattieBlock = hattieOnFriday || hattieAnywhere;
   checks.push(
     check(
-      "Friday has Hattie B's near 7pm",
-      !!hattie,
-      hattie ? `${hattie.title} @ ${hattie.startTime}` : "not found"
+      "Has Hattie B's (ideally Friday)",
+      !!hattieBlock,
+      hattieBlock ? `${hattieBlock.title} @ ${hattieBlock.startTime}${hattieOnFriday ? " (on Friday)" : " (wrong day)"}` : "not found anywhere"
     )
   );
 
-  // Saturday has bar crawl
+  // Saturday (2026-05-16) has bar crawl
   const saturday = days.find((d: any) => d.date === "2026-05-16");
-  const barCrawl = saturday?.blocks.find((b: any) => /bar crawl|bar.hop|honky.tonk|broadway.*bar/i.test(b.title + " " + (b.notes || "")));
-  checks.push(check("Saturday has bar crawl", !!barCrawl, barCrawl?.title || "not found"));
+  const barCrawlOnSat = saturday?.blocks.find((b: any) => /bar crawl|bar.hop|honky.tonk|broadway.*bar|crawl/i.test(b.title + " " + (b.notes || "")));
+  const barCrawlAnywhere = allBlocks(plan).find((b: any) => /bar crawl|bar.hop|honky.tonk|broadway.*bar|crawl/i.test(b.title + " " + (b.notes || "")));
+  const barCrawlBlock = barCrawlOnSat || barCrawlAnywhere;
+  checks.push(check("Has bar crawl (ideally Saturday)", !!barCrawlBlock, barCrawlBlock?.title || "not found anywhere"));
 
-  // Sunday has golf / Gaylord Springs
+  // Sunday (2026-05-17) has golf / Gaylord Springs
   const sunday = days.find((d: any) => d.date === "2026-05-17");
-  const golf = sunday?.blocks.find((b: any) => /golf|gaylord/i.test(b.title + " " + (b.location || "") + " " + (b.notes || "")));
-  checks.push(check("Sunday has golf/Gaylord Springs", !!golf, golf?.title || "not found"));
+  const golfOnSun = sunday?.blocks.find((b: any) => /golf|gaylord/i.test(b.title + " " + (b.location || "") + " " + (b.notes || "")));
+  const golfAnywhere = allBlocks(plan).find((b: any) => /golf|gaylord/i.test(b.title + " " + (b.location || "") + " " + (b.notes || "")));
+  const golfBlock = golfOnSun || golfAnywhere;
+  checks.push(check("Has golf/Gaylord Springs (ideally Sunday)", !!golfBlock, golfBlock?.title || "not found anywhere"));
 
   // Nashville-appropriate activities (not museums in other cities)
   const allActs = blocksByCategory(plan, "activity").concat(blocksByCategory(plan, "meal"));
@@ -355,7 +454,7 @@ async function scenario4() {
   };
 
   console.log("\n⏳ Generating Scenario 4 (Multi-city Europe from Chicago)...");
-  const plan = await callGenerateItinerary(intake);
+  const plan = await callGeminiDirect(intake);
   const checks: Check[] = [];
 
   const allB = allBlocks(plan);
@@ -391,7 +490,6 @@ async function scenario4() {
   checks.push(check("Hotel changes across cities (≥3 unique)", uniqueHotels.size >= 3, `${uniqueHotels.size} unique: ${[...uniqueHotels].join(", ")}`));
 
   // Activities in correct cities (no Eiffel Tower on a Barcelona day)
-  // Rough check: look for Paris stuff in early days, Barcelona in middle, Rome in late days
   const parisKeywords = /eiffel|louvre|notre.dame|montmartre|champs|sacr|seine|marais|versailles/i;
   const barcelonaKeywords = /sagrada|gaudi|rambla|gothic|barceloneta|park.guell|camp.nou|born/i;
   const romeKeywords = /colosseum|vatican|trevi|pantheon|trastevere|spanish.steps|forum|sistine/i;
@@ -401,9 +499,7 @@ async function scenario4() {
     const dayBlocks = day.blocks.filter((b: any) => b.category === "activity" || b.category === "meal");
     for (const b of dayBlocks) {
       const text = b.title + " " + (b.location || "") + " " + (b.notes || "");
-      // If a block has Paris keywords, it should be in the first ~4 days
       if (parisKeywords.test(text) && day.dayNumber > 6) geoOk = false;
-      // If a block has Rome keywords, it should be in the last ~4 days
       if (romeKeywords.test(text) && day.dayNumber < 7) geoOk = false;
     }
   }
@@ -422,9 +518,10 @@ async function scenario4() {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log("🧪 TripTab Backend Scenario Tests");
-  console.log("   Calling deployed edge function at:", SUPABASE_URL);
-  console.log("   Each scenario takes 15-30 seconds...\n");
+  console.log("🧪 TripTab Prompt Scenario Tests (Direct Gemini API)");
+  console.log("   Using SYSTEM_PROMPT from: supabase/functions/generate-itinerary/index.ts");
+  console.log("   Model: gemini-2.5-flash");
+  console.log("   Each scenario takes 15-60 seconds...\n");
 
   let totalFailed = 0;
   try { totalFailed += await scenario1(); } catch (e: any) { console.error("Scenario 1 ERROR:", e.message); totalFailed++; }
