@@ -22,6 +22,7 @@ interface ConfirmActivityModalProps {
   onConfirm: (dayIndex: number, blockId: string, updates: Partial<TimeBlock>) => void;
   onAddExpense?: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
   tripId?: string | null;
+  expenses?: Expense[];
 }
 
 const BLOCK_TO_EXPENSE_CATEGORY: Record<string, Expense["category"]> = {
@@ -42,6 +43,7 @@ export default function ConfirmActivityModal({
   onConfirm,
   onAddExpense,
   tripId,
+  expenses = [],
 }: ConfirmActivityModalProps) {
   const isMobile = useIsMobile();
   const [stage, setStage] = useState<1 | 2>(1);
@@ -144,6 +146,15 @@ export default function ConfirmActivityModal({
 
   const handleLogExpense = async () => {
     if (!block || !onAddExpense) return;
+
+    // Guard against duplicate expenses for the same block
+    const existingExpenses = expenses.filter((e) => e.blockId === block.id);
+    if (existingExpenses.length > 0) {
+      toast({ title: "Expense already logged", description: "This activity already has an expense. You can edit it in the Expenses tab." });
+      onClose();
+      return;
+    }
+
     const expenseAmount = numericActualCost;
     const shares = computeShares(expenseAmount);
 

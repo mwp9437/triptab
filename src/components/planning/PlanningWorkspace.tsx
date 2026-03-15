@@ -74,6 +74,8 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
 
   const intakeContext = intakeToContext(intake);
   const conversationHistory = [{ role: "system", content: intakeContext }];
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialLoadRef = useRef(true);
 
   useEffect(() => {
     if (loadedPlan) return;
@@ -123,6 +125,37 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Reconcile block statuses with existing expenses on load
+  // If a block has a linked expense but status is "suggested", fix it to "confirmed"
+  useEffect(() => {
+    if (!plan || expenses.length === 0) return;
+    const expenseBlockIds = new Set(expenses.map((e) => e.blockId).filter(Boolean));
+    if (expenseBlockIds.size === 0) return;
+    let changed = false;
+    const reconciled = {
+      ...plan,
+      itinerary: plan.itinerary.map((day) => ({
+        ...day,
+        blocks: day.blocks.map((block) => {
+          if (expenseBlockIds.has(block.id) && block.status !== "confirmed") {
+            changed = true;
+            return {
+              ...block,
+              status: "confirmed" as const,
+              confirmedDetails: {
+                ...block.confirmedDetails,
+                expenseCreated: true,
+                confirmedAt: block.confirmedDetails?.confirmedAt || new Date().toISOString(),
+              },
+            };
+          }
+          return block;
+        }),
+      })),
+    };
+    if (changed) setPlan(reconciled);
+  }, [expenses]);
 
   // Detect gaps in the plan and queue chat questions
   useEffect(() => {
@@ -340,6 +373,27 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     }
     setSaving(false);
   };
+
+  // Debounced auto-save: persist plan to Supabase 2s after any change
+  useEffect(() => {
+    if (!plan || !tripId || !user) return;
+    // Skip the initial load to avoid a spurious save
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const planToSave = { ...plan, actionItems, accommodationDetails, bedroomAssignments, datePoll, personalBudget };
+      await supabase.from("trips").update({
+        plan_data: planToSave as any,
+        updated_at: new Date().toISOString(),
+      } as any).eq("id", tripId);
+    }, 2000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [plan, actionItems, accommodationDetails, bedroomAssignments, datePoll, personalBudget, tripId, user]);
 
   if (isGenerating) {
     return (

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -91,6 +91,28 @@ export default function SharedTrip() {
   }, [tripId, user, authLoading, navigate, urlRole]);
 
   const canEdit = effectiveRole === "owner" || effectiveRole === "editor";
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const initialLoadRef = useRef(true);
+
+  // Debounced auto-save for SharedTrip
+  useEffect(() => {
+    if (!plan || !tripId || !canEdit) return;
+    if (initialLoadRef.current) {
+      initialLoadRef.current = false;
+      return;
+    }
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const planToSave = { ...plan, accommodationDetails, bedroomAssignments, datePoll };
+      await supabase.from("trips").update({
+        plan_data: planToSave as any,
+        updated_at: new Date().toISOString(),
+      }).eq("id", tripId);
+    }, 2000);
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [plan, accommodationDetails, bedroomAssignments, datePoll, tripId, canEdit]);
 
   const handleDeleteBlock = useCallback((dayIndex: number, blockId: string) => {
     setPlan((prev) => {

@@ -1296,6 +1296,7 @@ export default function Dashboard({
             onConfirm={onUpdateBlock}
             onAddExpense={onAddExpense}
             tripId={tripId}
+            expenses={expenses}
           />
         )}
       </div>
