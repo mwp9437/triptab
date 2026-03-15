@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const prompt = `Generate a beautiful, realistic travel photograph: ${imageQuery}. Style: ${styleHint}. The photo should look like it was taken by a professional travel photographer — natural lighting, sharp focus, vivid but not oversaturated colors. NO text, NO watermarks, NO borders.`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
