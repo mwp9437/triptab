@@ -28,6 +28,7 @@ import AccommodationHub, { AccommodationDetails, BedroomAssignment } from "./Acc
 import DatePoll, { DatePollData } from "./DatePoll";
 import AddActivityModal, { Suggestion } from "./AddActivityModal";
 import ConfirmActivityModal from "./ConfirmActivityModal";
+import FeedbackModal from "./FeedbackModal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Expense, Traveler } from "@/types/expenses";
 import type { ExpenseInitialValues } from "./expenses/AddExpenseModal";
@@ -518,6 +519,7 @@ export default function Dashboard({
             <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => downloadICS(plan, expenses, travelers)}>
               <CalendarDays className="w-4 h-4" />
             </Button>
+            <FeedbackModal tripId={tripId} />
             {user && (
               <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={signOut}>
                 <LogOut className="w-4 h-4" />

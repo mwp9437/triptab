@@ -1,8 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plane, CheckCircle, FolderOpen, LogIn } from "lucide-react";
+import { Plane, CheckCircle, FolderOpen, LogIn, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import FeedbackModal from "./FeedbackModal";
 import luxuryTerrace from "@/assets/luxury-terrace.png";
 
 interface LandingHubProps {
@@ -137,6 +138,16 @@ export default function LandingHub({ onSelectPath }: LandingHubProps) {
             </>
           )}
         </motion.p>
+
+        {/* Feedback link */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="mt-6"
+        >
+          <FeedbackModal />
+        </motion.div>
       </div>
     </div>
   );
