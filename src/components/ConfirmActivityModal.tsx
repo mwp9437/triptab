@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, DollarSign, Users } from "lucide-react";
+import { Check, DollarSign, Users, Repeat } from "lucide-react";
 import { TimeBlock, CostType } from "@/types/itinerary";
 import { Expense, Traveler, SplitMethod } from "@/types/expenses";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -51,41 +51,45 @@ export default function ConfirmActivityModal({
   const [cost, setCost] = useState("");
   const [costType, setCostType] = useState<CostType>("total");
   const [participants, setParticipants] = useState<Set<string>>(new Set());
+  const [roundTrip, setRoundTrip] = useState(false);
 
   // Stage 2 state
   const [actualCost, setActualCost] = useState("");
   const [paidBy, setPaidBy] = useState("");
   const [splitMethod, setSplitMethod] = useState<SplitMethod>("equal");
+  const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
 
-  // Reset form when block changes
-  const resetForm = () => {
-    setStage(1);
-    if (block) {
+  // Bug 6 fix: reset form whenever the block identity changes
+  useEffect(() => {
+    if (open && block) {
+      setStage(1);
       setTitle(block.title);
       setCost(block.cost != null ? String(block.cost) : "");
       setCostType(block.costType || (block.category === "transport" ? "per_person" : "total"));
       setParticipants(new Set(travelers.map((t) => t.id)));
       setPaidBy(travelers.find((t) => t.isCurrentUser)?.id || travelers[0]?.id || "");
       setActualCost("");
+      setSplitMethod("equal");
+      setCustomAmounts({});
+      setRoundTrip(false);
     }
-  };
-
-  // Reset when modal opens with new block
-  useState(() => { resetForm(); });
-
-  // Re-sync when block/open changes
-  if (open && block && title === "" && stage === 1) {
-    resetForm();
-  }
+  }, [open, block?.id]);
 
   const numericCost = parseFloat(cost) || 0;
   const participantCount = participants.size;
-  const totalCostFromInput = costType === "per_person" ? numericCost * participantCount : numericCost;
+  const baseTotalCost = costType === "per_person" ? numericCost * participantCount : numericCost;
+  const totalCostFromInput = roundTrip ? baseTotalCost * 2 : baseTotalCost;
 
   // Stage 2 actual cost
   const numericActualCost = parseFloat(actualCost) || totalCostFromInput;
 
   const participantArray = travelers.filter((t) => participants.has(t.id));
+
+  // Custom split validation
+  const customTotal = useMemo(() => {
+    if (splitMethod !== "custom_amount") return 0;
+    return participantArray.reduce((sum, t) => sum + (parseFloat(customAmounts[t.id] || "0") || 0), 0);
+  }, [splitMethod, customAmounts, participantArray]);
 
   const toggleParticipant = (id: string) => {
     setParticipants((prev) => {
@@ -94,6 +98,24 @@ export default function ConfirmActivityModal({
       else next.add(id);
       return next;
     });
+  };
+
+  const computeShares = (amount: number) => {
+    if (splitMethod === "custom_amount") {
+      return participantArray.map((t) => ({
+        travelerId: t.id,
+        share: parseFloat(customAmounts[t.id] || "0") || 0,
+      }));
+    }
+    // Equal split
+    if (participantArray.length === 0) return [];
+    const cents = Math.round(amount * 100);
+    const baseShare = Math.floor(cents / participantArray.length);
+    const remainder = cents - baseShare * participantArray.length;
+    return participantArray.map((t, i) => ({
+      travelerId: t.id,
+      share: (baseShare + (i < remainder ? 1 : 0)) / 100,
+    }));
   };
 
   const handleConfirmOnly = () => {
@@ -112,7 +134,6 @@ export default function ConfirmActivityModal({
       },
     });
     toast({ title: "Activity confirmed" });
-    resetForm();
     onClose();
   };
 
@@ -124,23 +145,15 @@ export default function ConfirmActivityModal({
   const handleLogExpense = async () => {
     if (!block || !onAddExpense) return;
     const expenseAmount = numericActualCost;
-    const shares = participantArray.length > 0
-      ? (() => {
-          const cents = Math.round(expenseAmount * 100);
-          const baseShare = Math.floor(cents / participantArray.length);
-          const remainder = cents - baseShare * participantArray.length;
-          return participantArray.map((t, i) => ({
-            travelerId: t.id,
-            share: (baseShare + (i < remainder ? 1 : 0)) / 100,
-          }));
-        })()
-      : [];
+    const shares = computeShares(expenseAmount);
+
+    const descSuffix = roundTrip ? " (round trip)" : "";
 
     try {
       await onAddExpense({
         tripId: "",
         blockId: block.id,
-        description: title.trim() || block.title,
+        description: (title.trim() || block.title) + descSuffix,
         amount: expenseAmount,
         currency: "USD",
         category: BLOCK_TO_EXPENSE_CATEGORY[block.category] || "other",
@@ -175,20 +188,17 @@ export default function ConfirmActivityModal({
       return;
     }
 
-    resetForm();
     onClose();
   };
 
   const handleOpenChange = (v: boolean) => {
-    if (!v) {
-      resetForm();
-      onClose();
-    }
+    if (!v) onClose();
   };
 
   if (!block) return null;
 
   const isExpenseMode = block.status === "confirmed" && block.confirmedDetails && !block.confirmedDetails.expenseCreated;
+  const isTransport = block.category === "transport";
 
   const formContent = (
     <div className="space-y-4 px-1">
@@ -246,10 +256,50 @@ export default function ConfirmActivityModal({
             </div>
             {costType === "per_person" && participantCount > 0 && numericCost > 0 && (
               <p className="text-xs text-muted-foreground font-body mt-1">
-                {participantCount} participants x ${numericCost.toFixed(2)} = ${totalCostFromInput.toFixed(2)} total
+                {participantCount} participants x ${numericCost.toFixed(2)} = ${baseTotalCost.toFixed(2)} total
               </p>
             )}
           </div>
+
+          {/* Round trip toggle for transport */}
+          {isTransport && (
+            <div className="space-y-1">
+              <label className="text-xs font-body font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Repeat className="w-3 h-3" /> Trip type
+              </label>
+              <div className="flex gap-1 glass rounded-xl p-1">
+                <button
+                  onClick={() => setRoundTrip(false)}
+                  className={cn(
+                    "flex-1 py-1.5 rounded-lg text-xs font-body font-medium transition-all",
+                    !roundTrip
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  One Way
+                </button>
+                <button
+                  onClick={() => setRoundTrip(true)}
+                  className={cn(
+                    "flex-1 py-1.5 rounded-lg text-xs font-body font-medium transition-all",
+                    roundTrip
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Round Trip
+                </button>
+              </div>
+              {roundTrip && numericCost > 0 && (
+                <p className="text-xs text-muted-foreground font-body mt-1">
+                  {costType === "per_person"
+                    ? `Round trip: $${(numericCost * 2).toFixed(2)} per person ($${totalCostFromInput.toFixed(2)} total)`
+                    : `Round trip total: $${totalCostFromInput.toFixed(2)}`}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Participants */}
           <div className="space-y-1.5">
@@ -300,6 +350,7 @@ export default function ConfirmActivityModal({
           <div className="text-center py-1">
             <p className="text-sm font-body text-muted-foreground">
               Log expense for <span className="font-medium text-foreground">"{title || block.title}"</span>
+              {roundTrip && <span className="text-primary"> (round trip)</span>}
             </p>
           </div>
 
@@ -365,10 +416,51 @@ export default function ConfirmActivityModal({
             </div>
           </div>
 
+          {/* Custom amount inputs */}
+          {splitMethod === "custom_amount" && participantArray.length > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-body text-muted-foreground">Custom amounts</label>
+                <span
+                  className={cn(
+                    "text-xs font-body",
+                    Math.abs(customTotal - numericActualCost) < 0.02 ? "text-primary" : "text-destructive"
+                  )}
+                >
+                  ${customTotal.toFixed(2)} / ${numericActualCost.toFixed(2)}
+                </span>
+              </div>
+              <div className="glass rounded-xl p-2.5 space-y-1.5">
+                {participantArray.map((t) => (
+                  <div key={t.id} className="flex items-center gap-2">
+                    <span className="text-sm font-body text-foreground flex-1 truncate">{t.name}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground">$</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={customAmounts[t.id] || ""}
+                        onChange={(e) =>
+                          setCustomAmounts((prev) => ({ ...prev, [t.id]: e.target.value }))
+                        }
+                        className="w-20 bg-white/10 rounded-lg px-2 py-1 text-sm text-foreground outline-none border border-white/15 focus:border-primary/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Log button */}
           <Button
             onClick={handleLogExpense}
-            disabled={!paidBy || numericActualCost <= 0}
+            disabled={
+              !paidBy ||
+              numericActualCost <= 0 ||
+              (splitMethod === "custom_amount" && Math.abs(customTotal - numericActualCost) >= 0.02)
+            }
             className="w-full rounded-xl h-11 font-display font-semibold text-sm gap-1.5"
           >
             <DollarSign className="w-4 h-4" /> Log Expense

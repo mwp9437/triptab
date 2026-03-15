@@ -57,7 +57,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const [saving, setSaving] = useState(false);
   const isMobile = useIsMobile();
   const { isOptedIn, toggleOptIn, budgetCap, setBudgetCap } = useMemberOptIns(tripId);
-  const { travelers, expenses, addExpense, deleteExpense, addTraveler, removeTraveler } = useExpenses(tripId);
+  const { travelers, expenses, addExpense, deleteExpense, updateExpense, addTraveler, removeTraveler } = useExpenses(tripId);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showTravelers, setShowTravelers] = useState(false);
   const [accommodationDetails, setAccommodationDetails] = useState<AccommodationDetails>((loadedPlan as any)?.accommodationDetails || {});
@@ -406,6 +406,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           travelers={travelers}
           onAddExpense={addExpense}
           onDeleteExpense={deleteExpense}
+          onUpdateExpense={updateExpense}
           onOpenTravelers={() => setShowTravelers(true)}
           defaultTab={intake.expensesOnly ? "expenses" : undefined}
           accommodationDetails={accommodationDetails}

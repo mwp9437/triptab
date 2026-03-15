@@ -43,7 +43,9 @@ interface AddExpenseModalProps {
   travelers: Traveler[];
   plan: TripPlan;
   onAddExpense: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
+  onUpdateExpense?: (id: string, updates: Partial<Omit<Expense, "id" | "tripId" | "createdAt">>) => Promise<void>;
   initialValues?: ExpenseInitialValues;
+  editingExpense?: Expense | null;
 }
 
 export default function AddExpenseModal({
@@ -52,7 +54,9 @@ export default function AddExpenseModal({
   travelers,
   plan,
   onAddExpense,
+  onUpdateExpense,
   initialValues,
+  editingExpense,
 }: AddExpenseModalProps) {
   const isMobile = useIsMobile();
   const currentUser = travelers.find((t) => t.isCurrentUser);
@@ -70,6 +74,9 @@ export default function AddExpenseModal({
   const [customPercents, setCustomPercents] = useState<Record<string, string>>({});
   const [linkedBlockId, setLinkedBlockId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [costType, setCostType] = useState<"total" | "per_person">("total");
+
+  const isEditing = !!editingExpense;
 
   const resetForm = () => {
     setAmount("");
@@ -82,6 +89,7 @@ export default function AddExpenseModal({
     setCustomAmounts({});
     setCustomPercents({});
     setLinkedBlockId(null);
+    setCostType("total");
   };
 
   // Set paidBy when travelers load and it's still empty
@@ -105,6 +113,28 @@ export default function AddExpenseModal({
     }
   }, [open, initialValues]);
 
+  // Pre-fill when editing an existing expense
+  useEffect(() => {
+    if (open && editingExpense) {
+      setAmount(String(editingExpense.amount));
+      setDescription(editingExpense.description);
+      setCategory(editingExpense.category);
+      setDate(new Date(editingExpense.date + "T00:00:00"));
+      setPaidBy(editingExpense.paidBy);
+      setSelectedParticipants(new Set(editingExpense.participants.map((p) => p.travelerId)));
+      setSplitMethod(editingExpense.splitMethod);
+      setLinkedBlockId(editingExpense.blockId ?? null);
+      setCostType("total");
+      if (editingExpense.splitMethod === "custom_amount") {
+        setCustomAmounts(Object.fromEntries(editingExpense.participants.map((p) => [p.travelerId, String(p.share)])));
+      }
+      if (editingExpense.splitMethod === "custom_percent") {
+        const total = editingExpense.amount;
+        setCustomPercents(Object.fromEntries(editingExpense.participants.map((p) => [p.travelerId, String(total > 0 ? Math.round((p.share / total) * 10000) / 100 : 0)])));
+      }
+    }
+  }, [open, editingExpense]);
+
   // Trip date constraints
   const tripStart = plan.startDate ? new Date(plan.startDate + "T00:00:00") : undefined;
   const tripEnd = plan.endDate ? new Date(plan.endDate + "T00:00:00") : undefined;
@@ -117,7 +147,8 @@ export default function AddExpenseModal({
   }, [plan.itinerary, dateStr]);
 
   const participantArray = travelers.filter((t) => selectedParticipants.has(t.id));
-  const numericAmount = parseFloat(amount) || 0;
+  const rawAmount = parseFloat(amount) || 0;
+  const numericAmount = costType === "per_person" ? rawAmount * participantArray.length : rawAmount;
 
   // Compute shares
   const computedShares = useMemo(() => {
@@ -161,7 +192,7 @@ export default function AddExpenseModal({
     if (!isValid) return;
     setSubmitting(true);
     try {
-      await onAddExpense({
+      const expenseData = {
         tripId: "",
         blockId: linkedBlockId,
         description: description.trim(),
@@ -175,8 +206,15 @@ export default function AddExpenseModal({
           share: computedShares[t.id] ?? 0,
         })),
         splitMethod,
-      });
-      toast({ title: "Expense added", description: `$${numericAmount.toFixed(2)} for ${description.trim()}` });
+      };
+
+      if (isEditing && onUpdateExpense) {
+        await onUpdateExpense(editingExpense!.id, expenseData);
+        toast({ title: "Expense updated", description: `$${numericAmount.toFixed(2)} for ${description.trim()}` });
+      } else {
+        await onAddExpense(expenseData);
+        toast({ title: "Expense added", description: `$${numericAmount.toFixed(2)} for ${description.trim()}` });
+      }
       resetForm();
       onOpenChange(false);
     } catch {
@@ -213,6 +251,39 @@ export default function AddExpenseModal({
               className="flex-1 bg-transparent text-2xl font-display font-bold text-foreground outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <span className="text-sm font-body text-muted-foreground font-medium">USD</span>
+          </div>
+
+          {/* Total / Per Person toggle */}
+          <div className="space-y-1">
+            <div className="flex gap-1 glass rounded-xl p-1">
+              <button
+                onClick={() => setCostType("total")}
+                className={cn(
+                  "flex-1 py-1.5 rounded-lg text-xs font-body font-medium transition-all",
+                  costType === "total"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Total
+              </button>
+              <button
+                onClick={() => setCostType("per_person")}
+                className={cn(
+                  "flex-1 py-1.5 rounded-lg text-xs font-body font-medium transition-all",
+                  costType === "per_person"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Per Person
+              </button>
+            </div>
+            {costType === "per_person" && participantArray.length > 0 && rawAmount > 0 && (
+              <p className="text-xs text-muted-foreground font-body">
+                {participantArray.length} participants x ${rawAmount.toFixed(2)} = ${numericAmount.toFixed(2)} total
+              </p>
+            )}
           </div>
 
           {/* Description */}
@@ -445,7 +516,7 @@ export default function AddExpenseModal({
             disabled={!isValid || submitting}
             className="w-full rounded-xl h-11 font-display font-semibold text-sm"
           >
-            {submitting ? "Adding..." : "Add Expense"}
+            {submitting ? (isEditing ? "Updating..." : "Adding...") : (isEditing ? "Update Expense" : "Add Expense")}
           </Button>
     </div>
   );
@@ -455,7 +526,7 @@ export default function AddExpenseModal({
       <Drawer open={open} onOpenChange={handleOpenChange}>
         <DrawerContent className="glass-card-readable border-white/15 max-h-[92vh]">
           <DrawerHeader>
-            <DrawerTitle className="font-display text-lg">Add Expense</DrawerTitle>
+            <DrawerTitle className="font-display text-lg">{isEditing ? "Edit Expense" : "Add Expense"}</DrawerTitle>
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-6">
             {formContent}
@@ -469,7 +540,7 @@ export default function AddExpenseModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="glass-card-readable border-white/15 sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display text-lg">Add Expense</DialogTitle>
+          <DialogTitle className="font-display text-lg">{isEditing ? "Edit Expense" : "Add Expense"}</DialogTitle>
         </DialogHeader>
         {formContent}
       </DialogContent>

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DollarSign, Plane, Hotel, UtensilsCrossed, Ticket, Bus, Package,
-  Plus, Trash2, ChevronDown, ChevronUp, ArrowRight, Check, Users, Target, TrendingUp,
+  Plus, Trash2, ChevronDown, ChevronUp, ArrowRight, Check, Users, Target, TrendingUp, Pencil,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ interface ExpensesPanelProps {
   tripId: string | null;
   onAddExpense: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
   onDeleteExpense: (id: string) => Promise<void>;
+  onUpdateExpense?: (id: string, updates: Partial<Omit<Expense, "id" | "tripId" | "createdAt">>) => Promise<void>;
   onSave?: () => void;
   onOpenTravelers?: () => void;
   initialValues?: ExpenseInitialValues;
@@ -58,6 +59,7 @@ export default function ExpensesPanel({
   tripId,
   onAddExpense,
   onDeleteExpense,
+  onUpdateExpense,
   onSave,
   onOpenTravelers,
   initialValues,
@@ -66,6 +68,7 @@ export default function ExpensesPanel({
   onSetPersonalBudget,
 }: ExpensesPanelProps) {
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [settleOpen, setSettleOpen] = useState(false);
   const [expandedExpense, setExpandedExpense] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -76,7 +79,10 @@ export default function ExpensesPanel({
   // Auto-open modal when initialValues are provided
   const handleAddModalChange = (open: boolean) => {
     setAddModalOpen(open);
-    if (!open && onClearInitialValues) onClearInitialValues();
+    if (!open) {
+      setEditingExpense(null);
+      if (onClearInitialValues) onClearInitialValues();
+    }
   };
 
   // Open modal if initialValues arrive
@@ -163,7 +169,9 @@ export default function ExpensesPanel({
           travelers={travelers}
           plan={plan}
           onAddExpense={onAddExpense}
+          onUpdateExpense={onUpdateExpense}
           initialValues={initialValues}
+          editingExpense={editingExpense}
         />
       </div>
     );
@@ -492,14 +500,30 @@ export default function ExpensesPanel({
                           </Button>
                         </div>
                       ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full rounded-xl h-7 text-xs text-muted-foreground hover:text-destructive"
-                          onClick={() => setDeleteConfirm(exp.id)}
-                        >
-                          <Trash2 className="w-3 h-3 mr-1" /> Delete
-                        </Button>
+                        <div className="flex gap-2 pt-1">
+                          {onUpdateExpense && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="flex-1 rounded-xl h-7 text-xs text-muted-foreground hover:text-primary"
+                              onClick={() => {
+                                setEditingExpense(exp);
+                                setAddModalOpen(true);
+                                setExpandedExpense(null);
+                              }}
+                            >
+                              <Pencil className="w-3 h-3 mr-1" /> Edit
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex-1 rounded-xl h-7 text-xs text-muted-foreground hover:text-destructive"
+                            onClick={() => setDeleteConfirm(exp.id)}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" /> Delete
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </motion.div>
@@ -526,7 +550,9 @@ export default function ExpensesPanel({
         travelers={travelers}
         plan={plan}
         onAddExpense={onAddExpense}
+        onUpdateExpense={onUpdateExpense}
         initialValues={initialValues}
+        editingExpense={editingExpense}
       />
     </div>
   );

@@ -278,6 +278,7 @@ interface DashboardProps {
   travelers?: Traveler[];
   onAddExpense?: (expense: Omit<Expense, "id" | "createdAt">) => Promise<void>;
   onDeleteExpense?: (id: string) => Promise<void>;
+  onUpdateExpense?: (id: string, updates: Partial<Omit<Expense, "id" | "tripId" | "createdAt">>) => Promise<void>;
   onOpenTravelers?: () => void;
   defaultTab?: "schedule" | "details" | "expenses";
   // Accommodation props
@@ -321,6 +322,7 @@ export default function Dashboard({
   travelers = [],
   onAddExpense,
   onDeleteExpense,
+  onUpdateExpense,
   onOpenTravelers,
   defaultTab,
   accommodationDetails,
@@ -1207,6 +1209,7 @@ export default function Dashboard({
                   tripId={tripId ?? null}
                   onAddExpense={onAddExpense}
                   onDeleteExpense={onDeleteExpense}
+                  onUpdateExpense={onUpdateExpense}
                   onSave={onSave}
                   onOpenTravelers={onOpenTravelers}
                   initialValues={quickAddValues}
@@ -1229,6 +1232,7 @@ export default function Dashboard({
                   tripId={tripId ?? null}
                   onAddExpense={onAddExpense}
                   onDeleteExpense={onDeleteExpense}
+                  onUpdateExpense={onUpdateExpense}
                   onSave={onSave}
                   onOpenTravelers={onOpenTravelers}
                   initialValues={quickAddValues}
