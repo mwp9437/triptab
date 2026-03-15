@@ -185,6 +185,38 @@
       inset 0 -1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  .glass-card-readable {
+    position: relative;
+    background: rgba(30, 30, 30, 0.88);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    color: rgba(255, 255, 255, 0.95);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .glass-card-readable label,
+  .glass-card-readable .text-muted-foreground {
+    color: rgba(255, 255, 255, 0.65) !important;
+  }
+  .glass-card-readable .text-foreground,
+  .glass-card-readable p:not(.text-muted-foreground),
+  .glass-card-readable span:not(.text-muted-foreground):not([class*="text-"]) {
+    color: rgba(255, 255, 255, 0.95);
+  }
+  .glass-card-readable input,
+  .glass-card-readable textarea,
+  .glass-card-readable select {
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+  .glass-card-readable input::placeholder,
+  .glass-card-readable textarea::placeholder {
+    color: rgba(255, 255, 255, 0.35) !important;
+  }
+  .glass-card-readable .glass {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
   .glass-card-solid {
     position: relative;
     background: rgba(255, 255, 255, 0.25);

@@ -282,7 +282,7 @@ export default function RemixModal({ block, tripContext, onClose, onSwap }: Remi
   if (isMobile) {
     return (
       <Drawer open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
-        <DrawerContent className="max-h-[85vh] flex flex-col p-0 overflow-hidden border-white/20 bg-white/90 backdrop-blur-2xl">
+        <DrawerContent className="glass-card-readable max-h-[85vh] flex flex-col p-0 overflow-hidden border-white/20">
           <DrawerHeader className="px-6 pt-4 pb-1">
             {headerContent}
             <DrawerTitle className="font-display font-bold text-lg text-foreground leading-tight">
@@ -301,7 +301,7 @@ export default function RemixModal({ block, tripContext, onClose, onSwap }: Remi
 
   return (
     <Dialog open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-lg w-[95vw] p-0 overflow-hidden rounded-3xl border-white/20 bg-white/90 backdrop-blur-2xl shadow-2xl max-h-[85vh] flex flex-col [&>button]:z-10">
+      <DialogContent className="glass-card-readable max-w-lg w-[95vw] p-0 overflow-hidden rounded-3xl border-white/20 shadow-2xl max-h-[85vh] flex flex-col [&>button]:z-10">
         <div className="px-6 pt-6 pb-3">
           <DialogHeader>
             {headerContent}

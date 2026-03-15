@@ -359,7 +359,7 @@ export default function ExpensesPanel({
 
       {/* Settle Up Modal */}
       <Dialog open={settleOpen} onOpenChange={setSettleOpen}>
-        <DialogContent className="glass-card border-white/15 sm:max-w-sm">
+        <DialogContent className="glass-card-readable border-white/15 sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-lg">Settle Up</DialogTitle>
           </DialogHeader>

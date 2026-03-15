@@ -339,7 +339,7 @@ export default function AddActivityModal({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={handleOpenChange}>
-        <DrawerContent className="glass-card border-white/15 max-h-[85vh] flex flex-col">
+        <DrawerContent className="glass-card-readable border-white/15 max-h-[85vh] flex flex-col">
           <DrawerHeader>
             <DrawerTitle className="font-display text-lg">{headerContent}</DrawerTitle>
           </DrawerHeader>
@@ -353,7 +353,7 @@ export default function AddActivityModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="glass-card border-white/15 sm:max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="glass-card-readable border-white/15 sm:max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="font-display text-lg">{headerContent}</DialogTitle>
         </DialogHeader>

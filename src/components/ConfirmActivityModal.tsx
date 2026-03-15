@@ -397,11 +397,11 @@ export default function ConfirmActivityModal({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={handleOpenChange}>
-        <DrawerContent className="glass-card border-white/15 max-h-[85vh]">
+        <DrawerContent className="glass-card-readable border-white/15 max-h-[85vh] flex flex-col">
           <DrawerHeader>
             <DrawerTitle className="font-display text-lg">{modalTitle}</DrawerTitle>
           </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-6">
+          <div className="flex-1 overflow-y-auto px-4 pb-6">
             {formContent}
           </div>
         </DrawerContent>
@@ -411,11 +411,13 @@ export default function ConfirmActivityModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="glass-card border-white/15 sm:max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="glass-card-readable border-white/15 sm:max-w-md max-h-[85vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="font-display text-lg">{modalTitle}</DialogTitle>
         </DialogHeader>
-        {formContent}
+        <div className="flex-1 overflow-y-auto px-5 pb-5 pt-3">
+          {formContent}
+        </div>
       </DialogContent>
     </Dialog>
   );

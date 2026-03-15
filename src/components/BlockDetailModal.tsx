@@ -184,7 +184,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
   if (isMobile) {
     return (
       <Drawer open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
-        <DrawerContent className="max-h-[85vh] flex flex-col p-0 overflow-hidden border-white/20 bg-white/90 backdrop-blur-2xl">
+        <DrawerContent className="glass-card-readable max-h-[85vh] flex flex-col p-0 overflow-hidden border-white/20">
           {innerContent}
         </DrawerContent>
       </Drawer>
@@ -193,7 +193,7 @@ export default function BlockDetailModal({ block, tripContext, onClose, onSwap }
 
   return (
     <Dialog open={!!block} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-2xl w-[95vw] p-0 overflow-hidden rounded-3xl border-white/20 bg-white/90 backdrop-blur-2xl shadow-2xl max-h-[85vh] flex flex-col [&>button]:z-10">
+      <DialogContent className="glass-card-readable max-w-2xl w-[95vw] p-0 overflow-hidden rounded-3xl border-white/20 shadow-2xl max-h-[85vh] flex flex-col [&>button]:z-10">
         {innerContent}
       </DialogContent>
     </Dialog>

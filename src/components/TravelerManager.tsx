@@ -189,7 +189,7 @@ export default function TravelerManager({
     return (
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
-        <DrawerContent className="glass-card border-white/15 max-h-[85vh]">
+        <DrawerContent className="glass-card-readable border-white/15 max-h-[85vh]">
           <DrawerHeader>
             <DrawerTitle className="font-display text-lg">Travelers</DrawerTitle>
           </DrawerHeader>
@@ -204,7 +204,7 @@ export default function TravelerManager({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className="glass-card border-white/15 sm:max-w-md">
+      <DialogContent className="glass-card-readable border-white/15 sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-lg">Travelers</DialogTitle>
         </DialogHeader>

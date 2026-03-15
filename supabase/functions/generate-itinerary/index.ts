@@ -194,6 +194,13 @@ COST REALISM RULES:
   - Transport: use typical taxi/transit costs for the destination city
 - When uncertain about a specific price, estimate conservatively (slightly high) and round to nearest $5 or $10.
 
+ACTIVITY GRANULARITY:
+- Do NOT suggest individual transportation between activities (no "Uber to restaurant", "Walk to park", "Taxi to hotel"). Users know how to get around.
+- Each block should be a meaningful activity, meal, or experience — not logistics.
+- Target 4-6 meaningful blocks per day (excluding accommodation), not 8-10 granular ones.
+- For transit between cities, one transport block is enough (e.g., "Train to Barcelona") — don't add "Uber to station" + "Train" + "Uber from station" as 3 separate blocks.
+- Free time is fine — leave gaps between blocks rather than filling every hour.
+
 Rules:
 - block category: "transport" | "activity" | "meal" | "free" | "accommodation"
 - actionItem category: "flights" | "hotels" | "restaurants" | "tickets" | "packing"

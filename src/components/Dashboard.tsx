@@ -211,16 +211,43 @@ function deduplicateBlocks(blocks: TimeBlock[]): TimeBlock[] {
 
 /** Suggested time slots for empty/sparse days */
 type TimeSlot = { label: string; startTime: string; endTime: string; category: BlockCategory };
-const SUGGESTED_SLOTS: TimeSlot[] = [
+
+const MAX_SUGGESTIONS_PER_DAY = 4;
+
+const STANDARD_SLOTS: TimeSlot[] = [
   { label: "Morning Activity", startTime: "09:00", endTime: "12:00", category: "activity" },
   { label: "Lunch", startTime: "12:00", endTime: "13:30", category: "meal" },
   { label: "Afternoon Activity", startTime: "14:00", endTime: "17:00", category: "activity" },
+  { label: "Dinner", startTime: "19:00", endTime: "21:00", category: "meal" },
 ];
 
+function getSmartSuggestions(blocks: TimeBlock[]): TimeSlot[] {
+  const nonAccom = blocks.filter(b => b.category !== "accommodation");
+  const confirmedCount = nonAccom.filter(b => b.status === "confirmed").length;
+
+  // If the user has 4+ confirmed activities, only nudge for major gaps
+  if (confirmedCount >= 4) {
+    const gaps: TimeSlot[] = [];
+    const hasEvening = nonAccom.some(b => b.startTime >= "17:00");
+    const hasLunch = nonAccom.some(b => b.startTime >= "11:30" && b.startTime < "14:00" && /meal|lunch|food/i.test(b.category + b.title));
+    if (!hasEvening) gaps.push({ label: "Evening Plans", startTime: "18:00", endTime: "21:00", category: "activity" });
+    if (!hasLunch) gaps.push({ label: "Lunch", startTime: "12:00", endTime: "13:30", category: "meal" });
+    return gaps.slice(0, 1);
+  }
+
+  const suggestionsToShow = Math.max(0, MAX_SUGGESTIONS_PER_DAY - confirmedCount);
+  if (suggestionsToShow === 0) return [];
+
+  const missing = STANDARD_SLOTS.filter(slot =>
+    !nonAccom.some(b => b.startTime < slot.endTime && b.endTime > slot.startTime)
+  );
+
+  return missing.slice(0, suggestionsToShow);
+}
+
+// Legacy alias
 function getMissingSlots(blocks: TimeBlock[]): TimeSlot[] {
-  return SUGGESTED_SLOTS.filter(slot => {
-    return !blocks.some(b => b.startTime < slot.endTime && b.endTime > slot.startTime);
-  });
+  return getSmartSuggestions(blocks);
 }
 
 interface DashboardProps {
@@ -626,9 +653,9 @@ export default function Dashboard({
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 className={cn(
-                                  "glass rounded-2xl group relative cursor-pointer hover:shadow-lg transition-all mb-2 flex flex-col justify-center",
+                                  "glass-card-solid rounded-2xl group relative cursor-pointer hover:shadow-lg transition-all mb-2 flex flex-col justify-center",
                                   isSuggested
-                                    ? "border-l-4 border-dashed border-l-muted-foreground/30 bg-white/5"
+                                    ? "border-l-4 border-dashed border-l-muted-foreground/30 !bg-white/10"
                                     : style.colorClass,
                                   !optedIn && "opacity-50"
                                 )}
@@ -646,30 +673,31 @@ export default function Dashboard({
                                   <span className={cn("absolute w-5 h-5 rounded-full bg-sage/20 text-sage flex items-center justify-center text-[10px] font-bold z-10", isConfirmed ? "top-1.5 right-7" : "top-1.5 right-1.5")} title="Has expense logged">$</span>
                                 )}
                                 <div className="p-3.5">
+                                  {/* Top row: icon + title + meta | price + actions */}
                                   <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-start gap-2.5">
+                                    <div className="flex items-start gap-2.5 min-w-0">
                                       {isSuggested ? (
                                         <Sparkles className="w-4 h-4 mt-0.5 shrink-0 text-primary/50" />
                                       ) : (
                                         <Icon className="w-4 h-4 mt-0.5 shrink-0 opacity-70" />
                                       )}
-                                      <div>
-                                        <p className={cn("font-body text-sm", isSuggested ? "italic text-muted-foreground" : "font-medium")}>{block.title}</p>
+                                      <div className="min-w-0">
+                                        <p className={cn("font-body text-sm truncate", isSuggested ? "italic text-muted-foreground" : "font-medium")}>{block.title}</p>
                                         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                           <span className="flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
                                             {block.startTime}–{block.endTime}
                                           </span>
                                           {block.location && (
-                                            <span className="flex items-center gap-1">
-                                              <MapPin className="w-3 h-3" />
-                                              {block.location}
+                                            <span className="flex items-center gap-1 truncate">
+                                              <MapPin className="w-3 h-3 shrink-0" />
+                                              <span className="truncate">{block.location}</span>
                                             </span>
                                           )}
                                         </div>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1 shrink-0">
                                       {/* Price display */}
                                       {isSuggested ? (
                                         block.cost != null && block.cost > 0 && (
@@ -702,41 +730,82 @@ export default function Dashboard({
                                       )}
                                     </div>
                                   </div>
+                                  {/* Notes row */}
                                   {block.notes && (
-                                    <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body line-clamp-2">{block.notes}</p>
+                                    <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body line-clamp-2 pr-2">{block.notes}</p>
                                   )}
-                                  {/* Confirm button for suggested blocks */}
-                                  {isSuggested && onUpdateBlock && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
-                                      className="absolute bottom-2 left-3.5 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/15 text-primary text-xs font-body font-medium hover:bg-primary/25 transition-colors"
-                                    >
-                                      <Check className="w-3 h-3" /> Confirm
-                                    </button>
-                                  )}
-                                  {/* Log expense for confirmed blocks without expense */}
-                                  {isConfirmed && !hasExpense && onAddExpense && tripId && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
-                                      className="absolute bottom-2 left-3.5 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sage/15 text-sage text-xs font-body font-medium hover:bg-sage/25 transition-colors"
-                                    >
-                                      <CircleDollarSign className="w-3 h-3" /> Log expense
-                                    </button>
-                                  )}
-                                  {/* Remix button */}
-                                  <TooltipProvider delayDuration={300}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
+                                  {/* Bottom row: action buttons in normal flow (not absolute) */}
+                                  {(isSuggested || (isConfirmed && !hasExpense)) && (
+                                    <div className="flex items-center justify-between mt-2 ml-[26px]">
+                                      {/* Left: Confirm / Log expense */}
+                                      {isSuggested && onUpdateBlock && (
                                         <button
-                                          onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
-                                          className="absolute bottom-2 right-2 opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                          onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
+                                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/15 text-primary text-xs font-body font-medium hover:bg-primary/25 active:bg-primary/25 transition-colors"
                                         >
-                                          <Shuffle className="w-3.5 h-3.5" />
+                                          <Check className="w-3 h-3" /> Confirm
                                         </button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top"><p>Find alternatives</p></TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
+                                      )}
+                                      {isConfirmed && !hasExpense && onAddExpense && tripId && (
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
+                                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sage/15 text-sage text-xs font-body font-medium hover:bg-sage/25 active:bg-sage/25 transition-colors"
+                                        >
+                                          <CircleDollarSign className="w-3 h-3" /> Log expense
+                                        </button>
+                                      )}
+                                      {/* Right: Remix */}
+                                      <TooltipProvider delayDuration={300}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                              className="p-1.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                                            >
+                                              <Shuffle className="w-3.5 h-3.5" />
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top"><p>Find alternatives</p></TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    </div>
+                                  )}
+                                  {/* Remix-only row for confirmed blocks with expense */}
+                                  {isConfirmed && hasExpense && (
+                                    <div className="flex items-center justify-end mt-1">
+                                      <TooltipProvider delayDuration={300}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                              className="opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                            >
+                                              <Shuffle className="w-3.5 h-3.5" />
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top"><p>Find alternatives</p></TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    </div>
+                                  )}
+                                  {/* Remix for blocks without confirm/expense buttons */}
+                                  {!isSuggested && !isConfirmed && (
+                                    <div className="flex items-center justify-end mt-1">
+                                      <TooltipProvider delayDuration={300}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                              className="opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                                            >
+                                              <Shuffle className="w-3.5 h-3.5" />
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top"><p>Find alternatives</p></TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    </div>
+                                  )}
                                 </div>
                               </motion.div>
                             );
@@ -745,7 +814,7 @@ export default function Dashboard({
 
                         {/* Placeholder suggestion bubbles for missing time slots */}
                         {onAddActivity && (() => {
-                          const missing = getMissingSlots(regularBlocks);
+                          const missing = getSmartSuggestions(day.blocks);
                           return missing.map((slot) => {
                             const SlotIcon = BLOCK_STYLES[slot.category]?.icon || Palmtree;
                             const slotKey = `${idx}-${slot.label}`;

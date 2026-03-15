@@ -453,7 +453,7 @@ export default function AddExpenseModal({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={handleOpenChange}>
-        <DrawerContent className="glass-card border-white/15 max-h-[92vh]">
+        <DrawerContent className="glass-card-readable border-white/15 max-h-[92vh]">
           <DrawerHeader>
             <DrawerTitle className="font-display text-lg">Add Expense</DrawerTitle>
           </DrawerHeader>
@@ -467,7 +467,7 @@ export default function AddExpenseModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="glass-card border-white/15 sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="glass-card-readable border-white/15 sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-lg">Add Expense</DialogTitle>
         </DialogHeader>

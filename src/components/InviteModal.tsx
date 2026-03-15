@@ -128,7 +128,7 @@ export default function InviteModal({ tripId }: InviteModalProps) {
     return (
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
-        <DrawerContent className="glass-card border-white/15 max-h-[85vh]">
+        <DrawerContent className="glass-card-readable border-white/15 max-h-[85vh]">
           <DrawerHeader>
             <DrawerTitle className="font-display italic">Share Trip</DrawerTitle>
           </DrawerHeader>
@@ -143,7 +143,7 @@ export default function InviteModal({ tripId }: InviteModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className="glass-card rounded-3xl border-white/20 max-w-md">
+      <DialogContent className="glass-card-readable rounded-3xl border-white/20 max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display italic">Share Trip</DialogTitle>
         </DialogHeader>

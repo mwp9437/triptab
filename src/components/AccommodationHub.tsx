@@ -316,7 +316,7 @@ export default function AccommodationHub({
     return (
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
-        <DrawerContent className="glass-card border-white/15 max-h-[85vh] flex flex-col p-0 overflow-hidden">
+        <DrawerContent className="glass-card-readable border-white/15 max-h-[85vh] flex flex-col p-0 overflow-hidden">
           <DrawerHeader className="px-5 pt-4 pb-0">
             <DrawerTitle className="font-display text-lg">Lodging</DrawerTitle>
           </DrawerHeader>
@@ -330,7 +330,7 @@ export default function AccommodationHub({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{triggerButton}</DialogTrigger>
-      <DialogContent className="glass-card border-white/15 sm:max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="glass-card-readable border-white/15 sm:max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="font-display text-lg">Lodging</DialogTitle>
         </DialogHeader>
