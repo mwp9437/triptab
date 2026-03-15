@@ -110,7 +110,7 @@ export default function SharedTrip() {
         ...day,
         blocks: day.blocks.map((b) =>
           b.id === original.id
-            ? { ...b, title: replacement.title, description: replacement.description, estimatedCost: replacement.estimatedCost }
+            ? { ...b, title: replacement.title, description: replacement.description, cost: replacement.cost }
             : b
         ),
       }));
@@ -123,7 +123,7 @@ export default function SharedTrip() {
       if (!prev) return prev;
       const itinerary = [...prev.itinerary];
       const day = { ...itinerary[dayIndex] };
-      day.blocks = day.blocks.map((b) => (b.id === blockId ? { ...b, estimatedCost: cost } : b));
+      day.blocks = day.blocks.map((b) => (b.id === blockId ? { ...b, cost } : b));
       itinerary[dayIndex] = day;
       return { ...prev, itinerary };
     });
