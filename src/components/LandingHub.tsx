@@ -4,7 +4,6 @@ import { Plane, CheckCircle, FolderOpen, LogIn, MessageSquarePlus } from "lucide
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import FeedbackModal from "./FeedbackModal";
-import luxuryTerrace from "@/assets/luxury-terrace.png";
 
 interface LandingHubProps {
   onSelectPath: (path: "plan" | "existing") => void;
@@ -33,11 +32,20 @@ export default function LandingHub({ onSelectPath }: LandingHubProps) {
 
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden">
-      {/* Background with ken-burns */}
+      {/* Full-bleed aerial beach background with ken-burns */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        <img src={luxuryTerrace} alt="" className="w-full h-full object-cover bg-kenburns" />
+        <img
+          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&h=1080&fit=crop"
+          alt=""
+          className="w-full h-full object-cover bg-kenburns"
+        />
       </div>
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/15 via-transparent to-black/30" />
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.05) 35%, rgba(0,0,0,0.0) 50%, rgba(0,0,0,0.05) 65%, rgba(0,0,0,0.35) 100%)",
+        }}
+      />
 
       {/* Header */}
       <header className="relative z-10 px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between">
