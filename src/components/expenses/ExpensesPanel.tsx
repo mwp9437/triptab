@@ -2,10 +2,11 @@ import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DollarSign, Plane, Hotel, UtensilsCrossed, Ticket, Bus, Package,
-  Plus, Trash2, ChevronDown, ChevronUp, ArrowRight, Check, Users,
+  Plus, Trash2, ChevronDown, ChevronUp, ArrowRight, Check, Users, Target, TrendingUp,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -46,6 +47,8 @@ interface ExpensesPanelProps {
   onOpenTravelers?: () => void;
   initialValues?: ExpenseInitialValues;
   onClearInitialValues?: () => void;
+  personalBudget?: number | null;
+  onSetPersonalBudget?: (budget: number | null) => void;
 }
 
 export default function ExpensesPanel({
@@ -59,12 +62,16 @@ export default function ExpensesPanel({
   onOpenTravelers,
   initialValues,
   onClearInitialValues,
+  personalBudget,
+  onSetPersonalBudget,
 }: ExpensesPanelProps) {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [settleOpen, setSettleOpen] = useState(false);
   const [expandedExpense, setExpandedExpense] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [settledItems, setSettledItems] = useState<Set<number>>(new Set());
+  const [editingBudget, setEditingBudget] = useState(false);
+  const [budgetInput, setBudgetInput] = useState("");
 
   // Auto-open modal when initialValues are provided
   const handleAddModalChange = (open: boolean) => {
@@ -164,9 +171,131 @@ export default function ExpensesPanel({
 
   const maxCatAmount = Math.max(...Object.values(categoryTotals), 1);
 
+  // Personal budget calculations
+  const currentUser = travelers.find((t) => t.isCurrentUser);
+  const myShare = currentUser
+    ? expenses.reduce((sum, exp) => {
+        const myPart = exp.participants.find((p) => p.travelerId === currentUser.id);
+        return sum + (myPart?.share || 0);
+      }, 0)
+    : totalSpent;
+  const budgetPercent = personalBudget ? Math.min((myShare / personalBudget) * 100, 100) : 0;
+  const overBudget = personalBudget != null && myShare > personalBudget;
+  const budgetWarning = personalBudget != null && myShare > personalBudget * 0.8;
+
+  const commitBudget = () => {
+    const num = parseFloat(budgetInput);
+    if (!isNaN(num) && num > 0) {
+      onSetPersonalBudget?.(Math.round(num * 100) / 100);
+    } else if (budgetInput.trim() === "") {
+      onSetPersonalBudget?.(null);
+    }
+    setEditingBudget(false);
+  };
+
   return (
     <div className="space-y-4 relative pb-16">
-      {/* Summary Card */}
+      {/* Personal Budget Card */}
+      {onSetPersonalBudget && (
+        <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-primary" />
+                My Budget
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {personalBudget != null ? (
+              <>
+                <div className="flex justify-between items-center text-sm font-body">
+                  <span className="text-muted-foreground">Budget</span>
+                  {editingBudget ? (
+                    <span className="flex items-center gap-1">
+                      <DollarSign className="w-3 h-3" />
+                      <input
+                        autoFocus
+                        type="number"
+                        min="0"
+                        value={budgetInput}
+                        onChange={(e) => setBudgetInput(e.target.value)}
+                        onBlur={commitBudget}
+                        onKeyDown={(e) => { if (e.key === "Enter") commitBudget(); if (e.key === "Escape") setEditingBudget(false); }}
+                        className="w-20 bg-transparent border-b border-primary text-sm font-semibold outline-none text-foreground"
+                      />
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => { setBudgetInput(String(personalBudget)); setEditingBudget(true); }}
+                      className="font-semibold text-foreground hover:text-primary transition-colors"
+                    >
+                      ${personalBudget.toLocaleString()}
+                    </button>
+                  )}
+                </div>
+                <Progress
+                  value={budgetPercent}
+                  className={cn("h-2", overBudget ? "[&>div]:bg-destructive" : budgetWarning ? "[&>div]:bg-yellow-500" : "")}
+                />
+                <div className="flex justify-between text-sm font-body">
+                  <span className="text-muted-foreground">My share spent</span>
+                  <span className={cn("font-semibold", overBudget ? "text-destructive" : "text-foreground")}>
+                    ${myShare.toFixed(2)}
+                  </span>
+                </div>
+                {overBudget && (
+                  <p className="text-xs text-destructive font-body flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Over budget by ${(myShare - personalBudget).toFixed(2)}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-2">
+                <p className="text-sm text-muted-foreground font-body mb-2">Set a budget to track your spending</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="flex items-center gap-1 glass rounded-xl px-3 py-1.5">
+                    <DollarSign className="w-4 h-4 text-primary" />
+                    <Input
+                      type="number"
+                      placeholder="e.g. 2000"
+                      value={budgetInput}
+                      onChange={(e) => setBudgetInput(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") commitBudget(); }}
+                      className="w-24 border-0 bg-transparent h-7 text-sm p-0 focus-visible:ring-0"
+                    />
+                  </div>
+                  <Button size="sm" className="rounded-xl h-8" onClick={commitBudget} disabled={!budgetInput.trim()}>
+                    Set
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Category breakdown */}
+            {Object.keys(categoryTotals).length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                {Object.entries(CATEGORY_LABELS).map(([cat, label]) => {
+                  const actual = categoryTotals[cat] || 0;
+                  if (actual === 0) return null;
+                  const Icon = CATEGORY_ICONS[cat];
+                  return (
+                    <div key={cat} className="flex items-center justify-between text-xs font-body">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <Icon className="w-3 h-3" /> {label}
+                      </span>
+                      <span className="font-medium text-foreground">${actual.toLocaleString()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Spending Summary Card */}
       <Card className="rounded-2xl border-white/15 glass-card shadow-lg">
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-display flex items-center gap-2">
@@ -182,55 +311,6 @@ export default function ExpensesPanel({
             <p className="text-xs text-muted-foreground font-body mt-0.5">
               total spent · {expenses.length} expense{expenses.length !== 1 ? "s" : ""}
             </p>
-          </div>
-
-          {/* Category breakdown with estimated vs actual */}
-          <div className="space-y-2">
-            {Object.entries(CATEGORY_LABELS).map(([cat, label]) => {
-              const actual = categoryTotals[cat] || 0;
-              const estimated = (plan.budget.categories[cat] as number) || 0;
-              if (actual === 0 && estimated === 0) return null;
-              const Icon = CATEGORY_ICONS[cat];
-              const overBudget = estimated > 0 && actual > estimated;
-              return (
-                <div key={cat} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-body">
-                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <Icon className="w-3 h-3" /> {label}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className={cn("font-medium", overBudget ? "text-destructive" : "text-foreground")}>
-                        ${actual.toLocaleString()}
-                      </span>
-                      {estimated > 0 && (
-                        <span className="text-muted-foreground/60">
-                          / ${estimated.toLocaleString()}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  {estimated > 0 && (
-                    <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          overBudget ? "bg-destructive/70" : "bg-primary/60"
-                        )}
-                        style={{ width: `${Math.min((actual / estimated) * 100, 100)}%` }}
-                      />
-                    </div>
-                  )}
-                  {!estimated && (
-                    <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary/40"
-                        style={{ width: `${Math.min((actual / maxCatAmount) * 100, 100)}%` }}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </CardContent>
       </Card>

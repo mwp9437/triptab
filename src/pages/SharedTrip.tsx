@@ -129,13 +129,24 @@ export default function SharedTrip() {
     });
   }, []);
 
+  const handleUpdateBlock = useCallback((dayIndex: number, blockId: string, updates: Partial<TimeBlock>) => {
+    setPlan((prev) => {
+      if (!prev) return prev;
+      const itinerary = [...prev.itinerary];
+      const day = { ...itinerary[dayIndex] };
+      day.blocks = day.blocks.map((b) => (b.id === blockId ? { ...b, ...updates } : b));
+      itinerary[dayIndex] = day;
+      return { ...prev, itinerary };
+    });
+  }, []);
+
   const handleAddActivity = useCallback((dayIndex: number, block?: any) => {
     if (!block) return;
     setPlan((prev) => {
       if (!prev) return prev;
       const itinerary = [...prev.itinerary];
       const day = { ...itinerary[dayIndex] };
-      day.blocks = [...day.blocks, block].sort((a: any, b: any) => a.startTime.localeCompare(b.startTime));
+      day.blocks = [...day.blocks, { ...block, status: block.status || "confirmed" }].sort((a: any, b: any) => a.startTime.localeCompare(b.startTime));
       itinerary[dayIndex] = day;
       return { ...prev, itinerary };
     });
@@ -214,6 +225,7 @@ export default function SharedTrip() {
             onDeleteBlock: handleDeleteBlock,
             onSwapBlock: handleSwapBlock,
             onUpdateBlockCost: handleUpdateBlockCost,
+            onUpdateBlock: handleUpdateBlock,
             onAddActivity: handleAddActivity,
             onSave: handleSave,
             saving,

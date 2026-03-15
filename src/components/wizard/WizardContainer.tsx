@@ -665,49 +665,35 @@ function StepPreferences({ intake, onUpdate }: { intake: TripIntake; onUpdate: (
         />
       </div>
 
-      {/* Compact Budget Section */}
+      {/* Trip Style */}
       <div className="rounded-2xl bg-white/40 backdrop-blur-sm border border-white/30 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-body font-semibold text-foreground flex items-center gap-1.5">
-            <DollarSign className="w-4 h-4" /> Budget
-          </label>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-body">Per person cap:</span>
-            <Input
-              type="number"
-              value={intake.budget.totalBudget || ""}
-              onChange={(e) => onUpdate({ budget: { ...intake.budget, totalBudget: e.target.value ? Number(e.target.value) : undefined } })}
-              placeholder="Optional"
-              className="rounded-lg w-24 h-8 text-xs border-border/50 bg-white/50 backdrop-blur-sm"
-              min={0}
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          {categories.map((cat) => (
-            <div key={cat}>
-              <span className="text-xs font-body font-medium text-foreground capitalize mb-1.5 block">{cat}</span>
-              <div className="grid grid-cols-4 gap-1">
-                {([1, 2, 3, 4] as BudgetTier[]).map((tier) => {
-                  const isSelected = intake.budget[cat] === tier;
-                  return (
-                    <button
-                      key={tier}
-                      onClick={() => setBudgetTier(cat, tier)}
-                      className={cn(
-                        "rounded-lg py-1.5 text-center transition-all border font-body text-xs",
-                        isSelected
-                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                          : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50"
-                      )}
-                    >
-                      {tierLabels[tier - 1]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        <label className="text-sm font-body font-semibold text-foreground flex items-center gap-1.5 mb-3">
+          <DollarSign className="w-4 h-4" /> Trip Style
+        </label>
+        <p className="text-xs text-muted-foreground font-body mb-3">Sets the vibe for AI suggestions — hotels, restaurants, activities</p>
+        <div className="grid grid-cols-4 gap-1.5">
+          {([1, 2, 3, 4] as BudgetTier[]).map((tier) => {
+            const styleLabels = ["Budget", "Moderate", "Upscale", "Luxury"];
+            const isSelected = intake.budget.accommodation === tier;
+            return (
+              <button
+                key={tier}
+                onClick={() => {
+                  // Set all categories to the same tier
+                  onUpdate({ budget: { ...intake.budget, accommodation: tier, meals: tier, activities: tier, transportation: tier } });
+                }}
+                className={cn(
+                  "rounded-xl py-2.5 text-center transition-all border font-body",
+                  isSelected
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-white/50 border-white/30 text-muted-foreground hover:border-primary/50"
+                )}
+              >
+                <span className="block text-sm font-medium">{tierLabels[tier - 1]}</span>
+                <span className="block text-[10px] mt-0.5 opacity-80">{styleLabels[tier - 1]}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

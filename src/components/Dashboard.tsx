@@ -10,11 +10,10 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import EditablePrice from "@/components/EditablePrice";
 import InviteModal from "@/components/InviteModal";
-import MyBudgetPanel from "@/components/MyBudgetPanel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
+
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
@@ -28,6 +27,7 @@ import ExpensesPanel from "./expenses/ExpensesPanel";
 import AccommodationHub, { AccommodationDetails, BedroomAssignment } from "./AccommodationHub";
 import DatePoll, { DatePollData } from "./DatePoll";
 import AddActivityModal, { Suggestion } from "./AddActivityModal";
+import ConfirmActivityModal from "./ConfirmActivityModal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Expense, Traveler } from "@/types/expenses";
 import type { ExpenseInitialValues } from "./expenses/AddExpenseModal";
@@ -232,6 +232,7 @@ interface DashboardProps {
   onDeleteBlock?: (dayIndex: number, blockId: string) => void;
   onSwapBlock?: (original: TimeBlock, replacement: BlockAlternative) => void;
   onUpdateBlockCost?: (dayIndex: number, blockId: string, cost: number) => void;
+  onUpdateBlock?: (dayIndex: number, blockId: string, updates: Partial<TimeBlock>) => void;
   tripContext?: string;
   hideActionsSidebar?: boolean;
   hideFloatingChat?: boolean;
@@ -242,6 +243,8 @@ interface DashboardProps {
   onToggleOptIn?: (blockId: string) => void;
   budgetCap?: number | null;
   onSetBudgetCap?: (cap: number | null) => void;
+  personalBudget?: number | null;
+  onSetPersonalBudget?: (budget: number | null) => void;
   travelerSlot?: React.ReactNode;
   // Expense props
   expenses?: Expense[];
@@ -273,6 +276,7 @@ export default function Dashboard({
   onDeleteBlock,
   onSwapBlock,
   onUpdateBlockCost,
+  onUpdateBlock,
   tripContext,
   hideActionsSidebar,
   hideFloatingChat,
@@ -283,6 +287,8 @@ export default function Dashboard({
   onToggleOptIn,
   budgetCap,
   onSetBudgetCap,
+  personalBudget,
+  onSetPersonalBudget,
   travelerSlot,
   expenses = [],
   travelers = [],
@@ -350,6 +356,17 @@ export default function Dashboard({
     setAddActivityOpen(true);
   };
 
+  // Confirm activity modal state
+  const [confirmBlock, setConfirmBlock] = useState<TimeBlock | null>(null);
+  const [confirmDayIndex, setConfirmDayIndex] = useState(0);
+  const [confirmDayDate, setConfirmDayDate] = useState("");
+
+  const openConfirmModal = (block: TimeBlock, dayIndex: number, dayDate: string) => {
+    setConfirmBlock(block);
+    setConfirmDayIndex(dayIndex);
+    setConfirmDayDate(dayDate);
+  };
+
   const togglePackingItem = (id: string) => {
     setPackingList((items) =>
       items.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item))
@@ -363,7 +380,6 @@ export default function Dashboard({
   };
 
   const completedCount = actionItems.filter((i) => i.completed).length;
-  const budgetPercent = plan.budget.total > 0 ? (plan.budget.spent / plan.budget.total) * 100 : 0;
 
   const groupedActions = actionItems.reduce<Record<string, ActionItem[]>>((acc, item) => {
     (acc[item.category] ||= []).push(item);
@@ -579,7 +595,7 @@ export default function Dashboard({
                         {onAddActivity && (
                           <button
                             onClick={(e) => { e.stopPropagation(); openAddActivity(idx); }}
-                            className="w-7 h-7 rounded-full glass border border-white/20 flex items-center justify-center hover:bg-primary/15 hover:text-primary transition-all text-muted-foreground shrink-0 mr-2"
+                            className="w-9 h-9 rounded-full glass border border-white/20 flex items-center justify-center hover:bg-primary/15 hover:text-primary transition-all text-muted-foreground shrink-0 mr-2"
                             title="Add activity"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -600,25 +616,45 @@ export default function Dashboard({
                             const duration = getDurationMinutes(block.startTime, block.endTime);
                             const minHeight = Math.min(Math.max(Math.round(duration * 0.6 + 40), 56), 140);
                             const optedIn = isOptedIn ? isOptedIn(block.id) : true;
-                            
+                            const isSuggested = block.status === "suggested" || (!block.status && !block.isUserPrice);
+                            const isConfirmed = block.status === "confirmed";
+                            const hasExpense = block.confirmedDetails?.expenseCreated || expenseBlockIds.has(block.id);
+
                             return (
                               <motion.div
                                 key={block.id}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                className={`glass rounded-2xl ${style.colorClass} group relative cursor-pointer hover:shadow-lg transition-all mb-2 flex flex-col justify-center ${!optedIn ? "opacity-50" : ""}`}
+                                className={cn(
+                                  "glass rounded-2xl group relative cursor-pointer hover:shadow-lg transition-all mb-2 flex flex-col justify-center",
+                                  isSuggested
+                                    ? "border-l-4 border-dashed border-l-muted-foreground/30 bg-white/5"
+                                    : style.colorClass,
+                                  !optedIn && "opacity-50"
+                                )}
                                 style={{ minHeight: `${minHeight}px` }}
                                 onClick={() => setSelectedBlock(block)}
                               >
-                                {expenseBlockIds.has(block.id) && (
-                                  <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-sage/20 text-sage flex items-center justify-center text-[10px] font-bold z-10" title="Has expense logged">$</span>
+                                {/* Confirmed checkmark badge */}
+                                {isConfirmed && (
+                                  <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center z-10" title="Confirmed">
+                                    <Check className="w-3 h-3" />
+                                  </span>
+                                )}
+                                {/* Expense badge */}
+                                {hasExpense && (
+                                  <span className={cn("absolute w-5 h-5 rounded-full bg-sage/20 text-sage flex items-center justify-center text-[10px] font-bold z-10", isConfirmed ? "top-1.5 right-7" : "top-1.5 right-1.5")} title="Has expense logged">$</span>
                                 )}
                                 <div className="p-3.5">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-start gap-2.5">
-                                      <Icon className="w-4 h-4 mt-0.5 shrink-0 opacity-70" />
+                                      {isSuggested ? (
+                                        <Sparkles className="w-4 h-4 mt-0.5 shrink-0 text-primary/50" />
+                                      ) : (
+                                        <Icon className="w-4 h-4 mt-0.5 shrink-0 opacity-70" />
+                                      )}
                                       <div>
-                                        <p className="font-body font-medium text-sm">{block.title}</p>
+                                        <p className={cn("font-body text-sm", isSuggested ? "italic text-muted-foreground" : "font-medium")}>{block.title}</p>
                                         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                           <span className="flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
@@ -634,19 +670,20 @@ export default function Dashboard({
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                      <EditablePrice
-                                        cost={block.cost}
-                                        isUserPrice={block.isUserPrice}
-                                        onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
-                                      />
-                                      {onToggleOptIn && tripId && (
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); onToggleOptIn(block.id); }}
-                                          className={`transition-opacity p-1 rounded-lg ${optedIn ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:bg-muted/30"}`}
-                                          title={optedIn ? "Opted in — click to opt out" : "Opted out — click to opt in"}
-                                        >
-                                          {optedIn ? <UserCheck className="w-3.5 h-3.5" /> : <UserX className="w-3.5 h-3.5" />}
-                                        </button>
+                                      {/* Price display */}
+                                      {isSuggested ? (
+                                        block.cost != null && block.cost > 0 && (
+                                          <span className="text-xs text-muted-foreground/70 font-body whitespace-nowrap">
+                                            ~${block.cost} est.
+                                            {block.costType === "per_person" ? " /pp" : ""}
+                                          </span>
+                                        )
+                                      ) : (
+                                        <EditablePrice
+                                          cost={block.confirmedDetails?.actualCost ?? block.cost}
+                                          isUserPrice={block.isUserPrice || isConfirmed}
+                                          onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
+                                        />
                                       )}
                                       {onDeleteBlock && (
                                         <TooltipProvider delayDuration={300}>
@@ -668,21 +705,23 @@ export default function Dashboard({
                                   {block.notes && (
                                     <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body line-clamp-2">{block.notes}</p>
                                   )}
-                                  {/* Quick-add expense */}
-                                  {onAddExpense && tripId && (
-                                    <TooltipProvider delayDuration={300}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); handleQuickAddExpense(block, day.date); }}
-                                            className="absolute bottom-2 right-10 opacity-60 sm:opacity-30 group-hover:opacity-100 transition-opacity p-1.5 rounded-xl glass hover:bg-sage/10 text-muted-foreground hover:text-sage"
-                                          >
-                                            <CircleDollarSign className="w-3.5 h-3.5" />
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top"><p>Log expense</p></TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
+                                  {/* Confirm button for suggested blocks */}
+                                  {isSuggested && onUpdateBlock && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
+                                      className="absolute bottom-2 left-3.5 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/15 text-primary text-xs font-body font-medium hover:bg-primary/25 transition-colors"
+                                    >
+                                      <Check className="w-3 h-3" /> Confirm
+                                    </button>
+                                  )}
+                                  {/* Log expense for confirmed blocks without expense */}
+                                  {isConfirmed && !hasExpense && onAddExpense && tripId && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
+                                      className="absolute bottom-2 left-3.5 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sage/15 text-sage text-xs font-body font-medium hover:bg-sage/25 transition-colors"
+                                    >
+                                      <CircleDollarSign className="w-3 h-3" /> Log expense
+                                    </button>
                                   )}
                                   {/* Remix button */}
                                   <TooltipProvider delayDuration={300}>
@@ -716,32 +755,68 @@ export default function Dashboard({
                             const displaySub = sug ? (sug.cost != null ? `~$${sug.cost} est.` : sug.description?.slice(0, 50)) : undefined;
 
                             return (
-                              <button
+                              <div
                                 key={slot.label}
-                                onClick={() => openAddActivity(idx, slot)}
-                                className="w-full rounded-2xl border-2 border-dashed border-white/20 hover:border-primary/30 bg-white/5 hover:bg-white/10 p-3.5 flex items-start gap-2.5 text-left transition-all mb-2 group/ph"
+                                className="w-full rounded-2xl border-2 border-dashed border-white/20 bg-white/5 p-3.5 mb-2"
                               >
-                                <SlotIcon className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground/50" />
-                                <div className="flex-1 min-w-0">
-                                  {isLoading ? (
-                                    <div className="space-y-1.5">
-                                      <div className="h-4 w-3/4 rounded bg-white/10 animate-pulse" />
-                                      <div className="h-3 w-1/2 rounded bg-white/5 animate-pulse" />
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <p className="font-body text-sm italic text-muted-foreground/70 group-hover/ph:text-muted-foreground transition-colors truncate">
-                                        {displayTitle}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground/40 flex items-center gap-1 mt-0.5">
-                                        <Clock className="w-3 h-3" />{slot.startTime}–{slot.endTime}
-                                        {displaySub && <span className="ml-1 truncate">{displaySub}</span>}
-                                      </p>
-                                    </>
-                                  )}
+                                <div className="flex items-start gap-2.5">
+                                  <SlotIcon className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground/50" />
+                                  <div className="flex-1 min-w-0">
+                                    {isLoading ? (
+                                      <div className="space-y-1.5">
+                                        <div className="h-4 w-3/4 rounded bg-white/10 animate-pulse" />
+                                        <div className="h-3 w-1/2 rounded bg-white/5 animate-pulse" />
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <p className="font-body text-sm italic text-muted-foreground/70 truncate">
+                                          {displayTitle}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground/40 flex items-center gap-1 mt-0.5">
+                                          <Clock className="w-3 h-3" />{slot.startTime}–{slot.endTime}
+                                          {displaySub && <span className="ml-1 truncate">{displaySub}</span>}
+                                        </p>
+                                      </>
+                                    )}
+                                  </div>
+                                  <Sparkles className="w-3.5 h-3.5 text-primary/30 mt-0.5 shrink-0" />
                                 </div>
-                                <Sparkles className="w-3.5 h-3.5 text-primary/30 group-hover/ph:text-primary/60 transition-colors mt-0.5 shrink-0" />
-                              </button>
+                                {/* Two clear action buttons */}
+                                {!isLoading && (
+                                  <div className="flex gap-2 mt-2.5 ml-[26px]">
+                                    <button
+                                      onClick={() => {
+                                        if (sug) {
+                                          // Add suggestion as suggested block, then open confirm
+                                          const newBlock: TimeBlock = {
+                                            id: crypto.randomUUID(),
+                                            title: sug.title,
+                                            startTime: slot.startTime,
+                                            endTime: slot.endTime,
+                                            category: (sug.category as BlockCategory) || slot.category,
+                                            location: sug.location,
+                                            cost: sug.cost,
+                                            notes: sug.description,
+                                            status: "suggested",
+                                          };
+                                          onAddActivity(idx, newBlock);
+                                        } else {
+                                          openAddActivity(idx, slot);
+                                        }
+                                      }}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/15 text-primary text-xs font-body font-medium hover:bg-primary/25 active:bg-primary/25 transition-colors"
+                                    >
+                                      <Plus className="w-3 h-3" /> Add to itinerary
+                                    </button>
+                                    <button
+                                      onClick={() => openAddActivity(idx, slot)}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-muted-foreground text-xs font-body hover:text-foreground hover:bg-white/10 active:bg-white/10 transition-colors"
+                                    >
+                                      <Shuffle className="w-3 h-3" /> See alternatives
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                             );
                           });
                         })()}
@@ -801,21 +876,30 @@ export default function Dashboard({
                             displayTitle = `Check out: ${block.title} @ ${formatTime(block.endTime)}`;
                           }
 
+                          const accomSuggested = block.status === "suggested" || (!block.status && !block.isUserPrice);
+                          const accomConfirmed = block.status === "confirmed";
+                          const accomHasExpense = block.confirmedDetails?.expenseCreated || expenseBlockIds.has(block.id);
+
                           return (
                           <motion.div
                             key={block.id}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="mt-2 pt-2 border-t border-border/30 cursor-pointer group"
+                            className="mt-2 pt-2 border-t border-border/30 cursor-pointer group relative"
                             onClick={() => setSelectedBlock(block)}
                           >
-                            <div className={`glass rounded-2xl p-3 flex items-center justify-between ${BLOCK_STYLES.accommodation.colorClass}`}>
+                            <div className={cn(
+                              "glass rounded-2xl p-3 flex items-center justify-between",
+                              accomSuggested
+                                ? "border-l-4 border-dashed border-l-muted-foreground/30"
+                                : BLOCK_STYLES.accommodation.colorClass
+                            )}>
                               <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-                                  <Bed className="w-4 h-4 text-primary" />
+                                  {accomSuggested ? <Sparkles className="w-4 h-4 text-primary/50" /> : <Bed className="w-4 h-4 text-primary" />}
                                 </div>
                                 <div>
-                                  <p className="font-body font-medium text-sm text-foreground">{displayTitle}</p>
+                                  <p className={cn("font-body text-sm", accomSuggested ? "italic text-muted-foreground" : "font-medium text-foreground")}>{displayTitle}</p>
                                   {block.location && (
                                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                       <MapPin className="w-3 h-3" /> {block.location}
@@ -824,12 +908,34 @@ export default function Dashboard({
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <EditablePrice
-                                  cost={block.cost}
-                                  isUserPrice={block.isUserPrice}
-                                  suffix="/night"
-                                  onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
-                                />
+                                {accomSuggested ? (
+                                  block.cost != null && block.cost > 0 && (
+                                    <span className="text-xs text-muted-foreground/70 font-body">~${block.cost} est./night</span>
+                                  )
+                                ) : (
+                                  <EditablePrice
+                                    cost={block.confirmedDetails?.actualCost ?? block.cost}
+                                    isUserPrice={block.isUserPrice || accomConfirmed}
+                                    suffix="/night"
+                                    onUpdate={(c) => onUpdateBlockCost?.(idx, block.id, c)}
+                                  />
+                                )}
+                                {accomConfirmed && (
+                                  <span className="w-5 h-5 rounded-full bg-green-500/20 text-green-600 flex items-center justify-center" title="Confirmed">
+                                    <Check className="w-3 h-3" />
+                                  </span>
+                                )}
+                                {accomHasExpense && (
+                                  <span className="w-5 h-5 rounded-full bg-sage/20 text-sage flex items-center justify-center text-[10px] font-bold" title="Has expense">$</span>
+                                )}
+                                {accomSuggested && onUpdateBlock && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
+                                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/15 text-primary text-xs font-body font-medium hover:bg-primary/25 transition-colors"
+                                  >
+                                    <Check className="w-3 h-3" /> Confirm
+                                  </button>
+                                )}
                                 {onDeleteBlock && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); onDeleteBlock(idx, block.id); }}
@@ -893,43 +999,6 @@ export default function Dashboard({
 
               {sidebarView === "details" && (
                 <>
-                  {/* Personal budget panel for group trips */}
-                  {tripId && isOptedIn && onSetBudgetCap && (
-                    <MyBudgetPanel
-                      plan={plan}
-                      isOptedIn={isOptedIn}
-                      budgetCap={budgetCap ?? null}
-                      onSetBudgetCap={onSetBudgetCap}
-                      tripId={tripId}
-                    />
-                  )}
-                  <Card className="rounded-2xl border-white/15 glass-card-solid shadow-lg">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base font-display flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-primary" />
-                        Budget
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex justify-between text-sm font-body">
-                        <div>
-                          <span className="text-muted-foreground">Estimated total</span>
-                          <p className="text-[10px] text-muted-foreground/70 font-body">(AI estimates — actual costs may vary)</p>
-                        </div>
-                        <span className="font-semibold text-foreground">${plan.budget.total.toLocaleString()}</span>
-                      </div>
-                      <Progress value={budgetPercent} className="h-2" />
-                      <div className="grid grid-cols-2 gap-2">
-                        {Object.entries(plan.budget.categories).map(([cat, amount]) => (
-                          <div key={cat} className="flex justify-between text-xs font-body text-muted-foreground">
-                            <span className="capitalize">{cat}</span>
-                            <span>${(amount as number).toLocaleString()}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
                   <Card className="rounded-2xl border-white/15 glass-card-solid shadow-lg">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base font-display flex items-center justify-between">
@@ -1073,6 +1142,8 @@ export default function Dashboard({
                   onOpenTravelers={onOpenTravelers}
                   initialValues={quickAddValues}
                   onClearInitialValues={() => setQuickAddValues(undefined)}
+                  personalBudget={personalBudget}
+                  onSetPersonalBudget={onSetPersonalBudget}
                 />
               )}
             </div>
@@ -1093,6 +1164,8 @@ export default function Dashboard({
                   onOpenTravelers={onOpenTravelers}
                   initialValues={quickAddValues}
                   onClearInitialValues={() => setQuickAddValues(undefined)}
+                  personalBudget={personalBudget}
+                  onSetPersonalBudget={onSetPersonalBudget}
                 />
               ) : (
                 <div className="text-center py-12 text-muted-foreground text-sm font-body">
@@ -1134,6 +1207,20 @@ export default function Dashboard({
             slotEndTime={addActivitySlot?.endTime}
             slotCategory={addActivitySlot?.category}
             preloadedSuggestions={addActivitySlot ? slotSuggestions?.[`${addActivityDayIndex}-${addActivitySlot.label}`] : undefined}
+          />
+        )}
+
+        {onUpdateBlock && (
+          <ConfirmActivityModal
+            open={!!confirmBlock}
+            onClose={() => setConfirmBlock(null)}
+            block={confirmBlock}
+            dayDate={confirmDayDate}
+            dayIndex={confirmDayIndex}
+            travelers={travelers}
+            onConfirm={onUpdateBlock}
+            onAddExpense={onAddExpense}
+            tripId={tripId}
           />
         )}
       </div>

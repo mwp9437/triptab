@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Home, Copy, ExternalLink, Plus, Trash2, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Traveler } from "@/types/expenses";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /* ─── Types ─── */
 export interface AccommodationDetails {
@@ -61,6 +63,7 @@ export default function AccommodationHub({
   canEdit,
   travelers,
 }: AccommodationHubProps) {
+  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"details" | "rooms">("details");
   const [details, setDetails] = useState<AccommodationDetails>(accommodationDetails || {});
@@ -123,193 +126,216 @@ export default function AccommodationHub({
     );
   };
 
+  const triggerButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30"
+    >
+      <Home className="w-4 h-4" />
+      <span className="hidden sm:inline">Lodging</span>
+    </Button>
+  );
+
+  const tabToggle = (
+    <div className="flex gap-1 mx-5 mt-3 glass rounded-xl p-1">
+      <button
+        className={`flex-1 py-1.5 rounded-lg text-xs font-display font-semibold transition-all ${
+          tab === "details" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+        }`}
+        onClick={() => setTab("details")}
+      >
+        Details
+      </button>
+      <button
+        className={`flex-1 py-1.5 rounded-lg text-xs font-display font-semibold transition-all ${
+          tab === "rooms" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+        }`}
+        onClick={() => setTab("rooms")}
+      >
+        Rooms ({bedrooms.length})
+      </button>
+    </div>
+  );
+
+  const bodyContent = (
+    <>
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        {tab === "details" && (
+          <>
+            <Field label="Property Name" value={details.propertyName} onChange={(v) => set("propertyName", v)} readOnly={!canEdit} />
+
+            {/* Address with Maps link */}
+            <div className="space-y-1">
+              <label className="text-xs font-body font-medium text-muted-foreground">Address</label>
+              <div className="flex gap-2">
+                <Input
+                  value={details.address || ""}
+                  onChange={(e) => set("address", e.target.value)}
+                  readOnly={!canEdit}
+                  className="glass border-white/20 rounded-xl h-9 text-sm flex-1"
+                  placeholder="123 Main St…"
+                />
+                {details.address && (
+                  <a href={mapsUrl(details.address)} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl glass border-white/20 shrink-0">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Check-in Time" value={details.checkInTime} onChange={(v) => set("checkInTime", v)} readOnly={!canEdit} type="time" />
+              <Field label="Check-out Time" value={details.checkOutTime} onChange={(v) => set("checkOutTime", v)} readOnly={!canEdit} type="time" />
+            </div>
+
+            <Field label="Door Code / Lockbox" value={details.doorCode} onChange={(v) => set("doorCode", v)} readOnly={!canEdit} />
+
+            <Field label="WiFi Network" value={details.wifiName} onChange={(v) => set("wifiName", v)} readOnly={!canEdit} />
+
+            {/* WiFi password with copy */}
+            <div className="space-y-1">
+              <label className="text-xs font-body font-medium text-muted-foreground">WiFi Password</label>
+              <div className="flex gap-2">
+                <Input
+                  value={details.wifiPassword || ""}
+                  onChange={(e) => set("wifiPassword", e.target.value)}
+                  readOnly={!canEdit}
+                  className="glass border-white/20 rounded-xl h-9 text-sm flex-1"
+                />
+                {details.wifiPassword && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl glass border-white/20 shrink-0"
+                    onClick={copyWifi}
+                  >
+                    {copiedWifi ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <AreaField label="House Rules" value={details.houseRules} onChange={(v) => set("houseRules", v)} readOnly={!canEdit} />
+            <AreaField label="Parking Instructions" value={details.parkingInstructions} onChange={(v) => set("parkingInstructions", v)} readOnly={!canEdit} />
+
+            <Field label="Host Name" value={details.hostName} onChange={(v) => set("hostName", v)} readOnly={!canEdit} />
+            <Field label="Host Contact" value={details.hostContact} onChange={(v) => set("hostContact", v)} readOnly={!canEdit} />
+          </>
+        )}
+
+        {tab === "rooms" && (
+          <>
+            {bedrooms.length === 0 && (
+              <p className="text-sm text-muted-foreground font-body text-center py-6">
+                No rooms added yet.
+              </p>
+            )}
+
+            <div className="grid gap-3">
+              {bedrooms.map((room) => (
+                <div key={room.id} className="glass-card-solid rounded-2xl p-4 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 space-y-2">
+                      <Input
+                        value={room.name}
+                        onChange={(e) => updateRoom(room.id, { name: e.target.value })}
+                        readOnly={!canEdit}
+                        placeholder="Room name (e.g. Master Bedroom)"
+                        className="glass border-white/20 rounded-xl h-9 text-sm font-semibold"
+                      />
+                      <Input
+                        value={room.description}
+                        onChange={(e) => updateRoom(room.id, { description: e.target.value })}
+                        readOnly={!canEdit}
+                        placeholder="Description (e.g. King bed, en-suite)"
+                        className="glass border-white/20 rounded-xl h-9 text-sm"
+                      />
+                    </div>
+                    {canEdit && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-destructive/15 hover:text-destructive" onClick={() => removeRoom(room.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Traveler assignment */}
+                  <div>
+                    <p className="text-xs text-muted-foreground font-body mb-1.5">Assigned</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {travelers.map((t) => {
+                        const assigned = room.assignedTravelerIds.includes(t.id);
+                        return (
+                          <button
+                            key={t.id}
+                            disabled={!canEdit}
+                            onClick={() => toggleTravelerInRoom(room.id, t.id)}
+                            className={`px-2.5 py-1.5 min-h-[44px] rounded-lg text-xs font-body transition-all ${
+                              assigned
+                                ? "bg-primary/20 text-primary border border-primary/30"
+                                : "glass border-white/15 text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {initials(t.name)} {t.name.split(" ")[0]}
+                          </button>
+                        );
+                      })}
+                      {travelers.length === 0 && (
+                        <span className="text-xs text-muted-foreground">Add travelers first</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {canEdit && (
+              <Button variant="outline" size="sm" className="w-full gap-1.5 rounded-xl glass border-white/20" onClick={addRoom}>
+                <Plus className="w-4 h-4" /> Add Room
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Footer */}
+      {canEdit && (
+        <div className="px-5 pb-5 pt-2">
+          <Button onClick={handleSave} className="w-full rounded-xl h-10 font-display font-semibold">
+            Save
+          </Button>
+        </div>
+      )}
+    </>
+  );
+
   /* ─── Render ─── */
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
+        <DrawerContent className="glass-card border-white/15 max-h-[85vh] flex flex-col p-0 overflow-hidden">
+          <DrawerHeader className="px-5 pt-4 pb-0">
+            <DrawerTitle className="font-display text-lg">Lodging</DrawerTitle>
+          </DrawerHeader>
+          {tabToggle}
+          {bodyContent}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30"
-        >
-          <Home className="w-4 h-4" />
-          <span className="hidden sm:inline">Lodging</span>
-        </Button>
-      </DialogTrigger>
-
+      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
       <DialogContent className="glass-card border-white/15 sm:max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="font-display text-lg">Lodging</DialogTitle>
         </DialogHeader>
-
-        {/* Tab toggle */}
-        <div className="flex gap-1 mx-5 mt-3 glass rounded-xl p-1">
-          <button
-            className={`flex-1 py-1.5 rounded-lg text-xs font-display font-semibold transition-all ${
-              tab === "details" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setTab("details")}
-          >
-            Details
-          </button>
-          <button
-            className={`flex-1 py-1.5 rounded-lg text-xs font-display font-semibold transition-all ${
-              tab === "rooms" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-            onClick={() => setTab("rooms")}
-          >
-            Rooms ({bedrooms.length})
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {tab === "details" && (
-            <>
-              <Field label="Property Name" value={details.propertyName} onChange={(v) => set("propertyName", v)} readOnly={!canEdit} />
-
-              {/* Address with Maps link */}
-              <div className="space-y-1">
-                <label className="text-xs font-body font-medium text-muted-foreground">Address</label>
-                <div className="flex gap-2">
-                  <Input
-                    value={details.address || ""}
-                    onChange={(e) => set("address", e.target.value)}
-                    readOnly={!canEdit}
-                    className="glass border-white/20 rounded-xl h-9 text-sm flex-1"
-                    placeholder="123 Main St…"
-                  />
-                  {details.address && (
-                    <a href={mapsUrl(details.address)} target="_blank" rel="noopener noreferrer">
-                      <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl glass border-white/20 shrink-0">
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </Button>
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Check-in Time" value={details.checkInTime} onChange={(v) => set("checkInTime", v)} readOnly={!canEdit} type="time" />
-                <Field label="Check-out Time" value={details.checkOutTime} onChange={(v) => set("checkOutTime", v)} readOnly={!canEdit} type="time" />
-              </div>
-
-              <Field label="Door Code / Lockbox" value={details.doorCode} onChange={(v) => set("doorCode", v)} readOnly={!canEdit} />
-
-              <Field label="WiFi Network" value={details.wifiName} onChange={(v) => set("wifiName", v)} readOnly={!canEdit} />
-
-              {/* WiFi password with copy */}
-              <div className="space-y-1">
-                <label className="text-xs font-body font-medium text-muted-foreground">WiFi Password</label>
-                <div className="flex gap-2">
-                  <Input
-                    value={details.wifiPassword || ""}
-                    onChange={(e) => set("wifiPassword", e.target.value)}
-                    readOnly={!canEdit}
-                    className="glass border-white/20 rounded-xl h-9 text-sm flex-1"
-                  />
-                  {details.wifiPassword && (
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 rounded-xl glass border-white/20 shrink-0"
-                      onClick={copyWifi}
-                    >
-                      {copiedWifi ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <AreaField label="House Rules" value={details.houseRules} onChange={(v) => set("houseRules", v)} readOnly={!canEdit} />
-              <AreaField label="Parking Instructions" value={details.parkingInstructions} onChange={(v) => set("parkingInstructions", v)} readOnly={!canEdit} />
-
-              <Field label="Host Name" value={details.hostName} onChange={(v) => set("hostName", v)} readOnly={!canEdit} />
-              <Field label="Host Contact" value={details.hostContact} onChange={(v) => set("hostContact", v)} readOnly={!canEdit} />
-            </>
-          )}
-
-          {tab === "rooms" && (
-            <>
-              {bedrooms.length === 0 && (
-                <p className="text-sm text-muted-foreground font-body text-center py-6">
-                  No rooms added yet.
-                </p>
-              )}
-
-              <div className="grid gap-3">
-                {bedrooms.map((room) => (
-                  <div key={room.id} className="glass-card-solid rounded-2xl p-4 space-y-3">
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 space-y-2">
-                        <Input
-                          value={room.name}
-                          onChange={(e) => updateRoom(room.id, { name: e.target.value })}
-                          readOnly={!canEdit}
-                          placeholder="Room name (e.g. Master Bedroom)"
-                          className="glass border-white/20 rounded-xl h-9 text-sm font-semibold"
-                        />
-                        <Input
-                          value={room.description}
-                          onChange={(e) => updateRoom(room.id, { description: e.target.value })}
-                          readOnly={!canEdit}
-                          placeholder="Description (e.g. King bed, en-suite)"
-                          className="glass border-white/20 rounded-xl h-9 text-sm"
-                        />
-                      </div>
-                      {canEdit && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-destructive/15 hover:text-destructive" onClick={() => removeRoom(room.id)}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Traveler assignment */}
-                    <div>
-                      <p className="text-xs text-muted-foreground font-body mb-1.5">Assigned</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {travelers.map((t) => {
-                          const assigned = room.assignedTravelerIds.includes(t.id);
-                          return (
-                            <button
-                              key={t.id}
-                              disabled={!canEdit}
-                              onClick={() => toggleTravelerInRoom(room.id, t.id)}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-body transition-all ${
-                                assigned
-                                  ? "bg-primary/20 text-primary border border-primary/30"
-                                  : "glass border-white/15 text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              {initials(t.name)} {t.name.split(" ")[0]}
-                            </button>
-                          );
-                        })}
-                        {travelers.length === 0 && (
-                          <span className="text-xs text-muted-foreground">Add travelers first</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {canEdit && (
-                <Button variant="outline" size="sm" className="w-full gap-1.5 rounded-xl glass border-white/20" onClick={addRoom}>
-                  <Plus className="w-4 h-4" /> Add Room
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Footer */}
-        {canEdit && (
-          <div className="px-5 pb-5 pt-2">
-            <Button onClick={handleSave} className="w-full rounded-xl h-10 font-display font-semibold">
-              Save
-            </Button>
-          </div>
-        )}
+        {tabToggle}
+        {bodyContent}
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,6 @@
 export type BlockCategory = "transport" | "activity" | "meal" | "free" | "accommodation";
+export type BlockStatus = "suggested" | "confirmed";
+export type CostType = "total" | "per_person";
 
 export interface TimeBlock {
   id: string;
@@ -10,6 +12,16 @@ export interface TimeBlock {
   category: BlockCategory;
   notes?: string;
   isUserPrice?: boolean;
+  status?: BlockStatus;
+  costType?: CostType;
+  confirmedDetails?: {
+    actualCost?: number;
+    costType?: CostType;
+    paidBy?: string;
+    participants?: string[];
+    confirmedAt?: string;
+    expenseCreated?: boolean;
+  };
 }
 
 export interface ItineraryDay {

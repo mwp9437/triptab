@@ -63,6 +63,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const [accommodationDetails, setAccommodationDetails] = useState<AccommodationDetails>((loadedPlan as any)?.accommodationDetails || {});
   const [bedroomAssignments, setBedroomAssignments] = useState<BedroomAssignment[]>((loadedPlan as any)?.bedroomAssignments || []);
   const [datePoll, setDatePoll] = useState<DatePollData>((loadedPlan as any)?.datePoll || { options: [], votes: {} });
+  const [personalBudget, setPersonalBudget] = useState<number | null>((loadedPlan as any)?.personalBudget ?? null);
   const [slotSuggestions, setSlotSuggestions] = useState<Record<string, any[]>>({});
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const suggestionsRequestedRef = useRef(false);
@@ -99,7 +100,18 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
             timestamp: new Date(),
           }]);
         } else {
-          setPlan(generated); setActionItems(generated.actionItems || []); setIsGenerating(false);
+          // Mark all AI-generated blocks as "suggested"
+          const planWithStatus = {
+            ...generated,
+            itinerary: generated.itinerary.map(day => ({
+              ...day,
+              blocks: day.blocks.map(block => ({
+                ...block,
+                status: "suggested" as const,
+              })),
+            })),
+          };
+          setPlan(planWithStatus); setActionItems(generated.actionItems || []); setIsGenerating(false);
         }
       } catch {
         if (!cancelled) {
@@ -233,7 +245,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
       ...day,
       blocks: day.blocks.map((b) =>
         b.id === original.id
-          ? { ...b, title: replacement.title, location: replacement.location, cost: replacement.cost, notes: replacement.description }
+          ? { ...b, title: replacement.title, location: replacement.location, cost: replacement.cost, notes: replacement.description, status: "suggested" as const }
           : b
       ),
     }));
@@ -244,12 +256,24 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
   const handleAddActivity = (dayIndex: number, block?: any) => {
     if (!plan || !block) return;
     const updatedDays = [...plan.itinerary];
+    // User-added blocks are "confirmed" by default
+    const blockWithStatus = { ...block, status: block.status || "confirmed" };
     updatedDays[dayIndex] = {
       ...updatedDays[dayIndex],
-      blocks: [...updatedDays[dayIndex].blocks, block].sort((a, b) => a.startTime.localeCompare(b.startTime)),
+      blocks: [...updatedDays[dayIndex].blocks, blockWithStatus].sort((a, b) => a.startTime.localeCompare(b.startTime)),
     };
     setPlan({ ...plan, itinerary: updatedDays });
     toast({ title: "Activity added", description: `"${block.title}" added to Day ${dayIndex + 1}.` });
+  };
+
+  const handleUpdateBlock = (dayIndex: number, blockId: string, updates: Partial<TimeBlock>) => {
+    if (!plan) return;
+    const updatedDays = [...plan.itinerary];
+    updatedDays[dayIndex] = {
+      ...updatedDays[dayIndex],
+      blocks: updatedDays[dayIndex].blocks.map((b) => b.id === blockId ? { ...b, ...updates } : b),
+    };
+    setPlan({ ...plan, itinerary: updatedDays });
   };
 
   const handleUpdateAccommodation = (details: AccommodationDetails, bedrooms: BedroomAssignment[]) => {
@@ -287,7 +311,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     console.log("performSave called", { hasPlan: !!plan, hasUser: !!user, tripId });
     if (!plan || !user) return;
     setSaving(true);
-    const planWithActions = { ...plan, actionItems, accommodationDetails, bedroomAssignments, datePoll };
+    const planWithActions = { ...plan, actionItems, accommodationDetails, bedroomAssignments, datePoll, personalBudget };
 
     try {
       if (tripId) {
@@ -354,6 +378,7 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onSwapBlock={handleSwapBlock}
           onUpdateBlockCost={handleUpdateBlockCost}
           onAddActivity={handleAddActivity}
+          onUpdateBlock={handleUpdateBlock}
           tripContext={intakeContext}
           hideFloatingChat
           onSave={handleSave}
@@ -363,6 +388,8 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           onToggleOptIn={toggleOptIn}
           budgetCap={budgetCap}
           onSetBudgetCap={setBudgetCap}
+          personalBudget={personalBudget}
+          onSetPersonalBudget={setPersonalBudget}
           travelerSlot={tripId ? (
             <TravelerManager
               travelers={travelers}
