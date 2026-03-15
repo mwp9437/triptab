@@ -13,8 +13,8 @@ Deno.serve(async (req) => {
 
   try {
     const { imageQuery, category } = await req.json();
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
+    const apiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
 
     if (!imageQuery) throw new Error("imageQuery is required");
 
@@ -30,30 +30,34 @@ Deno.serve(async (req) => {
 
     const prompt = `Generate a beautiful, realistic travel photograph: ${imageQuery}. Style: ${styleHint}. The photo should look like it was taken by a professional travel photographer — natural lighting, sharp focus, vivid but not oversaturated colors. NO text, NO watermarks, NO borders.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: prompt }],
-        modalities: ["image", "text"],
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseModalities: ["IMAGE", "TEXT"],
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
       const err = await response.text();
-      throw new Error(`AI image API error: ${response.status} ${err}`);
+      throw new Error(`Gemini image API error: ${response.status} ${err}`);
     }
 
     const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const imagePart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith("image/"));
 
-    if (!imageUrl) {
+    if (!imagePart) {
       throw new Error("No image generated");
     }
+
+    const imageUrl = `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
 
     return new Response(JSON.stringify({ imageUrl }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
