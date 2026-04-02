@@ -36,7 +36,7 @@ export default function MyTrips() {
   }, [user]);
 
   const handleOpen = (trip: TripRow) => {
-    navigate("/", { state: { tripId: trip.id, intake: trip.intake_data, plan: trip.plan_data } });
+    navigate(`/trip/${trip.id}`);
   };
 
   const handleDelete = async (e: React.MouseEvent, trip: TripRow) => {

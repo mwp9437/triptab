@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useExpenses } from "@/hooks/use-expenses";
+import TravelerManager from "@/components/TravelerManager";
 
 type CollabRole = "owner" | "editor" | "viewer";
 
@@ -28,7 +29,8 @@ export default function SharedTrip() {
   const [accommodationDetails, setAccommodationDetails] = useState<AccommodationDetails>({});
   const [bedroomAssignments, setBedroomAssignments] = useState<BedroomAssignment[]>([]);
   const [datePoll, setDatePoll] = useState<DatePollData>({ options: [], votes: {} });
-  const { travelers } = useExpenses(tripId);
+  const { travelers, expenses, addExpense, deleteExpense, updateExpense, addTraveler, removeTraveler } = useExpenses(tripId);
+  const [showTravelers, setShowTravelers] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -242,6 +244,22 @@ export default function SharedTrip() {
       onLockDates={handleLockDates}
       currentTravelerId={travelers.find((t) => t.isCurrentUser)?.id}
       travelers={travelers}
+      expenses={expenses}
+      onAddExpense={canEdit ? addExpense : undefined}
+      onDeleteExpense={canEdit ? deleteExpense : undefined}
+      onUpdateExpense={canEdit ? updateExpense : undefined}
+      onOpenTravelers={() => setShowTravelers(true)}
+      travelerSlot={tripId ? (
+        <TravelerManager
+          travelers={travelers}
+          expenses={expenses}
+          tripId={tripId}
+          onAddTraveler={addTraveler}
+          onRemoveTraveler={removeTraveler}
+          externalOpen={showTravelers}
+          onExternalOpenChange={setShowTravelers}
+        />
+      ) : undefined}
       {...(canEdit
         ? {
             onDeleteBlock: handleDeleteBlock,

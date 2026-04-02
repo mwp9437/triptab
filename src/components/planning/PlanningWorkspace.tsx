@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { TripIntake } from "@/types/intake";
 import { TripPlan, TimeBlock, ActionItem, ChatMessage } from "@/types/itinerary";
 import { BlockAlternative, suggestActivities } from "@/lib/chat";
@@ -50,6 +51,7 @@ interface PlanningWorkspaceProps {
 
 export default function PlanningWorkspace({ intake, onBack, loadedTripId, loadedPlan }: PlanningWorkspaceProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [tripId, setTripId] = useState<string | null>(loadedTripId || null);
   const [plan, setPlan] = useState<TripPlan | null>(loadedPlan || null);
   const [isGenerating, setIsGenerating] = useState(!loadedPlan && !intake.skipAiGeneration);
@@ -364,8 +366,13 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
           plan_data: planWithActions as any,
         } as any).select().single();
         if (error) throw error;
-        setTripId((data as any).id);
+        const newTripId = (data as any).id;
+        setTripId(newTripId);
+        // Clear session draft and navigate to the persistent trip URL
+        sessionStorage.removeItem("triptab_draft");
         toast({ title: "Saved!", description: "Your trip has been saved." });
+        navigate(`/trip/${newTripId}`, { replace: true });
+        return;
       }
     } catch (err: any) {
       console.error("Save error:", err);
@@ -373,6 +380,13 @@ export default function PlanningWorkspace({ intake, onBack, loadedTripId, loaded
     }
     setSaving(false);
   };
+
+  // Persist unsaved trip state to sessionStorage so it survives page refresh
+  useEffect(() => {
+    if (!plan || tripId) return; // Only persist drafts (no tripId yet)
+    const draft = { intake, plan, actionItems, accommodationDetails, bedroomAssignments, datePoll, personalBudget };
+    sessionStorage.setItem("triptab_draft", JSON.stringify(draft));
+  }, [plan, actionItems, accommodationDetails, bedroomAssignments, datePoll, personalBudget, tripId, intake]);
 
   // Debounced auto-save: persist plan to Supabase 2s after any change
   useEffect(() => {

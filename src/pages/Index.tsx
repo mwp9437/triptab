@@ -28,6 +28,23 @@ export default function Index() {
       if (state.intake) setIntake(state.intake);
       setView("planning");
       window.history.replaceState({}, document.title);
+      return;
+    }
+
+    // Restore unsaved draft from sessionStorage on refresh
+    try {
+      const draftJson = sessionStorage.getItem("triptab_draft");
+      if (draftJson) {
+        const draft = JSON.parse(draftJson);
+        if (draft.plan && draft.intake) {
+          setIntake(draft.intake);
+          setLoadedPlan(draft.plan);
+          setLoadedTripId(null);
+          setView("planning");
+        }
+      }
+    } catch {
+      // Ignore parse errors
     }
   }, [location.state]);
 
@@ -54,6 +71,7 @@ export default function Index() {
     setView("hub");
     setLoadedTripId(null);
     setLoadedPlan(null);
+    sessionStorage.removeItem("triptab_draft");
   };
 
   return (
