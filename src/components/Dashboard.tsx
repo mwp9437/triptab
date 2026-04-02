@@ -34,6 +34,15 @@ import { Expense, Traveler } from "@/types/expenses";
 import type { ExpenseInitialValues } from "./expenses/AddExpenseModal";
 import luxuryResort from "@/assets/luxury-resort.png";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, X } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 /** Curated Unsplash photo IDs — permanent URLs, no API key needed */
 const DESTINATION_PHOTOS: Record<string, string> = {
@@ -339,6 +348,7 @@ export default function Dashboard({
 }: DashboardProps) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [actionItems, setActionItems] = useState<ActionItem[]>(plan.actionItems);
   const [packingList, setPackingList] = useState<PackingItem[]>(plan.packingList || []);
   const [selectedBlock, setSelectedBlock] = useState<TimeBlock | null>(null);
@@ -384,6 +394,19 @@ export default function Dashboard({
     setAddActivityDayIndex(dayIndex);
     setAddActivitySlot(slot);
     setAddActivityOpen(true);
+  };
+
+  // Undo remove state for suggested blocks
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleRemoveSuggested = (dayIndex: number, blockId: string) => {
+    onDeleteBlock?.(dayIndex, blockId);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    // Store info for undo — we need to refetch if needed but for now just toast
+    toast({
+      title: "Activity removed",
+      description: "Undo not available after deletion.",
+    });
   };
 
   // Confirm activity modal state
@@ -448,82 +471,138 @@ export default function Dashboard({
 
       <div className="relative z-10">
         {/* Top bar — glass */}
-        <header className="border-b border-white/15 px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between sticky top-0 glass-card z-40">
+        <header className="border-b border-white/15 px-3 sm:px-6 py-2 sm:py-3 flex items-center justify-between sticky top-0 glass-card z-40">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8 hover:bg-white/20 shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div className="min-w-0">
-              <h1 className="font-display font-bold text-base sm:text-lg text-foreground truncate">{plan.destination}</h1>
-              <p className="text-[10px] sm:text-xs text-muted-foreground font-body tracking-wide">
+              <h1 className="font-display font-bold text-sm sm:text-lg text-foreground truncate max-w-[180px] sm:max-w-none">{plan.destination}</h1>
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-body tracking-wide whitespace-nowrap">
                 {plan.startDate} → {plan.endDate} · {plan.travelers} traveler{plan.travelers > 1 ? "s" : ""}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-            {user && (
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex" onClick={() => navigate("/my-trips")}>
-                <FolderOpen className="w-4 h-4" /> <span className="hidden md:inline">My Trips</span>
-              </Button>
+            {/* Desktop: show all buttons */}
+            {!isMobile && (
+              <>
+                {user && (
+                  <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30" onClick={() => navigate("/my-trips")}>
+                    <FolderOpen className="w-4 h-4" /> <span className="hidden md:inline">My Trips</span>
+                  </Button>
+                )}
+                {tripId && <InviteModal tripId={tripId} />}
+                {travelerSlot}
+                {onUpdateAccommodation && (
+                  <AccommodationHub
+                    accommodationDetails={accommodationDetails}
+                    bedroomAssignments={bedroomAssignments}
+                    onUpdate={onUpdateAccommodation}
+                    canEdit={!!isOwner}
+                    travelers={travelers}
+                  />
+                )}
+                {onUpdateDatePoll && onLockDates && (
+                  <DatePoll
+                    datePoll={datePoll}
+                    onUpdate={onUpdateDatePoll}
+                    onLock={onLockDates}
+                    isOwner={!!isOwner}
+                    currentTravelerId={currentTravelerId}
+                    travelers={travelers}
+                  />
+                )}
+                {onSave && (
+                  <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30" onClick={onSave} disabled={saving}>
+                    <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30" onClick={handlePrint}>
+                  <Download className="w-4 h-4" /> <span className="hidden md:inline">PDF</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30"
+                  onClick={() => downloadICS(plan, expenses, travelers)}
+                >
+                  <CalendarDays className="w-4 h-4" /> <span className="hidden md:inline">Sync</span>
+                </Button>
+                <FeedbackModal tripId={tripId} />
+                {user && (
+                  <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={signOut}>
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                )}
+              </>
             )}
-            {user && (
-              <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => navigate("/my-trips")}>
-                <FolderOpen className="w-4 h-4" />
-              </Button>
-            )}
-            {tripId && <InviteModal tripId={tripId} />}
-            {travelerSlot}
-            {onUpdateAccommodation && (
-              <AccommodationHub
-                accommodationDetails={accommodationDetails}
-                bedroomAssignments={bedroomAssignments}
-                onUpdate={onUpdateAccommodation}
-                canEdit={!!isOwner}
-                travelers={travelers}
-              />
-            )}
-            {onUpdateDatePoll && onLockDates && (
-              <DatePoll
-                datePoll={datePoll}
-                onUpdate={onUpdateDatePoll}
-                onLock={onLockDates}
-                isOwner={!!isOwner}
-                currentTravelerId={currentTravelerId}
-                travelers={travelers}
-              />
-            )}
-            {onSave && (
-              <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={onSave} disabled={saving}>
-                <Save className="w-4 h-4" />
-              </Button>
-            )}
-            {onSave && (
-              <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex" onClick={onSave} disabled={saving}>
-                <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}
-              </Button>
-            )}
-            <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={handlePrint}>
-              <Download className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex" onClick={handlePrint}>
-              <Download className="w-4 h-4" /> <span className="hidden md:inline">PDF</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 rounded-xl border-white/20 glass hover:bg-white/30 hidden sm:flex"
-              onClick={() => downloadICS(plan, expenses, travelers)}
-            >
-              <CalendarDays className="w-4 h-4" /> <span className="hidden md:inline">Sync</span>
-            </Button>
-            <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 sm:hidden h-8 w-8" onClick={() => downloadICS(plan, expenses, travelers)}>
-              <CalendarDays className="w-4 h-4" />
-            </Button>
-            <FeedbackModal tripId={tripId} />
-            {user && (
-              <Button variant="ghost" size="icon" className="rounded-xl h-8 w-8" onClick={signOut}>
-                <LogOut className="w-4 h-4" />
-              </Button>
+
+            {/* Mobile: show Save + Share + overflow menu */}
+            {isMobile && (
+              <>
+                {onSave && (
+                  <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 h-8 w-8" onClick={onSave} disabled={saving}>
+                    <Save className="w-4 h-4" />
+                  </Button>
+                )}
+                {tripId && <InviteModal tripId={tripId} />}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="rounded-xl border-white/20 glass hover:bg-white/30 h-8 w-8">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="glass-card-readable border-white/15 min-w-[180px]">
+                    {user && (
+                      <DropdownMenuItem onClick={() => navigate("/my-trips")} className="gap-2 text-sm font-body">
+                        <FolderOpen className="w-4 h-4" /> My Trips
+                      </DropdownMenuItem>
+                    )}
+                    {/* Render travelerSlot, accommodation, datepoll inline — they are self-contained modals */}
+                    {travelerSlot && (
+                      <div className="px-2 py-1.5">{travelerSlot}</div>
+                    )}
+                    {onUpdateAccommodation && (
+                      <div className="px-2 py-1.5">
+                        <AccommodationHub
+                          accommodationDetails={accommodationDetails}
+                          bedroomAssignments={bedroomAssignments}
+                          onUpdate={onUpdateAccommodation}
+                          canEdit={!!isOwner}
+                          travelers={travelers}
+                        />
+                      </div>
+                    )}
+                    {onUpdateDatePoll && onLockDates && (
+                      <div className="px-2 py-1.5">
+                        <DatePoll
+                          datePoll={datePoll}
+                          onUpdate={onUpdateDatePoll}
+                          onLock={onLockDates}
+                          isOwner={!!isOwner}
+                          currentTravelerId={currentTravelerId}
+                          travelers={travelers}
+                        />
+                      </div>
+                    )}
+                    <DropdownMenuItem onClick={handlePrint} className="gap-2 text-sm font-body">
+                      <Download className="w-4 h-4" /> Export PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => downloadICS(plan, expenses, travelers)} className="gap-2 text-sm font-body">
+                      <CalendarDays className="w-4 h-4" /> Sync Calendar
+                    </DropdownMenuItem>
+                    <div className="px-2 py-1.5">
+                      <FeedbackModal tripId={tripId} />
+                    </div>
+                    {user && (
+                      <DropdownMenuItem onClick={signOut} className="gap-2 text-sm font-body">
+                        <LogOut className="w-4 h-4" /> Sign Out
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             )}
           </div>
         </header>
@@ -738,19 +817,37 @@ export default function Dashboard({
                                   {block.notes && (
                                     <p className="text-xs text-muted-foreground mt-1.5 ml-[26px] font-body line-clamp-2 pr-2">{block.notes}</p>
                                   )}
-                                  {/* Bottom row: action buttons in normal flow (not absolute) */}
-                                  {(isSuggested || (isConfirmed && !hasExpense)) && (
-                                    <div className="flex items-center justify-between mt-2 ml-[26px]">
-                                      {/* Left: Confirm / Log expense */}
-                                      {isSuggested && onUpdateBlock && (
+                                  {/* Bottom row: action buttons for suggested blocks */}
+                                  {isSuggested && (
+                                    <div className="flex items-center gap-2 mt-2 ml-[26px]">
+                                      {onUpdateBlock && (
                                         <button
                                           onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
-                                          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/15 text-primary text-xs font-body font-medium hover:bg-primary/25 active:bg-primary/25 transition-colors"
+                                          className="flex items-center gap-1 px-2.5 py-1.5 min-h-[36px] min-w-[44px] rounded-lg border border-white/20 text-muted-foreground text-xs font-body font-medium hover:bg-primary/15 hover:text-primary active:bg-primary/15 transition-colors"
                                         >
                                           <Check className="w-3 h-3" /> Confirm
                                         </button>
                                       )}
-                                      {isConfirmed && !hasExpense && onAddExpense && tripId && (
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); setRemixBlock(block); }}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 min-h-[36px] min-w-[44px] rounded-lg border border-white/20 text-muted-foreground text-xs font-body font-medium hover:bg-primary/15 hover:text-primary active:bg-primary/15 transition-colors"
+                                      >
+                                        <Shuffle className="w-3 h-3" /> Remix
+                                      </button>
+                                      {onDeleteBlock && (
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleRemoveSuggested(idx, block.id); }}
+                                          className="flex items-center gap-1 px-2.5 py-1.5 min-h-[36px] min-w-[44px] rounded-lg border border-white/20 text-muted-foreground text-xs font-body font-medium hover:bg-destructive/15 hover:text-destructive active:bg-destructive/15 transition-colors"
+                                        >
+                                          <X className="w-3 h-3" /> Remove
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                  {/* Log expense button for confirmed blocks */}
+                                  {isConfirmed && !hasExpense && (
+                                    <div className="flex items-center justify-between mt-2 ml-[26px]">
+                                      {onAddExpense && tripId && (
                                         <button
                                           onClick={(e) => { e.stopPropagation(); openConfirmModal(block, idx, day.date); }}
                                           className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sage/15 text-sage text-xs font-body font-medium hover:bg-sage/25 active:bg-sage/25 transition-colors"
@@ -758,7 +855,6 @@ export default function Dashboard({
                                           <CircleDollarSign className="w-3 h-3" /> Log expense
                                         </button>
                                       )}
-                                      {/* Right: Remix */}
                                       <TooltipProvider delayDuration={300}>
                                         <Tooltip>
                                           <TooltipTrigger asChild>
