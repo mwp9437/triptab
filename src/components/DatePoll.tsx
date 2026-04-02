@@ -31,6 +31,8 @@ interface DatePollProps {
   isOwner: boolean;
   currentTravelerId?: string;
   travelers: Traveler[];
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
 /* ─── Helpers ─── */
@@ -59,9 +61,16 @@ export default function DatePoll({
   isOwner,
   currentTravelerId,
   travelers,
+  externalOpen,
+  onExternalOpenChange,
 }: DatePollProps) {
   const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (onExternalOpenChange) onExternalOpenChange(v);
+    setInternalOpen(v);
+  };
   const [poll, setPoll] = useState<DatePollData>(
     datePoll || { options: [], votes: {} }
   );
@@ -261,10 +270,12 @@ export default function DatePoll({
     </div>
   );
 
+  const hasExternalControl = externalOpen !== undefined;
+
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
+        {!hasExternalControl && <DrawerTrigger asChild>{triggerButton}</DrawerTrigger>}
         <DrawerContent className="glass-card-readable border-white/15 max-h-[85vh] flex flex-col p-0 overflow-hidden">
           <DrawerHeader className="px-5 pt-4 pb-0">
             <DrawerTitle className="font-display text-lg">{titleContent}</DrawerTitle>
@@ -277,7 +288,7 @@ export default function DatePoll({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+      {!hasExternalControl && <DialogTrigger asChild>{triggerButton}</DialogTrigger>}
       <DialogContent className="glass-card-readable border-white/15 sm:max-w-lg max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-5 pt-5 pb-0">
           <DialogTitle className="font-display text-lg">{titleContent}</DialogTitle>

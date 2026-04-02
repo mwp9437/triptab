@@ -41,7 +41,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, X, Home, Users, MessageSquarePlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 /** Curated Unsplash photo IDs — permanent URLs, no API key needed */
@@ -357,6 +357,11 @@ export default function Dashboard({
   const [sidebarView, setSidebarView] = useState<"details" | "expenses">("details");
   const [quickAddValues, setQuickAddValues] = useState<ExpenseInitialValues | undefined>(undefined);
 
+  // Mobile overflow menu modal state
+  const [mobileAccommodationOpen, setMobileAccommodationOpen] = useState(false);
+  const [mobileDatePollOpen, setMobileDatePollOpen] = useState(false);
+  const [mobileFeedbackOpen, setMobileFeedbackOpen] = useState(false);
+
   // Add activity modal state
   const [addActivityOpen, setAddActivityOpen] = useState(false);
   const [addActivityDayIndex, setAddActivityDayIndex] = useState(0);
@@ -559,32 +564,20 @@ export default function Dashboard({
                         <FolderOpen className="w-4 h-4" /> My Trips
                       </DropdownMenuItem>
                     )}
-                    {/* Render travelerSlot, accommodation, datepoll inline — they are self-contained modals */}
-                    {travelerSlot && (
-                      <div className="px-2 py-1.5">{travelerSlot}</div>
+                    {onOpenTravelers && (
+                      <DropdownMenuItem onClick={onOpenTravelers} className="gap-2 text-sm font-body">
+                        <Users className="w-4 h-4" /> Travelers
+                      </DropdownMenuItem>
                     )}
                     {onUpdateAccommodation && (
-                      <div className="px-2 py-1.5">
-                        <AccommodationHub
-                          accommodationDetails={accommodationDetails}
-                          bedroomAssignments={bedroomAssignments}
-                          onUpdate={onUpdateAccommodation}
-                          canEdit={!!isOwner}
-                          travelers={travelers}
-                        />
-                      </div>
+                      <DropdownMenuItem onClick={() => setMobileAccommodationOpen(true)} className="gap-2 text-sm font-body">
+                        <Home className="w-4 h-4" /> Lodging
+                      </DropdownMenuItem>
                     )}
                     {onUpdateDatePoll && onLockDates && (
-                      <div className="px-2 py-1.5">
-                        <DatePoll
-                          datePoll={datePoll}
-                          onUpdate={onUpdateDatePoll}
-                          onLock={onLockDates}
-                          isOwner={!!isOwner}
-                          currentTravelerId={currentTravelerId}
-                          travelers={travelers}
-                        />
-                      </div>
+                      <DropdownMenuItem onClick={() => setMobileDatePollOpen(true)} className="gap-2 text-sm font-body">
+                        <CalendarDays className="w-4 h-4" /> Date Poll
+                      </DropdownMenuItem>
                     )}
                     <DropdownMenuItem onClick={handlePrint} className="gap-2 text-sm font-body">
                       <Download className="w-4 h-4" /> Export PDF
@@ -592,9 +585,12 @@ export default function Dashboard({
                     <DropdownMenuItem onClick={() => downloadICS(plan, expenses, travelers)} className="gap-2 text-sm font-body">
                       <CalendarDays className="w-4 h-4" /> Sync Calendar
                     </DropdownMenuItem>
-                    <div className="px-2 py-1.5">
-                      <FeedbackModal tripId={tripId} />
-                    </div>
+                    <DropdownMenuItem onClick={() => {
+                      if (!user) { toast({ title: "Sign in to submit feedback" }); return; }
+                      setMobileFeedbackOpen(true);
+                    }} className="gap-2 text-sm font-body">
+                      <MessageSquarePlus className="w-4 h-4" /> Feedback
+                    </DropdownMenuItem>
                     {user && (
                       <DropdownMenuItem onClick={signOut} className="gap-2 text-sm font-body">
                         <LogOut className="w-4 h-4" /> Sign Out
@@ -1393,6 +1389,40 @@ export default function Dashboard({
             onAddExpense={onAddExpense}
             tripId={tripId}
             expenses={expenses}
+          />
+        )}
+
+        {/* Mobile overflow menu modals — rendered outside dropdown to avoid portal conflicts */}
+        {/* TravelerSlot must always be in the DOM so its modal can open via onOpenTravelers */}
+        {isMobile && travelerSlot && <div className="hidden">{travelerSlot}</div>}
+        {isMobile && onUpdateAccommodation && (
+          <AccommodationHub
+            accommodationDetails={accommodationDetails}
+            bedroomAssignments={bedroomAssignments}
+            onUpdate={onUpdateAccommodation}
+            canEdit={!!isOwner}
+            travelers={travelers}
+            externalOpen={mobileAccommodationOpen}
+            onExternalOpenChange={setMobileAccommodationOpen}
+          />
+        )}
+        {isMobile && onUpdateDatePoll && onLockDates && (
+          <DatePoll
+            datePoll={datePoll}
+            onUpdate={onUpdateDatePoll}
+            onLock={onLockDates}
+            isOwner={!!isOwner}
+            currentTravelerId={currentTravelerId}
+            travelers={travelers}
+            externalOpen={mobileDatePollOpen}
+            onExternalOpenChange={setMobileDatePollOpen}
+          />
+        )}
+        {isMobile && (
+          <FeedbackModal
+            tripId={tripId}
+            externalOpen={mobileFeedbackOpen}
+            onExternalOpenChange={setMobileFeedbackOpen}
           />
         )}
       </div>

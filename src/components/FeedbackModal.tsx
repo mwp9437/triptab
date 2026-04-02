@@ -25,12 +25,19 @@ const TYPE_LABELS: { value: FeedbackType; label: string }[] = [
 
 interface FeedbackModalProps {
   tripId?: string | null;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
-export default function FeedbackModal({ tripId }: FeedbackModalProps) {
+export default function FeedbackModal({ tripId, externalOpen, onExternalOpenChange }: FeedbackModalProps) {
   const isMobile = useIsMobile();
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    if (onExternalOpenChange) onExternalOpenChange(v);
+    setInternalOpen(v);
+  };
   const [feedbackType, setFeedbackType] = useState<FeedbackType>("bug");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -91,6 +98,7 @@ export default function FeedbackModal({ tripId }: FeedbackModalProps) {
   );
 
   if (!user) {
+    if (hasExternalControl) return null;
     return (
       <>
         <Button
@@ -158,10 +166,12 @@ export default function FeedbackModal({ tripId }: FeedbackModalProps) {
     </div>
   );
 
+  const hasExternalControl = externalOpen !== undefined;
+
   if (isMobile) {
     return (
       <>
-        {triggerButton}
+        {!hasExternalControl && triggerButton}
         <Drawer open={open} onOpenChange={handleOpenChange}>
           <DrawerContent className="glass-card-readable border-white/15 max-h-[85vh] flex flex-col">
             <DrawerHeader>
@@ -178,7 +188,7 @@ export default function FeedbackModal({ tripId }: FeedbackModalProps) {
 
   return (
     <>
-      {triggerButton}
+      {!hasExternalControl && triggerButton}
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="glass-card-readable border-white/15 sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>

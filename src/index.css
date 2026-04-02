@@ -195,6 +195,17 @@
     color: rgba(255, 255, 255, 0.95);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  /* Inside portals (dialogs/drawers), backdrop-filter + transform breaks on mobile WebKit.
+     Use a fully opaque background instead so content is always visible. */
+  [data-radix-popper-content-wrapper] .glass-card-readable,
+  [role="dialog"] .glass-card-readable,
+  [role="dialog"].glass-card-readable,
+  [vaul-drawer] .glass-card-readable,
+  [vaul-drawer].glass-card-readable {
+    background: rgb(30, 30, 30);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   .glass-card-readable label,
   .glass-card-readable .text-muted-foreground {
     color: rgba(255, 255, 255, 0.65) !important;
