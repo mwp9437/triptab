@@ -75,6 +75,7 @@ export default function FeedbackModal({ tripId, externalOpen, onExternalOpenChan
   };
 
   const isValid = message.trim().length >= 10;
+  const hasExternalControl = externalOpen !== undefined;
 
   const triggerButton = (
     <>
@@ -165,8 +166,6 @@ export default function FeedbackModal({ tripId, externalOpen, onExternalOpenChan
       </Button>
     </div>
   );
-
-  const hasExternalControl = externalOpen !== undefined;
 
   if (isMobile) {
     return (
